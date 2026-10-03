@@ -4,7 +4,8 @@ import { audio } from '../kit/common.js';
 
 const SFX = ['jump', 'select', 'blip', 'coin', 'powerup', 'explosion', 'bounce', 'door', 'splash', 'laser', 'hurt', 'hit2', 'punch0', 'punch1', 'punch2',
   'heavy', 'whoosh', 'ding', 'honk', 'zap', 'motor', 'clang', 'smash', 'spray', 'page', 'voice0', 'voice1', 'voice2', 'voice3', 'voice4', 'voice5', 'tilly', 'crash', 'rattle', 'thunk', 'shatter',
-  'beep', 'hiss', 'splat', 'fling', 'charge', 'fanfare', 'raid'];
+  'beep', 'hiss', 'splat', 'fling', 'charge', 'fanfare', 'raid',
+  'hum', 'bang', 'quench', 'table', 'powerdown', 'click', 'lightsout', 'film', 'stomp', 'clunk', 'mri_voice', 'lou', 'scared'];
 export const S = { ctx: null, buf: {}, music: {}, loops: {}, cur: null, curName: null, master: null, mus: null, fx: null, vol: { music: 0.6, sfx: 0.8 }, want: null };
 
 export async function initSound(vol) {

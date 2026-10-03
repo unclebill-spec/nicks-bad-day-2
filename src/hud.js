@@ -64,10 +64,11 @@ export function drawHUD(game) {
   if (b && b.st !== 'enter' || (b && b.t > 0.4)) {
     if (b) {
       const bw = Math.min(200, VW - 120), bx = (VW - bw) / 2, by = 46;
-      spr('face_tilly', bx - 30, by - 8, { scale: 0.75 });
-      text(b.name + (b.phase === 2 ? '  TURBO!' : ''), bx, by - 10, { col: b.phase === 2 ? '#8ad8ff' : '#d8b4f4' });
-      bar(bx, by, bw, 6, (b.hp / b.maxHp) * b.shown, b.phase === 2 ? '#a24dff' : '#ff4a9a');
-      if (b.st === 'open' && Math.floor(W.t * 6) % 2) text('HIT THE BATTERY!', VW / 2, by + 12, { col: '#ffe84a', align: 'center' });
+      if (b.drawIcon) b.drawIcon(bx - 30, by - 8); else spr(b.mini ? 'face_lou' : 'face_tilly', bx - 30, by - 8, { scale: 0.75 });
+      text(b.name + (b.phase === 2 ? '  ' + (b.p2label || 'TURBO!') : ''), bx, by - 10, { col: b.phase === 2 ? '#8ad8ff' : '#d8b4f4' });
+      bar(bx, by, bw, 6, (b.hp / b.maxHp) * b.shown, b.phase === 2 ? '#a24dff' : b.isMRI ? '#3aa8ff' : '#ff4a9a');
+      const hint = b.hint ? b.hint() : b.st === 'open' ? 'HIT THE BATTERY!' : null;
+      if (hint && Math.floor(W.t * 6) % 2) text(hint, VW / 2, by + 12, { col: '#ffe84a', align: 'center' });
     }
   }
   // floor progress strip (where you are on the floor), small, under the P HUD

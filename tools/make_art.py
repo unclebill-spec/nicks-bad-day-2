@@ -54,10 +54,11 @@ def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
 B = chars.bodies()
 for h in ("nick", "kim", "will", "jackie"):
     char_sheet(h, chars.hero_anims(h), B[h])
-PATIENTS = ("wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite", "runner", "tray", "o2")
+PATIENTS = ("wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite", "runner", "tray", "o2", "barium", "apron", "lou")
 for e in PATIENTS + ("visitor",):
     big = e == "visitor"
-    char_sheet(e, chars.enemy_anims(e), B[e], cell=(96, 88) if big else (88, 80), anchor=(48, 84) if big else (44, 76))
+    cell, anchor = ((96, 88), (48, 84)) if big else ((176, 164), (88, 158)) if e == "lou" else ((88, 80), (44, 76))
+    char_sheet(e, chars.enemy_anims(e), B[e], cell=cell, anchor=anchor)
 # runtime recolour palettes (src/gfx.js tintSheet): every patient gets random hair + skin, a green or olive gown,
 # and elites get red or blue socks. Lists are [from colours..] -> the game picks matching [to colours..].
 for e in PATIENTS:
@@ -80,6 +81,18 @@ for i, f in enumerate(fr):
     sheet.paste(f, ((i % cols) * boss.W, (i // cols) * boss.H))
 sheet.save(OUT / "tilly.png", optimize=True)
 atlas["chars"]["tilly"] = {"img": "art/tilly.png", "cell": [boss.W, boss.H], "anchor": [boss.AX, boss.AY], "cols": cols, "anims": meta}
+# ---- v0.5 MRI magnet boss (MAGNA-SCAN 3000)
+import radiology as RA  # noqa: E402
+fr, meta = [], {}
+for an, (st, n) in RA.MRI_ANIMS.items():
+    meta[an] = {"s": len(fr), "n": n, "h": []}
+    for k in range(n):
+        fr.append(RA.mri_frame(st, k).image())
+sheet = Image.new("RGBA", (RA.MW * 4, RA.MH * ((len(fr) + 3) // 4)), (0, 0, 0, 0))
+for i, f in enumerate(fr):
+    sheet.paste(f, ((i % 4) * RA.MW, (i // 4) * RA.MH))
+sheet.save(OUT / "mri.png", optimize=True)
+atlas["chars"]["mri"] = {"img": "art/mri.png", "cell": [RA.MW, RA.MH], "anchor": [RA.MAX, RA.MAY], "cols": 4, "anims": meta}
 
 # ---- brileta potted plants (MIT, vendored): small sapling / deciduous crowns snapped to a 1-bit alpha and a short palette
 def brileta(reqs):
@@ -161,6 +174,25 @@ for st in range(3):
 add("p_tray", BR.proj_tray()); add("p_jello", BR.proj_jello()); add("puddle_g", BR.jello_splat())
 add("fridge", BR.fridge()); add("fridge_open", BR.fridge(True)); add("counter", BR.counter()); add("cabinets", BR.cabinets()); add("btable", BR.table())
 add("note_food", BR.food_note()); add("sign_breakroom", PR.sign("BREAKROOM", "#c86a1a")); add("vend_wall", PR.vending(0))
+# v0.5 Floor 4 Radiology + the night shift
+for i in range(4):
+    add(f"rwall{i}", RA.rwall_tile(i))
+add("rceil", RA.rceil_tile(False)); add("rceil_lit", RA.rceil_tile(True))
+for i, t in enumerate(RA.rfloor_tiles()):
+    add(f"rfloor{i}", t)
+for i, ks in enumerate((("chest", "hand"), ("skull", "chest"), ("hand", "duck"), ("chest", "skull"))):
+    add(f"lightbox{i}", RA.lightbox(ks, i + 1))
+add("warnlamp", RA.warn_lamp(True)); add("warnlamp_off", RA.warn_lamp(False)); add("trefoil", RA.trefoil()); add("poster_nometal", RA.poster_nometal())
+add("sign_radiology", PR.sign("4 RADIOLOGY", "#2a5ad8")); add("sign_mri", PR.sign("MRI SUITE: NO METAL!", "#7a3ab8")); add("sign_xray", PR.sign("X-RAY  CT  ULTRASOUND >", "#1a6a9a"))
+add("sign_imaging", PR.sign("IMAGING WAITING", "#2a8a7a")); add("floornum4", PR.floor_number(4))
+for i in range(3):
+    add(f"nwindow{i}", RA.night_window(i + 1))
+add("calllamp", RA.call_lamp(True)); add("calllamp_off", RA.call_lamp(False)); add("monitor", RA.vitals_monitor())
+for st in range(3):
+    add(f"apronrack{st}", RA.apron_rack(st)); add(f"contrastcart{st}", RA.contrast_cart(st)); add(f"viewer{st}", RA.film_viewer(st))
+for k, S in RA.rbits().items():
+    add(k, S)
+add("p_cup", RA.proj_cup()); add("puddle_w", RA.barium_splat()); add("p_film", RA.proj_film()); add("mri_wave0", RA.mri_wave(0)); add("mri_wave1", RA.mri_wave(1)); add("mri_table", RA.mri_table())
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
              ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
              ("w_clipboard", PR.w_clipboard), ("w_bedpan", PR.w_bedpan), ("w_mop", PR.w_mop), ("w_extinguisher", PR.w_extinguisher),
@@ -230,6 +262,16 @@ SPR["w_crash"] = word("CRASH!", 18, "#ffe84a", "#ff5a3a")
 SPR["w_beep"] = word("BEEP!", 14, "#ff8a8a", "#e83a3a")
 SPR["w_splat"] = word("SPLAT!", 16, "#aaff8a", "#3aa83a")
 SPR["w_caught"] = word("CAUGHT!", 18, "#ffe84a", "#ff8a1e")
+# v0.5 words
+SPR["w_magnet"] = word("MAGNET ON!", 22, "#bfeaff", "#3aa8ff", stroke=3)
+SPR["w_quench"] = word("QUENCH!", 22, "#ffffff", "#8ad8ff", stroke=3)
+SPR["w_knock"] = word("KNOCK!", 16, "#ffffff", "#bfeaff")
+SPR["w_clunk"] = word("CLUNK!", 16, "#e4e8f0", "#9aa4b4")
+SPR["w_hike"] = word("HIKE!", 22, "#ffe84a", "#ff8a1e", stroke=3)
+SPR["w_lightsout"] = word("LIGHTS OUT!", 26, "#bfeaff", "#3a68c8", stroke=3)
+SPR["w_power"] = word("POWER'S BACK!", 24, "#ffe84a", "#ff8a1e", stroke=3)
+SPR["w_superc"] = word("SUPERCONDUCTING!", 20, "#e8c8ff", "#a24dff", stroke=3)
+SPR["w_theend"] = word("THE END", 40, "#ffe84a", "#ff8a1e", stroke=3)
 SPR["w_timeup"] = word("TIME UP!", 30, "#ff8ac0", "#e83a6a", stroke=3)
 SPR["w_ready"] = word("CLOCK IN!", 30, "#ffe84a", "#ff8a1e", stroke=3)
 SPR["w_clear_stage"] = word("FLOOR CLEARED!", 26, "#ffe84a", "#ff8a1e", stroke=3)
@@ -254,6 +296,7 @@ for h in ("nick", "kim", "will", "jackie"):
     SPR[f"face_{h}"] = portrait(B[h])
     SPR[f"face_{h}_hurt"] = portrait(B[h], "hurt")
 SPR["face_tilly"] = portrait(boss.tilly_body(), "grin")
+SPR["face_lou"] = portrait(B["apron"], "grin")
 
 # ---- bitmap font (Press Start 2P, OFL) 8x8, ASCII 32..126, 16 per row
 f = ImageFont.truetype(str(PS), 8)

@@ -1,4 +1,4 @@
-# Flow test: boss defeat -> tally -> Breakroom Bonus (bot) -> bonus tally -> teaser -> title -> high scores; then a game over -> scores.
+# Flow test: boss defeat -> tally -> Breakroom Bonus (bot) -> bonus tally -> Radiology -> Night Shift -> ending -> scores -> title; then a game over -> scores.
 # (?bot=1 auto-skips the v0.4 cutscenes; tests/v04.py covers them.)
 import time
 from playwright.sync_api import sync_playwright
@@ -19,7 +19,16 @@ with sync_playwright() as p:
     pg.wait_for_function("__nbd.game.scene === 'btally'", timeout=20000); time.sleep(3.3)
     pg.screenshot(path='tests/out/f_btally.png'); print(pg.evaluate(J))
     pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(2)
-    pg.screenshot(path='tests/out/f_teaser.png'); print(pg.evaluate(J))
+    # v0.5: the bonus leads up to Floor 4 Radiology, then the night shift, then THE END
+    print('radiology', pg.evaluate("JSON.stringify([__nbd.game.scene, __nbd.W.lv.id, __nbd.W.heroes[0].score])"))
+    pg.screenshot(path='tests/out/f_radiology.png')
+    for lv in (2, 3):
+        pg.wait_for_function(f"__nbd.W.lv.id === {lv} && __nbd.game.scene === 'play'", timeout=10000); pg.evaluate('__nbd.W.cleared = true')
+        pg.wait_for_function("__nbd.game.scene === 'tally'", timeout=5000); time.sleep(3.3)
+        pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1)
+        print('after floor', lv, pg.evaluate(J))
+    time.sleep(1); pg.screenshot(path='tests/out/f_ending.png')
+    pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1); print(pg.evaluate(J))
     pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1); print(pg.evaluate(J))
     # game over
     pg.goto('http://localhost:8731/?zone=1&hero=nick'); pg.wait_for_function('window.__loaded === true'); time.sleep(1)

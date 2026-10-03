@@ -1,6 +1,6 @@
 # v0.4: new patients (Bed-Alarm Runner, Food-Tray Thrower, O2 Wanderer + loose tank), rideable gurney (keys: GRAB and
 # ATK+JUMP, gamepad, touch RIDE button, jump bail-out), 2P Charge Nurse team-up (+ solo fallback), shift-change cutscenes
-# (start / boss / lunch / next; skip by key, pad and tap), Breakroom Bonus round + tally + flow to the teaser.
+# (start / boss / lunch / next; skip by key, pad and tap), Breakroom Bonus round + tally + flow up to Floor 4 (v0.5).
 # Screenshots -> tests/out/v04_*.png
 import time, json
 from playwright.sync_api import sync_playwright
@@ -233,9 +233,10 @@ with sync_playwright() as p:
     pg.evaluate("(()=>{const d=__nbd.C.devs; })()")
     # gamepad-free skip with Enter
     key(pg, 'Enter', after=0.4)
-    check('cutscene skip -> teaser; high score includes the bonus', pg.evaluate(SC) == 'teaser' and pg.evaluate("__nbd.save.hi[0].s") >= tot, [pg.evaluate(SC), tot, sc])
-    time.sleep(1.7); key(pg, 'KeyJ', after=0.5)
-    check('teaser -> title', pg.evaluate(SC) == 'title')
+    # v0.5: the "next floor" cutscene now leads up to Floor 4 Radiology (tests/v05.py covers the rest of the run)
+    check('cutscene skip -> Floor 4 Radiology; the score carries the bonus', pg.evaluate(SC) in ('intro', 'play') and pg.evaluate("__nbd.W.lv.id") == 2 and pg.evaluate("__nbd.W.heroes[0].score") >= tot, [pg.evaluate(SC), tot, sc])
+    pg.evaluate('__nbd.toTitle()'); time.sleep(0.3)
+    check('quit -> title', pg.evaluate(SC) == 'title')
     # start cutscene on a 1P game from the title (pad press skips it)
     pg.close()
     pg = b.new_page(viewport={'width': 1280, 'height': 720}); pg.add_init_script(MOCK); watch(pg)

@@ -2,6 +2,7 @@
 // with caption boxes and speech bubbles (typewriter text). Any button or tap skips the whole scene.
 //   start: before Floor 3 (night-shift handoff, Tilly zooms past)   boss: before Turbo Tilly
 //   lunch: after the floor tally, into the Breakroom Bonus          next: after the bonus, up to Floor 4
+// v0.5: mri: before the MRI boss   night: after Radiology, into the night shift   ending: after the night shift
 import { G, text, rect, spr, frame, anim, sprSize, tintSheet, textW } from './gfx.js';
 import { LEVEL1, HEROES } from './data.js';
 import { W } from './world.js';
@@ -64,6 +65,39 @@ const SCRIPTS = {
         bubbles: [{ x: 4, y: 20, s: 'Why is everything up there... GLOWING?', tail: [w / 2, h - 70], at: 0.4, mw: w - 16 }] }),
     ];
   },
+  mri() {
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['rad', 2900, 58], dark: true, cap: 'THE MRI SUITE. 5:00 PM.', acts: [{ s: a, a: 'idle', x: w * 0.14, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.14 + 26, y: h - 1 }] : []), { s: 'mri', a: 'idle', x: w * 0.7, y: h + 2, scale: 0.62, rate: 4 }],
+        bubbles: [{ x: w * 0.36, y: 18, s: 'PLEASE HOLD STILL. SCANNING... EVERYTHING!', tail: [w * 0.7, h - 70], at: 0.35, mw: Math.min(230, w * 0.6), shout: true }] }),
+      (w, h) => ({ bg: null, burst: '#3aa8ff', acts: [{ s: 'mri', a: 'pull', x: w / 2, y: h + 30, scale: 0.9, rate: 10 }],
+        bubbles: [{ x: 6, y: 4, s: 'MAGNET... ON!', tail: [w / 2, h - 60], at: 0.25, mw: w - 20, shout: true }] }),
+      (w, h) => ({ bg: ['rad', 2700, 58], dark: true, floaty: true, faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: 'Why is my badge clip FLOATING?', tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }, { x: 4, y: 36, s: 'Drop the IV pole! DROP IT!', tail: [w / 2, h - 70], at: 1.4, mw: w - 16 }] }),
+    ];
+  },
+  night() {
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['hall', 600, 58], dark: true, moon: true, cap: '11:00 PM. BACK ON FLOOR 3.', acts: [{ s: a, a: 'idle', x: w * 0.3, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.3 + 28, y: h - 1 }] : [])],
+        bubbles: [{ x: w * 0.46, y: 12, s: 'Double shift. Quiet night, right?', tail: [w * 0.33, h - 52], at: 0.35, mw: Math.min(200, w * 0.48) }] }),
+      (w, h) => ({ bg: null, blackout: true, cap: 'KA-CHUNK!',
+        bubbles: [{ x: 4, y: h - 26, s: '...nurse?  ...nurse?  ...NURSE?', tail: [w * 0.5, h - 50], at: 0.6, mw: w - 16 }] }),
+      (w, h) => ({ bg: null, flashlight: true, faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: 'WHO SAID THE Q-WORD?!', tail: [w / 2, h - 70], at: 0.25, mw: w - 16, shout: true }] }),
+    ];
+  },
+  ending() {
+    const [a, b] = heroIds(), night = nightNurse();
+    return [
+      (w, h) => ({ bg: ['hall', 0, 58], sunrise: true, cap: '7:00 AM. SHIFT CHANGE. AGAIN.', acts: [{ s: a, a: 'win', x: w * 0.24, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.24 + 28, y: h - 1, rate: 3 }] : []), { s: night, a: 'idle', x: w * 0.74, y: h - 3, flip: true }],
+        bubbles: [{ x: w * 0.36, y: 4, s: 'Morning! How was the night shift?', tail: [w * 0.72, h - 52], at: 0.35, mw: Math.min(200, w * 0.55) }] }),
+      (w, h) => ({ bg: null, burst: '#ff8a1e', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: 'A wheelchair drag race, a magnet that ate my IV pole, and a blackout.', tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+      (w, h) => ({ bg: ['hall', 40, 58], sunrise: true, acts: [{ s: a, a: 'walk', x: w * 0.3, y: h - 3, mv: -30, flip: true }, ...(b ? [{ s: b, a: 'walk', x: w * 0.3 + 26, y: h - 1, mv: -30, flip: true }] : [])],
+        bubbles: [{ x: 4, y: 4, s: 'NOPE! See you tomorrow!', tail: [w * 0.3, h - 52], at: 0.25, mw: w - 16, shout: true }] }),
+    ];
+  },
 };
 
 export function makeCut(id) { return { id, t: 0, lastPanel: -1, panels: (SCRIPTS[id] || SCRIPTS.start)() }; }
@@ -119,12 +153,14 @@ function drawPanel(P, px, py, pw, ph, local, idx) {
   rect(px, py, pw, ph, '#2a3060');
   if (P.bg) {
     const [src, x0, y0] = P.bg;
-    const img = src === 'break' ? W.breakBg : W.hallBg;
+    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : W.hallBg;
     let sx = x0 === 'fridge' ? Math.max(0, (W.breakFridgeX || 300) - pw * 0.55) : x0;
     if (img) { sx = Math.max(0, Math.min(img.width - pw, sx)); c.drawImage(img, sx, y0, pw, ph, px, py, pw, ph); }
     if (src === 'hall') hallBits(sx, y0, px, py, pw);
     if (P.fridge && W.breakFridgeX) spr('fridge_open', px + W.breakFridgeX - sx, py + FLOOR_Y + 3 - 72 - y0);
     if (P.dark) rect(px, py, pw, ph, '#0a1030', 0.45);
+    if (P.moon) { rect(px, py, pw, ph, '#04061a', 0.35); for (let i = 0; i < 3; i++) { c.globalAlpha = 0.18; c.fillStyle = '#3aa8ff'; c.beginPath(); c.ellipse(px + pw * (0.2 + i * 0.3), py + ph - 8, 30, 6, 0, 0, Math.PI * 2); c.fill(); } c.globalAlpha = 1; }
+    if (P.sunrise) { c.globalAlpha = 0.28; c.fillStyle = '#ff9a4a'; c.fillRect(px, py, pw, ph); c.globalAlpha = 0.25; c.fillStyle = '#ffe8a0'; c.beginPath(); c.ellipse(px + pw * 0.85, py + 10, 60, 40, 0, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; }
   }
   if (P.burst) {  // dramatic close-up: radial burst
     rect(px, py, pw, ph, P.burst);
@@ -136,17 +172,25 @@ function drawPanel(P, px, py, pw, ph, local, idx) {
     const n = local > 1.0 ? '4' : '3'; text(n, px + pw / 2 - 6, py + 28, { col: '#ff5a3a', scale: 2, shadow: null }); text('^', px + pw / 2 + 16, py + 30, { col: Math.floor(local * 4) % 2 ? '#ffe84a' : '#5a3a20', shadow: null });
     rect(px + pw / 2 - 8, py + 58, 16, 16, '#e4e8f0'); rect(px + pw / 2 - 6, py + 60, 12, 12, local > 0.5 ? '#ffe84a' : '#8a94a4');
   }
-  if (P.glow) {  // Floor 4 teaser: dark room, pulsing green glow, x-ray lightbox
-    rect(px, py, pw, ph, '#06120c'); const g = 0.35 + Math.sin(local * 5) * 0.15;
-    for (let r = 5; r > 0; r--) { c.globalAlpha = g / r; c.fillStyle = '#5aff8a'; c.beginPath(); c.ellipse(px + pw / 2, py + ph / 2, r * 26, r * 16, 0, 0, Math.PI * 2); c.fill(); }
+  if (P.glow) {  // Floor 4 teaser: dark room, pulsing neon-blue glow (Bill's cold fire), x-ray lightboxes
+    rect(px, py, pw, ph, '#040a1a'); const g = 0.35 + Math.sin(local * 5) * 0.15;
+    for (let r = 5; r > 0; r--) { c.globalAlpha = g / r; c.fillStyle = '#3aa8ff'; c.beginPath(); c.ellipse(px + pw / 2, py + ph / 2, r * 26, r * 16, 0, 0, Math.PI * 2); c.fill(); }
     c.globalAlpha = 1; rect(px + 8, py + 26, 34, 44, '#cfe8ff', 0.5); rect(px + pw - 42, py + 26, 34, 44, '#cfe8ff', 0.5);
   }
+  if (P.blackout) {  // night: lights out, only eyes, a red exit sign and blinking call lights
+    rect(px, py, pw, ph, '#03040c');
+    rect(px + pw - 40, py + 8, 30, 10, '#ff3a4a', 0.9); text('EXIT', px + pw - 37, py + 10, { col: '#ffffff', shadow: null });
+    for (let i = 0; i < 3; i++) if (Math.floor(local * 3 + i) % 2) rect(px + 20 + i * 50, py + 26, 6, 4, '#ff4a3a');
+    for (let i = 0; i < 6; i++) { const ex = px + 16 + ((i * 53) % (pw - 30)), ey = py + 40 + ((i * 29) % (ph - 60)); if (local > 0.3 + i * 0.15 && Math.floor(local * 1.3 + i) % 4) { rect(ex, ey, 3, 2, '#fff6a0'); rect(ex + 7, ey, 3, 2, '#fff6a0'); } }
+  }
+  if (P.flashlight) { rect(px, py, pw, ph, '#03040c'); c.globalAlpha = 0.85; c.fillStyle = '#fff2b0'; c.beginPath(); c.moveTo(px + pw / 2, py + ph + 10); c.lineTo(px + pw / 2 - 70, py - 10); c.lineTo(px + pw / 2 + 70, py - 10); c.closePath(); c.fill(); c.globalAlpha = 1; }
   if (P.speed) for (let i = 0; i < 10; i++) rect(px + ((i * 47 - local * 400) % pw + pw) % pw, py + 30 + (i * 17) % (ph - 34), 22, 1, '#ffffff', 0.7);
   for (const A of P.acts || []) {
     const an = anim(A.s, A.a); if (!an) continue;
     const i = an.s + (Math.floor(local * (A.rate || 8)) % an.n);
     frame(A.s, i, px + A.x + (A.mv || 0) * local, py + A.y, { flip: !!A.flip, scale: A.scale || 1 });
   }
+  if (P.floaty) for (let i = 0; i < 6; i++) { const k = (local * 0.6 + i * 0.17) % 1; rect(px + 10 + i * (pw / 6), py + ph - 10 - k * (ph - 20), 4, 3, ['#c8ccd6', '#ffe84a', '#8ad8ff'][i % 3]); }
   for (const F of P.faces || []) spr(`face_${F.id}`, px + F.x + (F.flip ? 36 * F.scale : 0), py + F.y, { scale: F.scale, flip: !!F.flip });
   if (P.cap) { const w = Math.min(pw - 8, textW(P.cap) + 8); rect(px + 2, py + 2, w + 2, 13, INK); rect(px + 3, py + 3, w, 11, '#ffe84a'); text(P.cap, px + 7, py + 5, { col: INK, shadow: null }); }
   for (const B of P.bubbles || []) bubble(px, py, pw, ph, B, local);

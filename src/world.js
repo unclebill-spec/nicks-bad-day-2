@@ -1,6 +1,6 @@
 // The level: pre-rendered hospital hallway, wall features (doors and elevators that open), breakables, floor items,
 // projectiles, effects, the camera and the zone / wave spawner.
-import { G, spr, sprSize, rect, text, ellipse, ring, bolt, frame, textW } from './gfx.js';
+import { G, spr, sprSize, rect, text, ellipse, ring, bolt, frame, textW, anim } from './gfx.js';
 import { Y_MIN, Y_MAX, LEVEL1, BREAKABLES, LOOT, ITEMS, WEAPONS, DIFF, GRAV } from './data.js';
 import { sfx } from './sound.js';
 
@@ -18,11 +18,14 @@ const LAYER = {  // wall features: vertical placement by kind
   chairs: (w, h) => FLOOR_Y + 4 - h, plant0: (w, h) => FLOOR_Y + 3 - h, plant1: (w, h) => FLOOR_Y + 3 - h, plant2: (w, h) => FLOOR_Y + 3 - h,
   gurney: (w, h) => FLOOR_Y + 3 - h, fountain: (w, h) => FLOOR_Y - 4 - h + 4, wheelchair: (w, h) => FLOOR_Y + 3 - h,
   // v0.4 breakroom pieces
+  // v0.5 radiology + night pieces
+  warnlamp: () => 38, trefoil: () => 40, poster_nometal: () => 30, monitor: (w, h) => 70 - h + 2, calllamp: () => 42, nlight: () => FLOOR_Y - 12,
   fridge: (w, h) => FLOOR_Y + 3 - h, counter: (w, h) => FLOOR_Y + 3 - h, vend_wall: (w, h) => FLOOR_Y + 3 - h, btable: (w, h) => FLOOR_Y + 5 - h, cabinets: () => 30, note_food: () => 46, sign_breakroom: () => 37,
 };
 function wallY(kind, w, h) {
   if (LAYER[kind]) return LAYER[kind](w, h);
-  if (kind.startsWith('window')) return 30;
+  if (kind.startsWith('window') || kind.startsWith('nwindow')) return 30;
+  if (kind.startsWith('lightbox')) return 28;
   if (kind.startsWith('sign')) return 22;
   if (kind === 'poster_clock') return 26;
   if (kind === 'poster_tv') return 32;
@@ -30,21 +33,33 @@ function wallY(kind, w, h) {
   return 38;  // posters
 }
 
+// v0.5: what glows in the dark (Bill's gloom-and-glow: neon blue first, then violet and red). r = light radius,
+// pool = a pool of light on the floor below it, blink = flashes (Hz).
+const GLOW = {
+  lightbox: { col: '#3aa8ff', r: 34, dx: 22, dy: 15, pool: 48, a: 1 }, warnlamp: { col: '#ff3a4a', r: 24, dx: 26, dy: 5, blink: 1.1 },
+  sign_exit: { col: '#ff3a4a', r: 26, dx: 12, dy: 5, pool: 30 }, calllamp: { col: '#ff4a3a', r: 20, dx: 5, dy: 3, blink: 2.4, pool: 26 },
+  monitor: { col: '#3aa8ff', r: 22, dx: 10, dy: 7, pool: 28 }, nwindow: { col: '#7a9ae8', r: 34, dx: 32, dy: 20, a: 0.55 },
+  nlight: { col: '#3aa8ff', r: 6, dx: 0, dy: 2, pool: 30 }, sign_mri: { col: '#a24dff', r: 30, dx: 40, dy: 5 }, sign_radiology: { col: '#3aa8ff', r: 26, dx: 24, dy: 5 },
+  sign_imaging: { col: '#3ad8c8', r: 22, dx: 30, dy: 5 }, sign_xray: { col: '#3aa8ff', r: 22, dx: 40, dy: 5 }, trefoil: { col: '#ffd83a', r: 10, dx: 7, dy: 7, a: 0.6 },
+};
+const glowOf = (kind) => GLOW[kind] || GLOW[kind.replace(/\d+$/, '')];
 export function buildLevel(lv) {
-  W.lv = lv; W.doors = {}; W.elevs = {};
+  W.lv = lv; W.doors = {}; W.elevs = {}; W.lights = []; W.decor = []; W.dark = lv.lightsOut ? 0 : (lv.dark || 0);
+  const T = lv.tiles || {};
   const c = document.createElement('canvas'); c.width = lv.width; c.height = 224;
   const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
   const at = G.atlas.sprites.rects;
   const blit = (name, dx, dy) => { const r = at[name]; if (r) x.drawImage(G.img.sprites, r[0], r[1], r[2], r[3], Math.round(dx), Math.round(dy), r[2], r[3]); };
   // ceiling + wall
   for (let i = 0; i * 32 < lv.width; i++) {
-    blit(i % 3 === 1 ? 'ceil_lit' : 'ceil', i * 32, 0);
-    blit('wall' + ((i * 7) % 4), i * 32, 14);
+    const ceil = T.ceil || 'ceil';
+    blit(i % 3 === 1 && T.ceilLit !== false ? ceil + '_lit' : ceil, i * 32, 0);
+    blit((T.wall || 'wall') + ((i * 7) % 4), i * 32, 14);
   }
   // floor: two-tone linoleum rows, each row nudged sideways for a gentle perspective
   for (let r = 0; r < 9; r++) {
     const y = FLOOR_Y + r * 12, off = (r * 5) % 24;
-    for (let i = -1; i * 24 < lv.width + 24; i++) blit('floor' + ((i + r) & 1), i * 24 - off, y);
+    for (let i = -1; i * 24 < lv.width + 24; i++) blit((T.floor || 'floor') + ((i + r) & 1), i * 24 - off, y);
   }
   // soft shadow along the baseboard + a polish shine stripe
   x.fillStyle = 'rgba(30,40,60,0.22)'; x.fillRect(0, FLOOR_Y, lv.width, 4);
@@ -59,9 +74,14 @@ export function buildLevel(lv) {
       continue;
     }
     if (kind === 'elev') { W.elevs[extra] = { x: wx, open: 0, target: 0, t: 0, light: 0 }; blit('elevator', wx, FLOOR_Y - 82); continue; }
-    const [w, h] = sprSize(kind);
-    blit(kind, wx, wallY(kind, w, h));
+    const [w, h] = sprSize(kind), wy = wallY(kind, w, h);
+    blit(kind, wx, wy);
+    const g = glowOf(kind);
+    if (g) W.lights.push({ x: wx + g.dx, y: wy + g.dy, r: g.r, col: g.col, a: g.a || 0.85, blink: g.blink || 0, ph: (wx % 97) / 97 });
+    if (g && g.pool) W.lights.push({ x: wx + g.dx, y: FLOOR_Y + 16, r: g.pool, ry: g.pool * 0.3, col: g.col, a: (g.a || 0.85) * 0.8, blink: g.blink || 0, ph: (wx % 97) / 97, floor: true });
   }
+  // the night windows let a little moonlight onto the floor too
+  if (lv.dark) for (const [wx, kind] of lv.wall) if (kind.startsWith('nwindow')) W.lights.push({ x: wx + 32, y: FLOOR_Y + 24, r: 44, ry: 12, col: '#7a9ae8', a: 0.45, floor: true });
   W.bg = c;
   // breakables + floor items
   W.props = lv.props.map(([px, py, kind, drops]) => makeProp(kind, px, py, drops)); W.zynnProps = 0;
@@ -81,7 +101,7 @@ function drawElev(e) {
   c.restore();
   // floor indicator light: "3" with a down/up arrow; flashes when the car arrives
   rect(X + 23, Y + 1, 34, 6, '#20222c');
-  text('3', X + 36, Y, { col: e.light > 0 && Math.floor(W.t * 6) % 2 ? '#ffe84a' : '#ff5a3a', shadow: null });
+  text((W.lv && W.lv.floorNum) || '3', X + 36, Y, { col: e.light > 0 && Math.floor(W.t * 6) % 2 ? '#ffe84a' : '#ff5a3a', shadow: null });
 }
 
 export function drawBackground() {
@@ -90,6 +110,8 @@ export function drawBackground() {
   c.drawImage(W.bg, cx, 0, G.VW, 224, 0, OFF(), G.VW, 224);
   for (const d of Object.values(W.doors)) if (d.x - cx > -40 && d.x - cx < G.VW + 4) drawDoor(d);
   for (const e of Object.values(W.elevs)) if (e.x - cx > -84 && e.x - cx < G.VW + 4) drawElev(e);
+  // v0.5: the MRI sits powered down in its suite until the nurses get there (src/mri.js takes over at the boss fight)
+  if (W.lv.bossMusic === 'mri' && !(W.boss && W.boss.isMRI)) { const z = W.lv.zones[W.lv.zones.length - 1], x = mriX(z.lock); if (x - cx < G.VW + 100) frame('mri', anim('mri', 'dead').s, x - cx, MRI_Y + OFF()); }
   if (W.bgHook) W.bgHook();
 }
 
@@ -340,6 +362,51 @@ export function updateCamera(dt) {
   const sp = W.lockX !== null ? 220 : 400;
   W.camX += Math.sign(target - W.camX) * Math.min(Math.abs(target - W.camX), sp * dt);
   if (W.lockX === null) W.camMin = Math.max(W.camMin, W.camX);  // arcade rule: no scrolling back
+}
+export const MRI_Y = 188;
+export const mriX = (lock) => Math.min(lock, W.lv.width - G.VW) + G.VW - 96;
+// ---------------------------------------------------------------- v0.5 lighting: dark floors with pools of light
+// The world is drawn normally, then a darkness layer with stepped (retro, banded) holes cut out for every light, then a
+// soft additive colour glow. W.dark = 0 (off) .. 1 (pitch black). Extra lights come from W.lightHook (heroes'
+// flashlights, the MRI bore, glowing props, sparks).
+let LC = null;
+export function drawLighting() {
+  const dk = W.dark || 0; if (dk <= 0.01) return;
+  const VW = G.VW, VH = G.VH, oy = OFF(), cx = W.camX;
+  if (!LC || LC.width !== VW || LC.height !== VH) { LC = document.createElement('canvas'); LC.width = VW; LC.height = VH; }
+  const lc = LC.getContext('2d');
+  lc.globalCompositeOperation = 'source-over'; lc.globalAlpha = 1; lc.clearRect(0, 0, VW, VH);
+  lc.fillStyle = '#04061a'; lc.globalAlpha = dk; lc.fillRect(0, 0, VW, VH);
+  const L = [];
+  for (const l of W.lights) if (l.x - cx > -l.r - 10 && l.x - cx < VW + l.r + 10) L.push(l);
+  for (const p of W.props) if (p.def.glow && p.st < 2) { L.push({ x: p.x, y: p.y - 30 - p.z, r: 26, col: p.def.glow, a: 0.9 }); L.push({ x: p.x, y: p.y, r: 30, ry: 9, col: p.def.glow, a: 0.6, floor: true }); }
+  for (const f of W.fx) if (f.type === 'spark' && (f.kind === 'bigspark' || f.kind === 'bluespark')) L.push({ x: f.x, y: f.y - f.z, r: 18, col: f.kind === 'bluespark' ? '#8ad8ff' : '#ffe84a', a: 0.8 });
+  for (const s of W.shots) if (s.glow) L.push({ x: s.x, y: s.y - s.z, r: 16, col: s.glow, a: 0.8 });
+  if (W.lightHook) W.lightHook(L);
+  lc.globalCompositeOperation = 'destination-out';
+  const on = (l) => !l.blink || ((W.t * l.blink + (l.ph || 0)) % 1) < 0.62;
+  for (const l of L) {
+    if (!on(l)) continue;
+    const X = Math.round(l.x - cx), Y = Math.round(l.y + oy), ry = l.ry || l.r;
+    if (l.cone) {  // flashlight: a wedge of light in the facing direction, banded in 3 steps
+      for (let k = 0; k < 3; k++) {
+        const len = l.len * (1 - k * 0.24), half = l.half * (1 - k * 0.15);
+        lc.globalAlpha = 0.34; lc.beginPath(); lc.moveTo(X, Y);
+        lc.lineTo(X + l.dir * len, Y - len * Math.tan(half) * 0.5); lc.lineTo(X + l.dir * len, Y + len * Math.tan(half) * 0.9); lc.closePath(); lc.fill();
+      }
+      continue;
+    }
+    for (let k = 0; k < 4; k++) { lc.globalAlpha = (l.a || 0.85) * 0.3; lc.beginPath(); lc.ellipse(X, Y, Math.max(1, l.r * (1 - k * 0.22)), Math.max(1, ry * (1 - k * 0.22)), 0, 0, Math.PI * 2); lc.fill(); }
+  }
+  const c = G.ctx; c.globalAlpha = 1; c.drawImage(LC, 0, 0);
+  // colour glow on top (additive): the neon bleeds into the room
+  c.save(); c.globalCompositeOperation = 'lighter';
+  for (const l of L) {
+    if (!on(l) || !l.col || l.cone) continue;
+    const X = Math.round(l.x - cx), Y = Math.round(l.y + oy), ry = l.ry || l.r;
+    for (let k = 0; k < 2; k++) { c.globalAlpha = (l.a || 0.85) * (0.12 + 0.1 * dk) * (k ? 0.8 : 1); c.fillStyle = l.col; c.beginPath(); c.ellipse(X, Y, l.r * (0.8 - k * 0.35), ry * (0.8 - k * 0.35), 0, 0, Math.PI * 2); c.fill(); }
+  }
+  c.restore(); c.globalAlpha = 1;
 }
 export const offY = OFF;
 export { FLOOR_Y };

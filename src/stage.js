@@ -5,6 +5,7 @@ import { Y_MIN, Y_MAX, VARIANTS } from './data.js';
 import { W, openDoor, openElev, addFx, addShot, floatText, word, shake, spark, dropItem, breakProp, hitProp, propBox, addScore } from './world.js';
 import { Enemy } from './enemy.js';
 import { Tilly } from './boss.js';
+import { MRI, Lou } from './mri.js';
 import { sfx, playMusic } from './sound.js';
 
 const rr = (a, b) => a + W.rnd() * (b - a);
@@ -36,6 +37,13 @@ export function spawn(kind, where) {
 
 // a lobbed urinal lands (or hits a nurse): splash FX, a SPLOOSH! word and a slippery yellow puddle
 function splashAt(s, h) {
+  if (s.splash === 'barium') {  // v0.5: Contrast Chugger's barium cup, a chalky white puddle
+    for (const vx of [-50, 40, 10]) addFx({ type: 'chunk', spr: null, col: vx > 20 ? '#ffffff' : '#e8e4d8', sz: 3, x: s.x, y: s.y, z: 6, vx, vy: 0, vz: 120, spin: 0, dur: 0.8 });
+    word('w_splat', s.x, s.y, h ? 20 : 4); sfx('splat', { vol: 0.7 });
+    if (h) floatText(['CHALKY!', 'BANANA FLAVOR?!', 'MY CLEAN SCRUBS!'][Math.floor(W.rnd() * 3)], h.x, h.y, 66, '#ffffff');
+    addShot({ kind: 'puddle', spr: 'puddle_w', x: s.x, y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
+    return;
+  }
   if (s.splash === 'jello') {  // v0.4: lobbed jello cup, wobbly green splat that's just as slippery
     addFx({ type: 'chunk', spr: null, col: '#5ad85a', sz: 3, x: s.x, y: s.y, z: 6, vx: -40, vy: 0, vz: 110, spin: 0, dur: 0.8 }); addFx({ type: 'chunk', spr: null, col: '#bfffbf', sz: 2, x: s.x, y: s.y, z: 6, vx: 50, vy: 0, vz: 130, spin: 0, dur: 0.8 });
     word('w_splat', s.x, s.y, h ? 20 : 4); sfx('splat', { vol: 0.7 });
@@ -58,35 +66,41 @@ export const Director = {
     if (!W.zoneOn && W.zone + 1 < zs.length && lead >= zs[W.zone + 1].at) {
       W.zone++; W.zoneOn = true; W.wave = 0; const z = zs[W.zone];
       W.lockX = Math.min(z.lock, L.width - G.VW); W.go = 0;
-      if (z.boss) { if (W.onBossCut) W.onBossCut(() => this.startBoss()); else this.startBoss(); } else this.startWave();
+      if (z.boss) { if (W.onBossCut && !z.mini) W.onBossCut(() => this.startBoss(z)); else this.startBoss(z); } else this.startWave();
     }
     // spawn queue (capped on-screen count)
     const cap = W.diff.cap + (W.heroes.length > 1 ? 1 : 0);
     for (const q of W.queue) { q.t -= dt; if (q.t <= 0 && !q.done && this.alive() < cap && Math.abs(W.camX - W.lockX) < 4) { q.done = true; spawn(q.kind, q.where); } }
     W.queue = W.queue.filter((q) => !q.done);
+    // v0.5 mini-boss down: he naps where he fell (as scenery) and the zone opens up
+    if (W.bossOn && W.boss && W.boss.mini && W.boss.st === 'defeat' && W.boss.t > 2.2) { W.decor.push(W.boss); W.boss = null; W.bossOn = false; playMusic(L.music || 'stage'); }
     if (W.zoneOn && !W.bossOn && !W.queue.length && this.alive() === 0 && Math.abs(W.camX - W.lockX) < 4) {
       const z = zs[W.zone];
       if (W.wave + 1 < z.waves.length) { W.wave++; this.startWave(); }
+      else if (z.final && !W.finalT) { W.finalT = 0.001; }  // night shift's last wave: the lights come back on (main.js), then the tally
       else { W.zoneOn = false; W.lockX = null; W.camMin = W.camX; W.camMax = W.zone + 1 < zs.length ? zs[W.zone + 1].lock : L.width - G.VW; W.go = 3.2; sfx('select'); }
     }
     W.go = Math.max(0, W.go - dt);
     W.enemies = W.enemies.filter((e) => e.alive);
     this.shots(dt);
+    if (W.finalT) { W.finalT += dt; if (W.finalT > 2.8 && !W.cleared) W.cleared = true; }
     if (W.bossOn && W.boss && W.boss.st === 'defeat' && !W.cleared) { W.endT += dt; if (W.endT > 2.6) { W.cleared = true; } }
   },
   startWave() {
-    const z = W.lv.zones[W.zone], wave = z.waves[W.wave];
+    const z = W.lv.zones[W.zone], wave = z.waves[W.wave]; if (!wave) return;
     for (const [kind, where, delay] of wave) W.queue.push({ kind, where, t: delay });
     if (W.wave === 0 && z.title) floatText(z.title, W.lockX + G.VW / 2, 150, 60, '#8ad8ff');
   },
-  startBoss() {
-    W.bossOn = true; playMusic('boss');
-    const b = new Tilly(W.lockX + G.VW + 60, 176); W.boss = b;
-    floatText('DAYROOM', W.lockX + G.VW / 2, 150, 70, '#d8b4f4');
+  startBoss(z = W.lv.zones[W.zone]) {
+    W.bossOn = true; const kind = z.boss || 'tilly';
+    if (kind === 'lou') { W.boss = new Lou(W.lockX + G.VW + 50, 170); playMusic('boss'); }
+    else if (kind === 'mri') { W.boss = new MRI(z.lock); playMusic(W.lv.bossMusic || 'boss'); }
+    else { W.boss = new Tilly(W.lockX + G.VW + 60, 176); playMusic(W.lv.bossMusic || 'boss'); }
+    floatText(z.title || 'DAYROOM', W.lockX + G.VW / 2, 150, 70, '#d8b4f4');
   },
-  backup() {  // Tilly's call button: two patients answer
-    const kinds = ['wanderer', 'escape', 'crutch', 'bell', 'tray', 'o2'];
-    spawn(kinds[Math.floor(W.rnd() * kinds.length)], 'D314'); spawn(kinds[Math.floor(W.rnd() * kinds.length)], W.rnd() < 0.5 ? 'L' : 'R');
+  backup() {  // a boss's call for help: two patients answer
+    const kinds = W.lv.backup || ['wanderer', 'escape', 'crutch', 'bell', 'tray', 'o2'];
+    spawn(kinds[Math.floor(W.rnd() * kinds.length)], W.doors[314] ? 'D314' : 'L'); spawn(kinds[Math.floor(W.rnd() * kinds.length)], W.rnd() < 0.5 ? 'L' : 'R');
   },
   // ------------------------------------------------------------ projectiles
   shots(dt) {
@@ -97,7 +111,7 @@ export const Director = {
         const list = s.hostile ? W.heroes : [...W.enemies, ...(W.boss ? [W.boss] : [])];
         for (const t of list) {
           if (s.hit.has(t) || !t.alive || !t.hittable || !t.hittable()) continue;
-          const dx = (t.x - s.x) / s.r, dy = (t.y - s.y) / (s.r * 0.36);
+          const dx = (t.depthAny ? Math.max(0, t.front - s.x) : t.x - s.x) / s.r, dy = t.depthAny ? 0 : (t.y - s.y) / (s.r * 0.36);
           if (dx * dx + dy * dy <= 1 && t.z < 40) {
             s.hit.add(t);
             t.takeHit({ dmg: s.dmg, dir: Math.sign(t.x - s.x) || 1, kb: 150, down: !s.dizzy, dizzy: s.dizzy || 0, from: s.owner });
@@ -138,7 +152,7 @@ export const Director = {
         }
       } else if (s.kind === 'weapon' || s.kind === 'boomerang') {
         for (const t of [...W.enemies, ...(W.boss ? [W.boss] : [])]) {
-          if (s.hit.has(t) || !t.alive || !t.hittable() || Math.abs(t.y - s.y) > 10 + (t.big ? 6 : 0) || Math.abs(t.x - s.x) > t.w / 2 + 8 || s.z > t.z + t.h) continue;
+          if (s.hit.has(t) || !t.alive || !t.hittable() || (!t.depthAny && Math.abs(t.y - s.y) > 10 + (t.big ? 6 : 0)) || Math.abs(t.x - s.x) > t.w / 2 + 8 || s.z > t.z + t.h) continue;
           s.hit.add(t); t.takeHit({ dmg: s.dmg, dir: Math.sign(s.vx) || (t.x > s.x ? 1 : -1), kb: 150, down: true, from: s.owner });
           spark(t.x, t.y, s.z, 'bigspark'); sfx('clang', { vol: 0.6 }); addScore(s.owner, 150);
           if (s.kind === 'weapon') { s.life = 0; s.dropAt = true; }

@@ -1,15 +1,17 @@
 // Nick's Very Bad, Terrible Bad Day Part II: boot, the fixed-step loop, scenes (title, hero select, stage, tally,
 // teaser, game over, high scores), pause / settings / how-to menus, saves, display presets and fullscreen / install.
 // v0.4 flow: select -> [cutscene start] -> intro -> play -> [cutscene boss] -> Tilly -> tally -> [cutscene lunch] ->
-// Breakroom Bonus -> bonus tally -> [cutscene next] -> teaser. Cutscenes skip with any button / tap (auto-skipped with ?bot / ?nocut).
+// Breakroom Bonus -> bonus tally -> [cutscene next] -> Floor 4 Radiology (Lou mini-boss, [cutscene mri] -> MRI boss) ->
+// tally -> [cutscene night] -> Night Shift -> tally -> [cutscene ending] -> THE END (v0.5). Scores, lives, continues and
+// 2P carry from floor to floor. Cutscenes skip with any button / tap (auto-skipped with ?bot / ?nocut).
 import { G, initGfx, resize, present, text, spr, rect, panel, frame, anim, textW, sprSize, frameRect, ellipse } from './gfx.js';
 import { loaded, Q, audio } from '../kit/common.js';
 import { createDisplay } from '../kit/display.js';
 import { C, initControls, pollControls, readPlayer, menuIntents } from './controls.js';
 import { initSound, sfx, playMusic, stopMusic, setVolumes, preloadMusic, S as SND } from './sound.js';
-import { HEROES, HERO_ORDER, LEVEL1, DIFF } from './data.js';
+import { HEROES, HERO_ORDER, LEVEL1, LEVELS, DIFF } from './data.js';
 import { dropItem } from './world.js';
-import { W, buildLevel, drawBackground, updateWorld, updateCamera, drawProp, drawItem, drawShot, drawFx, offY, floatText, makeProp, hitProp, rollLoot } from './world.js';
+import { W, buildLevel, drawBackground, updateWorld, updateCamera, drawProp, drawItem, drawShot, drawFx, offY, floatText, makeProp, hitProp, rollLoot, drawLighting, word } from './world.js';
 import { Director, spawn } from './stage.js';
 import { Hero, drawTeamBack, drawTeamFront } from './hero.js';
 import { drawHUD } from './hud.js';
@@ -154,7 +156,7 @@ function hitMenu(m, lx, ly) {
 
 // ------------------------------------------------------------------ scenes
 // ---- v0.4 cutscenes
-const noCuts = () => !!(Q.get('bot') || Q.get('nocut') || ((Q.get('autostart') || Q.get('zone')) && !Q.get('cuts')));  // test URLs skip them unless &cuts=1
+const noCuts = () => !!(Q.get('bot') || Q.get('nocut') || ((Q.get('autostart') || Q.get('zone') || Q.get('level')) && !Q.get('cuts')));  // test URLs skip them unless &cuts=1
 function startCut(id, done) {
   game.cut = makeCut(id); game.cutDone = done; game.cutSkip = false; game.scene = 'cutscene'; game.t = 0; setScene('menu');
 }
@@ -170,14 +172,52 @@ function toBonusTally() {
   for (const h of W.heroes) if (h.alive && h.st !== 'out') { h.set('win'); h.inv = 0; }
   game.btally = W.heroes.map((h) => {
     const r = bonusRows(h); h.score += r.total;
-    const T = game.tally && game.tally.find((t) => t.h === h); if (T) T.total += h.score - T.score0;
     return { h, ...r };
   });
 }
-function goNext() {
-  finishRun(true);
-  const go = () => { game.scene = 'teaser'; game.t = 0; setScene('menu'); };
+function goNext() {  // after the breakroom: up to Floor 4
+  const go = () => loadLevel(1);
   if (noCuts()) go(); else startCut('next', go);
+}
+// v0.5: after a floor's tally. Floor 4 -> night shift -> the ending.
+function afterTally() {
+  const i = W.lv.id;
+  if (i === 1) return goLunch();
+  if (i === 2) { const go = () => loadLevel(2); if (noCuts()) go(); else startCut('night', go); return; }
+  finishRun(true); save.best = Math.max(save.best, 3); writeSave();
+  const go = () => { game.scene = 'ending'; game.t = 0; setScene('menu'); playMusic('clear'); };
+  if (noCuts()) go(); else startCut('ending', go);
+}
+// v0.5: put the team on floor idx (0-based) with everything they've earned: score, lives, meter, continues used, 2P
+function loadLevel(idx, zone = 0) {
+  const lv = LEVELS[idx];
+  W.enemies = []; W.boss = null; W.shots = []; W.fx = []; W.items = []; W.decor = []; W.t = 0; W.finalT = 0; W.vc = 0; W.bgHook = null; W.team = null;
+  buildLevel(lv); Director.reset(); W.camX = 0; W.camMin = 0; W.clock = lv.clock || 7 * 60; W.stats.time = 0;
+  if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else W.nightBg = W.bg;
+  W.heroes.forEach((h, i) => {
+    h.kos = 0; h.maxCombo = 0; h.combo = 0; h.weapon = null; h.held = null; h.grabber = null; h.ride = null; h.z = 0; h.vx = h.vy = h.vz = 0; h.inv = 0;
+    if (h.st === 'out') { if (game.continuesLeft() > 0) h.continueT = 10; h.x = 56 + i * 22; return; }  // a KO'd partner can still continue here
+    h.hp = h.maxHp; h.x = 56 + i * 22; h.y = 126 + i * 2; h.set('enter'); h.face = 1;
+  });
+  W.elevs.A.target = 1; W.elevs.A.t = 0; W.elevs.A.light = 1.2; sfx('ding');
+  game.scene = 'intro'; game.t = 0; game.tally = null; setScene('game');
+  if (zone > 0 && zone < lv.zones.length) {
+    const z = lv.zones[zone]; W.zone = zone - 1; W.camX = W.camMin = Math.max(0, z.lock - 60); W.camMax = z.lock;
+    W.heroes.forEach((h, i) => { if (h.st === 'out') return; h.x = z.at + 4 + i * 20; h.y = 172; h.set('idle'); }); game.t = 2.4;
+  }
+  if (lv.lightsOut) { W.dark = 0; W.lightsOutT = zone > 0 ? 9 : 0; if (zone > 0) W.dark = lv.dark; }
+  playMusic(lv.music || 'stage'); preloadMusic([lv.bossMusic || 'boss', 'clear']);
+}
+// night shift: the lights flicker and die in the intro, and come back on when the last patient is tucked in
+function nightLights(dt) {
+  const lv = W.lv; if (!lv.lightsOut) return;
+  if (W.finalT) { if (W.finalT < 0.05) { word('w_power', W.camX + G.VW / 2, 180, 60); sfx('powerup'); sfx('click'); } W.dark = Math.max(0.12, lv.dark * (1 - W.finalT / 1.2)); return; }
+  if (W.lightsOutT === undefined || W.lightsOutT > 5) return;
+  const t0 = W.lightsOutT; W.lightsOutT += dt; const t = W.lightsOutT;
+  if (t < 0.9) W.dark = 0;
+  else if (t < 1.6) W.dark = Math.floor(t * 14) % 3 === 0 ? 0 : lv.dark * 0.6;  // flicker...
+  else { if (t0 < 1.6) { sfx('lightsout'); word('w_lightsout', W.camX + G.VW / 2, 176, 70); floatText('Uh oh.', W.heroes[0] ? W.heroes[0].x : W.camX + 100, 172, 70, '#ffffff'); } W.dark = lv.dark; }
+  if (t > 0.9 && t0 <= 0.9) sfx('powerdown', { vol: 0.6 });
 }
 function toTitle() {
   W.bgHook = null; W.team = null;
@@ -226,22 +266,18 @@ function selectTap(lx, ly) {
 }
 function startGame() {
   const S = game.sel;
-  W.heroes = []; W.enemies = []; W.boss = null; W.shots = []; W.fx = []; W.stats = { kos: 0, time: 0 }; W.clock = 7 * 60; W.t = 0; W.vc = 0;
-  applySettings(); buildLevel(LEVEL1); Director.reset(); W.camX = 0; W.camMin = 0; W.hallBg = W.bg; W.bgHook = null; W.team = null;
-  W.onBossCut = (go) => { if (noCuts()) return go(); startCut('boss', () => { game.scene = 'play'; game.t = 0; setScene('game'); go(); }); };
+  W.heroes = []; W.stats = { kos: 0, time: 0 }; W.t = 0;
+  applySettings();
+  W.onBossCut = (go) => { if (noCuts()) return go(); startCut(W.lv.cutBoss || 'boss', () => { game.scene = 'play'; game.t = 0; setScene('game'); go(); }); };
   S.p.forEach((p, i) => {
     const h = new Hero(HERO_ORDER[p.cur], i, 56 + i * 22, 126 + i * 2);
-    h.devs = game.mode === 2 ? [p.dev] : null; h.set('enter'); h.face = 1;
+    h.devs = game.mode === 2 ? [p.dev] : null;
     W.heroes.push(h);
   });
-  W.elevs.A.target = 1; W.elevs.A.t = 0; W.elevs.A.light = 1.2; sfx('ding');
-  game.scene = 'intro'; game.t = 0; game.creditsUsed = 0; save.plays++; writeSave(); setScene('game');
-  const zj = +Q.get('zone');
-  if (zj > 0 && zj < W.lv.zones.length) {
-    const z = W.lv.zones[zj]; W.zone = zj - 1; W.camX = W.camMin = Math.max(0, z.lock - 60); W.camMax = z.lock;
-    W.heroes.forEach((h, i) => { h.x = z.at + 4 + i * 20; h.y = 172; h.set('idle'); }); game.t = 2.4;
-  } else if (!noCuts()) startCut('start', () => { game.scene = 'intro'; game.t = 0; setScene('game'); });
-  playMusic('stage'); preloadMusic(['boss', 'clear']);
+  game.creditsUsed = 0; save.plays++; writeSave();
+  const li = Math.max(0, Math.min(LEVELS.length - 1, (+Q.get('level') || 1) - 1)), zj = +Q.get('zone') || 0;
+  loadLevel(li, zj);
+  if (!zj && !li && !noCuts()) startCut('start', () => { game.scene = 'intro'; game.t = 0; setScene('game'); });
 }
 function dropIn(d) {  // a second player presses Start mid-game
   if (W.heroes.length >= 2 || game.scene !== 'play') return false;
@@ -266,7 +302,7 @@ function playUpdate(dt) {
     for (const h of W.heroes) { const I = readPlayer(h); for (const k in I.prs) if (I.prs[k]) (h.pend || (h.pend = {}))[k] = true; }
     return;
   }
-  W.t += dt; W.stats.time += dt; W.clock += dt / 1.5;
+  W.t += dt; W.stats.time += dt; W.clock += dt / 1.5; nightLights(dt);
   for (const h of W.heroes) {
     const I = Q.get('bot') && h.slot === 0 ? botInput(h) : readPlayer(h);
     if (h.pend) { for (const k in h.pend) I.prs[k] = true; h.pend = null; }
@@ -293,7 +329,7 @@ function botInput(h) {
   const foes = [...W.enemies.filter((e) => e.alive && e.st !== 'down' && e.x > W.camX - 10 && e.x < W.camX + G.VW + 10), ...(W.boss && W.boss.st !== 'defeat' ? [W.boss] : [])];
   if (!foes.length) { o.mx = 1; o.run = W.go > 0; return o; }
   foes.sort((a, b) => Math.abs(a.x - h.x) + Math.abs(a.y - h.y) - Math.abs(b.x - h.x) - Math.abs(b.y - h.y));
-  const f = foes[0], side = h.x < f.x ? -1 : 1, gx = f.x + side * (f.isBoss ? 44 : 24), dx = gx - h.x, dy = f.y - h.y;
+  const f = foes[0], side = f.isMRI ? -1 : h.x < f.x ? -1 : 1, gx = f.x + side * (f.isMRI ? f.w / 2 + 6 : f.isBoss ? 44 : 24), dx = gx - h.x, dy = f.isMRI ? 0 : f.y - h.y;
   o.mx = Math.abs(dx) > 5 ? Math.sign(dx) : 0; o.my = Math.abs(dy) > 3 ? Math.sign(dy) : 0;
   if (Math.abs(dx) < 14 && Math.abs(dy) < 8) { o.mx = 0; if (h.face !== -side) o.mx = -side * 0.3; o.prs.atk = (W.t * 60 | 0) % 7 === 0; if ((W.t * 60 | 0) % 400 === 0) o.prs.sp = true; }
   if (h.meter >= 100) o.prs.sp = o.held.jmp = true;
@@ -302,13 +338,13 @@ function botInput(h) {
 function toTally() {
   game.scene = 'tally'; game.t = 0; playMusic('clear'); setScene('menu');
   for (const h of W.heroes) if (h.alive && h.st !== 'out') { h.set('win'); h.inv = 0; }
-  const timeBonus = Math.max(0, Math.round((9 * 60 - W.clock) * 40));
+  const timeBonus = Math.max(0, Math.round(((W.lv.clock || 7 * 60) + 120 - W.clock) * 40));
   game.tally = W.heroes.map((h) => ({ h, score0: h.score, rows: [['SCORE', h.score], [`TUCKED IN x${h.kos}`, h.kos * 100], [`COMBO x${h.maxCombo || 0}`, (h.maxCombo || 0) * 50], ['ON TIME', h.st === 'out' ? 0 : timeBonus]], shown: 0 }));
-  for (const t of game.tally) t.total = t.rows.reduce((s, r, i) => s + (i ? r[1] : 0), t.rows[0][1]);
-  save.best = Math.max(save.best, 1); writeSave();
+  for (const t of game.tally) { t.total = t.rows.reduce((s, r, i) => s + (i ? r[1] : 0), t.rows[0][1]); t.h.score = t.total; }  // the bonus carries to the next floor
+  save.best = Math.max(save.best, W.lv.id || 1); writeSave();
 }
 function finishRun(cleared) {
-  const entries = (game.tally ? game.tally.map((t) => ({ s: t.total, h: t.h.id })) : W.heroes.map((h) => ({ s: h.score, h: h.id })));
+  const entries = W.heroes.map((h) => ({ s: h.score, h: h.id }));
   game.newHi = false;
   for (const e of entries) {
     if (e.s <= 0) continue;
@@ -334,14 +370,41 @@ function drawWorld() {
   const actors = [...W.heroes, ...W.enemies, ...(W.boss ? [W.boss] : [])];
   for (const a of actors) if (a.st !== 'out') a.drawShadow();
   for (const a of actors) list.push({ y: a.y + (a.st === 'held' ? 0.6 : 0), d: () => a.draw() });
+  for (const a of W.decor || []) list.push({ y: a.y, d: () => a.draw() });  // a beaten mini-boss napping on the floor
   list.sort((a, b) => a.y - b.y);
   for (const o of list) o.d();
+  if (W.dark > 0.01) { drawLighting(); drawEyes(); }
   for (const f of W.fx) drawFx(f);
   // gurney hint: RIDE! over a gurney a nurse is standing next to
   for (const h of W.heroes) { if (!h.canAct()) continue; const g = h.nearGurney(); if (g && Math.floor(W.t * 3) % 2) text('RIDE!', g.x - W.camX, g.y + offY() - 44, { col: '#8ad8ff', align: 'center' }); }
   c.restore();
   if (W.flash > 0) rect(0, 0, G.VW, G.VH, W.flashCol, Math.min(0.75, W.flash * 0.8));
   drawTeamFront();
+}
+// v0.5 light sources that move: nurses' flashlights on the night shift (a little glow around them on Radiology), the MRI
+W.lightHook = (L) => {
+  if (W.boss && W.boss.light) W.boss.light(L);
+  for (const h of W.heroes) {
+    if (!h.alive || h.st === 'out') continue;
+    const Y = h.y - h.z - 30;
+    if (W.lv.flashlight) {
+      L.push({ cone: true, x: h.x + h.face * 6, y: Y, dir: h.face, len: 124, half: 0.34 });
+      L.push({ x: h.x + h.face * 74, y: h.y, r: 40, ry: 11, col: '#fff2b0', a: 0.55, floor: true });
+      L.push({ x: h.x, y: Y + 4, r: 24, col: '#fff2b0', a: 0.55 });
+    } else L.push({ x: h.x, y: Y + 6, r: 30, a: 0.45 });
+  }
+};
+// in the dark, patients' eyes glow (night shift): two little dots that blink now and then
+function drawEyes() {
+  if (W.lv.flashlight) for (const h of W.heroes) { if (!h.alive || h.st === 'out') continue; const X = Math.round(h.x - W.camX + h.face * 7), Y = Math.round(h.y + offY() - h.z - 30); rect(X - (h.face < 0 ? 5 : 0), Y, 5, 3, '#2a2e3a'); rect(h.face > 0 ? X + 5 : X - 6, Y, 1, 3, '#fff6c8'); }
+  if (W.dark < 0.5) return;
+  for (const e of W.enemies) {
+    if (!e.alive || ['dead', 'down', 'fall', 'sleep'].includes(e.st) || e.isThief) continue;
+    const [n, i] = e.pose ? e.pose() : ['idle', 0], hd = e.handOf(n, i);
+    if (!hd || hd.length < 6 || ((W.t + e.x * 0.01) % 3.2) < 0.12) continue;
+    const X = Math.round(e.x - W.camX + hd[4] * (e.face < 0 ? -1 : 1)), Y = Math.round(e.y + offY() - e.z + hd[5]);
+    rect(X - 1 + (e.face < 0 ? -2 : 1), Y, 2, 1, '#fff6a0'); rect(X + 3 * (e.face < 0 ? -1 : 1) + (e.face < 0 ? -2 : 1), Y, 2, 1, '#fff6a0');
+  }
 }
 // touch: the GRAB button turns into RIDE next to a gurney
 let rideLabel = 'GRAB';
@@ -442,6 +505,18 @@ function drawTally() {
   });
   if (game.t > 3) text(Math.floor(game.t * 2) % 2 ? 'PRESS ATTACK' : '', VW / 2, VH - 30, { col: '#ffffff', align: 'center' });
 }
+function drawEnding() {  // v0.5: the end of the shift
+  const VW = G.VW, VH = G.VH;
+  rect(0, 0, VW, VH, '#05060c', 0.9);
+  const sc = Math.min(1, (VW - 20) / sprSize('w_theend')[0]), [w] = sprSize('w_theend');
+  spr('w_theend', VW / 2, 26, { ax: w / 2, scale: sc * Math.min(1, game.t * 2) });
+  text('NICK AND THE CREW SURVIVED THE SHIFT.', VW / 2, 82, { col: '#ffffff', align: 'center' });
+  text('EVERY PATIENT TUCKED IN. MOSTLY.', VW / 2, 96, { col: '#c8d4f0', align: 'center' });
+  W.heroes.forEach((h, i) => { const n = W.heroes.length, x = VW / 2 + (i - (n - 1) / 2) * 120; spr(`face_${h.id}`, x - 52, 112); text(h.d.name, x - 10, 118, { col: h.slot ? '#8ad8ff' : '#ffe84a' }); text(String(h.score).padStart(7, '0'), x - 10, 132, { col: '#ffffff' }); });
+  text('SEE YOU NEXT SHIFT...', VW / 2, 164, { col: '#3aa8ff', align: 'center' });
+  if (game.newHi) text('NEW HIGH SCORE!', VW / 2, 178, { col: Math.floor(game.t * 6) % 2 ? '#ffe84a' : '#ff8a1e', align: 'center' });
+  if (game.t > 1.5) text('PRESS ATTACK', VW / 2, VH - 20, { col: '#c8d4f0', align: 'center' });
+}
 function drawTeaser() {
   const VW = G.VW, VH = G.VH;
   rect(0, 0, VW, VH, '#05060c', 0.85);
@@ -491,7 +566,7 @@ function step(dt) {
     case 'title': menuInput(game.menu, menuIntents()); break;
     case 'select': selectUpdate(dt); break;
     case 'intro': {
-      W.t += dt; for (const h of W.heroes) h.update(dt, { mx: 0, my: 0, held: {}, prs: {} }); updateWorld(dt);
+      W.t += dt; for (const h of W.heroes) if (h.st !== 'out') h.update(dt, { mx: 0, my: 0, held: {}, prs: {} }); updateWorld(dt); nightLights(dt);
       if (game.t > 2.4) { game.scene = 'play'; for (const h of W.heroes) if (h.st === 'enter') h.set('idle'); }
       break;
     }
@@ -503,8 +578,9 @@ function step(dt) {
       break;
     }
     case 'btally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) goNext(); break;
-    case 'tally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) goLunch(); break;
+    case 'tally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) afterTally(); break;
     case 'teaser': if (game.t > 1.5 && any) toTitle(); break;
+    case 'ending': if (game.t > 1.5 && any) { game.scene = 'scores'; game.t = 0; } break;
     case 'gameover': if (game.t > 1.5 && any) { game.scene = 'scores'; game.t = 0; } break;
     case 'scores': if (game.t > 0.4 && (any || menuIntents().some((i) => i.a === 'back'))) toTitle(); break;
   }
@@ -521,6 +597,7 @@ function render() {
     case 'bonus': drawWorld(); drawHUD(game); drawBonusHUD(); break;
     case 'btally': drawWorld(); drawBonusTally(); break;
     case 'teaser': drawTeaser(); break;
+    case 'ending': drawEnding(); break;
     case 'gameover': drawWorld(); drawGameOver(); break;
     case 'scores': drawScores(); break;
   }
@@ -577,8 +654,8 @@ async function boot() {
     }
     if (game.scene === 'cutscene') { game.cutSkip = true; return; }
     if (game.scene === 'select') selectTap(lx, ly);
-    else if (['teaser', 'gameover', 'scores'].includes(game.scene) && game.t > 1.2) { if (game.scene === 'teaser') toTitle(); else if (game.scene === 'gameover') { game.scene = 'scores'; game.t = 0; } else toTitle(); }
-    else if (game.scene === 'tally' && game.t > 3) goLunch();
+    else if (['teaser', 'gameover', 'scores', 'ending'].includes(game.scene) && game.t > 1.2) { if (game.scene === 'teaser') toTitle(); else if (game.scene === 'gameover' || game.scene === 'ending') { game.scene = 'scores'; game.t = 0; } else toTitle(); }
+    else if (game.scene === 'tally' && game.t > 3) afterTally();
     else if (game.scene === 'btally' && game.t > 3) goNext();
   });
   view.addEventListener('pointermove', (e) => { const m = activeMenu(); if (!m || e.pointerType !== 'mouse') return; const [lx, ly] = toLogical(e); const i = hitMenu(m, lx, ly); if (i >= 0 && i !== m.sel) m.sel = i; });
@@ -587,7 +664,7 @@ async function boot() {
   requestAnimationFrame(frameLoop);
   // test hooks
   window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, Director, display,
-    cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch };
-  if (Q.get('autostart') || Q.get('zone')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } }
+    cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext };
+  if (Q.get('autostart') || Q.get('zone') || Q.get('level')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } }
 }
 boot().catch((e) => { const t = document.getElementById('loadtxt'); if (t) t.textContent = 'Could not load: ' + e.message; console.error(e); });

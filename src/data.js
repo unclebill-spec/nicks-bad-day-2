@@ -27,13 +27,13 @@ export const ATTACKS = {
 
 export const WEAPONS = {
   clipboard: { name: 'CLIPBOARD', spr: 'w_clipboard', dmg: 10, reach: 32, uses: 12, rate: 0.3, sfx: 'punch1', grip: [6, 14], word: 'w_smack' },
-  bedpan: { name: 'BEDPAN', spr: 'w_bedpan', dmg: 14, reach: 30, uses: 8, rate: 0.38, sfx: 'clang', grip: [17, 6], dizzy: true, word: 'w_clang' },
+  bedpan: { metal: true, name: 'BEDPAN', spr: 'w_bedpan', dmg: 14, reach: 30, uses: 8, rate: 0.38, sfx: 'clang', grip: [17, 6], dizzy: true, word: 'w_clang' },
   mop: { name: 'MOP', spr: 'w_mop', dmg: 11, reach: 54, uses: 10, rate: 0.42, sfx: 'whoosh', grip: [3, 5], down: true, word: 'w_wham' },
-  ivpole: { name: 'IV POLE', spr: 'w_ivpole', dmg: 13, reach: 58, uses: 10, rate: 0.46, sfx: 'clang', grip: [3, 6], down: true, word: 'w_bonk' },
-  crutch: { name: 'CRUTCH', spr: 'w_crutch', dmg: 12, reach: 50, uses: 10, rate: 0.4, sfx: 'clang', grip: [20, 5], down: true, word: 'w_poke' },
-  callbell: { name: 'CALL BELL', spr: 'w_callbell', dmg: 8, reach: 62, uses: 12, rate: 0.36, sfx: 'ding', grip: [1, 6], dizzy: true, word: 'w_ding' },
-  cane: { name: 'CANE', spr: 'w_cane', dmg: 11, reach: 40, uses: 10, rate: 0.34, sfx: 'punch1', grip: [3, 7], word: 'w_smack' },
-  extinguisher: { name: 'EXTINGUISHER', spr: 'w_extinguisher', spray: true, ammo: 3.2, reach: 74, sfx: 'spray', grip: [6, 18] },
+  ivpole: { metal: true, name: 'IV POLE', spr: 'w_ivpole', dmg: 13, reach: 58, uses: 10, rate: 0.46, sfx: 'clang', grip: [3, 6], down: true, word: 'w_bonk' },
+  crutch: { metal: true, name: 'CRUTCH', spr: 'w_crutch', dmg: 12, reach: 50, uses: 10, rate: 0.4, sfx: 'clang', grip: [20, 5], down: true, word: 'w_poke' },
+  callbell: { metal: true, name: 'CALL BELL', spr: 'w_callbell', dmg: 8, reach: 62, uses: 12, rate: 0.36, sfx: 'ding', grip: [1, 6], dizzy: true, word: 'w_ding' },
+  cane: { metal: true, name: 'CANE', spr: 'w_cane', dmg: 11, reach: 40, uses: 10, rate: 0.34, sfx: 'punch1', grip: [3, 7], word: 'w_smack' },
+  extinguisher: { metal: true, name: 'EXTINGUISHER', spr: 'w_extinguisher', spray: true, ammo: 3.2, reach: 74, sfx: 'spray', grip: [6, 18] },
 };
 
 export const ITEMS = {
@@ -67,6 +67,11 @@ export const ENEMIES = {
   // v0.4 breakroom bonus: snack thieves never attack, they raid the fridge / vending machine / counter and run for it
   thief: { name: 'SNACK THIEF', sheet: 'wanderer', hp: 14, speed: 62, depth: 40, reach: 0, score: 0, atk: 'none', cd: [9, 9],
     ko: ['I was just LOOKING!', "Okay, okay, back to bed!", 'Midnight snack... zzz', 'It had no NAME on it!'], voice: 'voice5' },
+  // v0.5 Radiology patients. ai = which patient brain they borrow (src/enemy.js); lines = their own chatter.
+  barium: { name: 'CONTRAST CHUGGER', sheet: 'barium', ai: 'tray', proj: 'barium', hp: 34, speed: 34, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.6, 2.6], keep: 118, drop: ['energy', 0.3],
+    ko: ['Tastes like... chalk... zzz', 'Banana flavor, my foot... zzz'], voice: 'voice1', lines: ['BANANA FLAVOR?!', 'Drink it ALL, they said!', 'Bottoms up!'] },
+  apron: { name: 'LEAD-APRON HUGGER', sheet: 'apron', ai: 'wanderer', hp: 56, speed: 26, depth: 22, reach: 24, score: 450, atk: 'hug', cd: [1.8, 2.8], armor: 2,
+    ko: ['So... heavy... zzz', 'Is the scan over? ...zzz'], voice: 'voice0', lines: ['They said keep it ON!', 'Hug for the X-ray tech?'] },
   visitor: { name: 'BELLIGERENT VISITOR', sheet: 'visitor', hp: 110, speed: 44, depth: 26, reach: 34, score: 800, atk: 'punch', cd: [1.4, 2.2], armor: 3, ko: ['I want the manager... zzz', 'Visiting hours are over.'], voice: 'voice3', big: true },
 };
 export const VARIANTS = {};  // v0.2: looks are randomized at runtime instead (src/enemy.js lookFor)
@@ -75,17 +80,17 @@ export const VARIANTS = {};  // v0.2: looks are randomized at runtime instead (s
 // (scoots and stops), fr = friction per second, push = launch speed factor, dmg = damage to patients it plows into,
 // mass = how hard it is to shove (other props / falling patients), bits = debris sprites, deb = debris chunk colours.
 export const BREAKABLES = {
-  crashcart: { name: 'CRASH CART', spr: 'crashcart', hp: 5, w: 28, h: 40, move: 'roll', fr: 0.55, push: 1.0, dmg: 14, mass: 2.2, loot: 'cart', zap: true,
+  crashcart: { metal: true, name: 'CRASH CART', spr: 'crashcart', hp: 5, w: 28, h: 40, move: 'roll', fr: 0.55, push: 1.0, dmg: 14, mass: 2.2, loot: 'cart', zap: true,
     bits: ['deb_drawer', 'deb_gauze', 'deb_pill', 'deb_syringe', 'deb_wheel', 'deb_gauze'], deb: ['#d8303c', '#a01c28', '#b8c0cc', '#3aa860'], hit: 'clang', brk: 'crash' },
-  supplycart: { name: 'SUPPLY CART', spr: 'supplycart', hp: 4, w: 28, h: 36, move: 'roll', fr: 0.6, push: 0.95, dmg: 12, mass: 2, loot: 'cart',
+  supplycart: { metal: true, name: 'SUPPLY CART', spr: 'supplycart', hp: 4, w: 28, h: 36, move: 'roll', fr: 0.6, push: 0.95, dmg: 12, mass: 2, loot: 'cart',
     bits: ['deb_box', 'deb_gauze', 'deb_glove', 'deb_rod', 'deb_wheel'], deb: ['#b8c0cc', '#c8a070', '#4a8ad8'], hit: 'clang', brk: 'crash' },
-  medcart: { name: 'MED CART', spr: 'medcart', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.6, push: 1.0, dmg: 12, mass: 1.8, loot: 'cart',
+  medcart: { metal: true, name: 'MED CART', spr: 'medcart', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.6, push: 1.0, dmg: 12, mass: 1.8, loot: 'cart',
     bits: ['deb_pill', 'deb_gauze', 'deb_wheel'], deb: ['#e84a5a', '#a82838', '#b8c0cc'], hit: 'clang', brk: 'crash' },
-  wheelchair: { name: 'WHEELCHAIR', spr: 'wheelchair', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.5, push: 1.1, dmg: 12, mass: 1.4, loot: 'small',
+  wheelchair: { metal: true, name: 'WHEELCHAIR', spr: 'wheelchair', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.5, push: 1.1, dmg: 12, mass: 1.4, loot: 'small',
     bits: ['deb_wheel', 'deb_rod', 'deb_seat'], deb: ['#2a5aa8', '#2a2e3a', '#9aa4b4'], hit: 'clang', brk: 'crash' },
   linen: { name: 'LINEN HAMPER', spr: 'linen', hp: 3, w: 20, h: 30, move: 'roll', fr: 0.85, push: 0.9, dmg: 10, mass: 1.2, loot: 'linen',
     bits: ['deb_linen', 'deb_linen', 'deb_rod'], deb: ['#4a7ac8', '#f4f4f8'], hit: 'thunk', brk: 'crash' },
-  ivstand: { name: 'IV STAND', spr: 'ivstand', hp: 2, w: 12, h: 54, states: 2, move: 'roll', fr: 0.9, push: 1.1, dmg: 8, mass: 0.7, loot: 'small',
+  ivstand: { metal: true, name: 'IV STAND', spr: 'ivstand', hp: 2, w: 12, h: 54, states: 2, move: 'roll', fr: 0.9, push: 1.1, dmg: 8, mass: 0.7, loot: 'small',
     bits: ['deb_rod', 'deb_glass'], deb: ['#b8c0cc', '#cfe8ff'], hit: 'clang', brk: 'smash' },
   chair: { name: 'CHAIR', spr: 'chair', hp: 2, w: 18, h: 26, move: 'slide', fr: 3.2, push: 0.85, dmg: 8, mass: 1, loot: 'small',
     bits: ['deb_seat', 'deb_rod'], deb: ['#5a8ad8', '#7c8696'], hit: 'thunk', brk: 'crash' },
@@ -96,10 +101,17 @@ export const BREAKABLES = {
   wetfloor: { name: 'WET FLOOR SIGN', spr: 'wetfloor', hp: 2, w: 14, h: 26, states: 2, move: 'slide', fr: 2.6, push: 1.2, dmg: 5, mass: 0.4, loot: 'small',
     bits: ['deb_sign', 'deb_sign'], deb: ['#ffd84a', '#d8a820'], hit: 'thunk', brk: 'thunk' },
   // v0.4: a rideable gurney (GRAB / ATK+JUMP / the RIDE touch button) and the O2 tank an O2 Wanderer drops
-  gurney: { name: 'GURNEY', spr: 'gurneyp', hp: 6, w: 52, h: 26, move: 'roll', fr: 0.5, push: 0.85, dmg: 14, mass: 2.4, loot: 'cart', ride: true,
+  gurney: { metal: true, name: 'GURNEY', spr: 'gurneyp', hp: 6, w: 52, h: 26, move: 'roll', fr: 0.5, push: 0.85, dmg: 14, mass: 2.4, loot: 'cart', ride: true,
     bits: ['deb_wheel', 'deb_linen', 'deb_rod', 'deb_linen'], deb: ['#f4f6fa', '#7ab0e8', '#b8c0cc'], hit: 'clang', brk: 'crash' },
-  o2tank: { name: 'O2 TANK', spr: 'o2tank', hp: 4, w: 14, h: 30, move: 'roll', fr: 0.7, push: 1.15, dmg: 12, mass: 1.0, loot: 'small', hiss: true,
+  o2tank: { metal: true, name: 'O2 TANK', spr: 'o2tank', hp: 4, w: 14, h: 30, move: 'roll', fr: 0.7, push: 1.15, dmg: 12, mass: 1.0, loot: 'small', hiss: true,
     bits: ['deb_rod', 'deb_wheel'], deb: ['#3aa860', '#267a44', '#b8c0cc'], hit: 'clang', brk: 'hiss' },
+  // v0.5 Radiology props (metal ones get yanked by the MRI magnet; glow = it lights the dark floor around it)
+  apronrack: { metal: true, name: 'LEAD APRON RACK', spr: 'apronrack', hp: 4, w: 30, h: 44, move: 'roll', fr: 0.6, push: 0.9, dmg: 13, mass: 2, loot: 'cart',
+    bits: ['deb_apron', 'deb_rod', 'deb_wheel', 'deb_apron'], deb: ['#3a6ad8', '#8a4ad8', '#2aa8a0', '#b8c0cc'], hit: 'clang', brk: 'crash' },
+  contrastcart: { metal: true, name: 'CONTRAST CART', spr: 'contrastcart', hp: 3, w: 28, h: 42, move: 'roll', fr: 0.6, push: 1.0, dmg: 12, mass: 1.8, loot: 'cart', zap: true, glow: '#ffb03a',
+    bits: ['deb_bottle', 'deb_gauze', 'deb_wheel', 'deb_bottle'], deb: ['#b8c0cc', '#f4f6fa', '#3a6ad8'], hit: 'clang', brk: 'crash' },
+  viewer: { metal: true, name: 'FILM VIEWER', spr: 'viewer', hp: 2, w: 24, h: 44, move: 'roll', fr: 0.9, push: 1.0, dmg: 9, mass: 0.9, loot: 'small', glow: '#3aa8ff',
+    bits: ['deb_film', 'deb_glass', 'deb_rod', 'deb_film'], deb: ['#bfeaff', '#1c3a66', '#8a94a4'], hit: 'clang', brk: 'smash' },
   vending: { name: 'VENDING MACHINE', spr: 'vending', hp: 6, w: 30, h: 64, big: true, mass: 99, loot: 'vending',
     bits: ['deb_glass', 'deb_can', 'deb_glass', 'deb_box'], deb: ['#d83a4a', '#1a2a3a', '#cfe8ff'], hit: 'clang', brk: 'smash' },
 };
@@ -114,7 +126,7 @@ export const LOOT = {
 
 // ---- Level 1: Floor 3 West, Med-Surg. x in world pixels. Doors / elevators are wall features enemies can come out of.
 export const LEVEL1 = {
-  id: 1, name: 'FLOOR 3: MED-SURG', sub: '7:00 AM. SHIFT CHANGE.', width: 3560, music: 'stage',
+  id: 1, name: 'FLOOR 3: MED-SURG', sub: '7:00 AM. SHIFT CHANGE.', width: 3560, music: 'stage', clock: 7 * 60, floorNum: '3', cutBoss: 'boss',
   // wall layout: [x, kind, extra]
   wall: [
     [24, 'elev', 'A'], [118, 'callpanel'], [132, 'floornum3'], [170, 'poster_hands'], [200, 'sign_medsurg'], [244, 'chairs'], [306, 'plant0'],
@@ -175,6 +187,94 @@ export const LEVEL1 = {
   ],
   bossArena: 3060,
 };
+// ---- v0.5 Level 2: Floor 4 Radiology. Dark slate halls lit by neon-blue X-ray lightboxes; a mini-boss (Lead-Apron Lou) in
+// the imaging waiting room and the MRI magnet boss in the MRI suite. dark = how dark the floor is (src/world.js lighting).
+export const LEVEL2 = {
+  id: 2, name: 'FLOOR 4: RADIOLOGY', sub: '3:00 PM. HOLD STILL, PLEASE.', width: 3500, music: 'radiology', bossMusic: 'mri', clock: 15 * 60, floorNum: '4', cutBoss: 'mri',
+  dark: 0.5, tiles: { wall: 'rwall', ceil: 'rceil', floor: 'rfloor' },
+  wall: [
+    [24, 'elev', 'A'], [118, 'callpanel'], [132, 'floornum4'], [168, 'sign_radiology'], [236, 'lightbox0'], [296, 'chairs'], [370, 'door', 401], [364, 'warnlamp'],
+    [430, 'lightbox1'], [496, 'poster_nometal'], [540, 'door', 402], [534, 'warnlamp'], [596, 'sign_xray'], [640, 'station'], [790, 'door', 403], [784, 'warnlamp'],
+    [846, 'lightbox2'], [906, 'trefoil'], [960, 'door', 404], [954, 'warnlamp'], [1016, 'lightbox3'], [1080, 'sign_imaging'], [1100, 'chairs'], [1166, 'chairs'],
+    [1240, 'lightbox0'], [1300, 'plant1'], [1344, 'chairs'], [1410, 'lightbox1'], [1480, 'door', 405], [1474, 'warnlamp'], [1540, 'lightbox2'], [1620, 'door', 406],
+    [1614, 'warnlamp'], [1676, 'poster_nometal'], [1720, 'lightbox3'], [1780, 'door', 407], [1774, 'warnlamp'], [1840, 'lightbox0'], [1910, 'trefoil'], [1960, 'door', 408],
+    [2030, 'lightbox1'], [2100, 'chairs'], [2180, 'lightbox2'], [2240, 'door', 409], [2234, 'warnlamp'], [2300, 'lightbox3'], [2380, 'door', 410], [2374, 'warnlamp'],
+    [2440, 'poster_nometal'], [2470, 'wheelchair'], [2520, 'door', 411], [2514, 'warnlamp'], [2600, 'lightbox0'], [2680, 'sign_mri'], [2800, 'poster_nometal'],
+    [2850, 'trefoil'], [2900, 'lightbox1'], [2990, 'sign_mri'], [3080, 'poster_nometal'], [3140, 'lightbox2'], [3420, 'sign_exit'],
+  ],
+  props: [
+    [150, 182, 'wetfloor', []], [236, 150, 'contrastcart', ['energy']], [300, 204, 'trash', []], [392, 190, 'gurney', []], [452, 150, 'viewer', []],
+    [556, 198, 'wheelchair', []], [640, 150, 'apronrack', []], [720, 186, 'gurney', []], [804, 202, 'viewer', []], [880, 146, 'ivstand', ['w:ivpole']], [1012, 196, 'contrastcart', ['w:bedpan']],
+    [1118, 200, 'chair', []], [1150, 198, 'chair', []], [1296, 190, 'apronrack', ['snacks']], [1366, 148, 'chair', []], [1388, 150, 'chair', []], [1500, 148, 'wheelchair', []], [1440, 202, 'trash', []],
+    [1652, 148, 'viewer', []], [1730, 200, 'linen', ['w:mop']], [1808, 162, 'contrastcart', []], [1902, 202, 'wetfloor', []], [1958, 148, 'apronrack', []], [2090, 190, 'gurney', []], [2150, 200, 'chair', []],
+    [2262, 150, 'wheelchair', []], [2330, 196, 'supplycart', ['w:clipboard']], [2424, 162, 'apronrack', []], [2504, 202, 'trash', []], [2562, 148, 'viewer', []], [2600, 148, 'ivstand', ['w:extinguisher']], [2680, 200, 'linen', ['zynn']],
+    // MRI suite: metal things for the magnet to yank
+    [3036, 150, 'wheelchair', []], [3060, 200, 'crashcart', ['energy']], [3116, 172, 'ivstand', []], [3090, 140, 'contrastcart', []], [3150, 206, 'apronrack', []],
+  ],
+  floorItems: [[700, 200, 'w:clipboard'], [3100, 184, 'w:crutch'], [3140, 160, 'w:ivpole']],
+  zones: [
+    { at: 120, lock: 0, waves: [
+      [['barium', 'R', 0.6], ['wanderer', 'D401', 1.4]],
+      [['apron', 'R', 0.3], ['escape', 'L', 1.2], ['barium', 'D402', 2.0], ['runner', 'R', 2.8]],
+    ] },
+    { at: 560, lock: 480, title: 'X-RAY', waves: [
+      [['spammer', 'D402', 0.2], ['barium', 'R', 1.0], ['crutch', 'L', 1.8], ['apron', 'R', 2.6]],
+      [['tray', 'D403', 0.3], ['o2', 'R', 1.1], ['bell', 'L', 1.9], ['barium', 'D404', 2.6]],
+    ] },
+    { at: 1150, lock: 1060, title: 'IMAGING WAITING', boss: 'lou', mini: true, waves: [] },
+    { at: 1700, lock: 1600, waves: [
+      [['elite', 'D406', 0.3], ['barium', 'R', 0.9], ['apron', 'L', 1.6]],
+      [['visitor', 'R', 0.4], ['sundowner', 'D407', 1.0], ['barium', 'L', 1.8], ['runner', 'D408', 2.4]],
+    ] },
+    { at: 2300, lock: 2200, waves: [
+      [['o2', 'D409', 0.3], ['apron', 'R', 0.9], ['tray', 'L', 1.6], ['barium', 'D410', 2.4]],
+      [['elite', 'R', 0.3], ['ivswing', 'L', 1.0], ['apron', 'D411', 1.8], ['bell', 'R', 2.5]],
+    ] },
+    { at: 3020, lock: 3000, boss: 'mri', title: 'MRI SUITE', waves: [] },
+  ],
+  bossArena: 3000, backup: ['barium', 'apron', 'wanderer', 'escape'],
+};
+// ---- v0.5 Level 3: the night shift, back on Floor 3. The lights go out: only exit signs, call lights, monitors, the
+// windows, blue night-lights and the nurses' flashlights glow. The last zone ends the shift (the power comes back on).
+export const LEVEL3 = {
+  id: 3, name: 'FLOOR 3: NIGHT SHIFT', sub: '11:00 PM. WHO TURNED OFF THE LIGHTS?', width: 2100, music: 'night', clock: 23 * 60, floorNum: '3',
+  dark: 0.9, flashlight: true, lightsOut: true, tiles: { ceilLit: false },
+  wall: [
+    [24, 'elev', 'A'], [118, 'callpanel'], [132, 'floornum3'], [200, 'sign_medsurg'], [244, 'chairs'], [306, 'plant0'], [340, 'door', 301], [356, 'calllamp'],
+    [430, 'nwindow0'], [510, 'door', 302], [526, 'calllamp'], [596, 'sign_exit'], [640, 'station'], [664, 'monitor'], [706, 'monitor'], [748, 'monitor'],
+    [790, 'door', 303], [806, 'calllamp'], [880, 'nwindow1'], [960, 'door', 304], [976, 'calllamp'], [1040, 'sign_elev'], [1100, 'plant1'], [1140, 'elev', 'B'],
+    [1222, 'callpanel'], [1240, 'elev', 'C'], [1322, 'callpanel'], [1344, 'chairs'], [1440, 'poster_duck'], [1480, 'door', 305], [1496, 'calllamp'],
+    [1540, 'nwindow2'], [1620, 'door', 306], [1636, 'calllamp'], [1700, 'sign_exit'], [1780, 'door', 307], [1796, 'calllamp'], [1880, 'nwindow0'],
+    [1960, 'door', 308], [1976, 'calllamp'], [2050, 'sign_exit'],
+    [90, 'nlight'], [470, 'nlight'], [900, 'nlight'], [1300, 'nlight'], [1580, 'nlight'], [1900, 'nlight'],
+  ],
+  props: [
+    [150, 182, 'wetfloor', []], [236, 150, 'crashcart', ['energy']], [392, 196, 'gurney', []], [470, 150, 'medcart', []], [556, 198, 'chair', []], [700, 164, 'crashcart', []],
+    [804, 202, 'wetfloor', []], [880, 146, 'ivstand', ['w:ivpole']], [1012, 196, 'linen', ['w:bedpan']], [1118, 202, 'wheelchair', []], [1296, 190, 'crashcart', ['snacks']],
+    [1366, 148, 'chair', []], [1500, 148, 'supplycart', []], [1652, 148, 'plant', []], [1730, 200, 'linen', ['w:mop']], [1808, 162, 'crashcart', []], [1902, 202, 'gurney', []],
+    [1958, 148, 'trash', ['zynn']], [1700, 186, 'viewer', []],
+  ],
+  floorItems: [[700, 200, 'w:clipboard'], [1200, 170, 'w:extinguisher']],
+  zones: [
+    { at: 120, lock: 0, waves: [
+      [['wanderer', 'D301', 0.5], ['sundowner', 'R', 1.4]],
+      [['escape', 'L', 0.3], ['runner', 'D302', 1.2], ['spammer', 'R', 2.0]],
+    ] },
+    { at: 560, lock: 480, title: 'NURSES STATION', waves: [
+      [['bell', 'D303', 0.3], ['crutch', 'R', 1.0], ['sundowner', 'L', 1.8]],
+      [['elite', 'D304', 0.3], ['tray', 'R', 1.2], ['wanderer', 'L', 2.0]],
+    ] },
+    { at: 1150, lock: 1060, title: 'ELEVATOR BANK', waves: [
+      [['sundowner', 'EB', 0.6], ['o2', 'EC', 1.0], ['escape', 'EB', 1.6]],
+      [['visitor', 'EC', 0.5], ['apron', 'EB', 1.0], ['barium', 'R', 2.0]],
+    ] },
+    { at: 1700, lock: 1600, title: 'LAST CALL', final: true, waves: [
+      [['elite', 'D306', 0.3], ['sundowner', 'R', 0.8], ['runner', 'D307', 1.6], ['ivswing', 'L', 2.2]],
+      [['visitor', 'D308', 0.3], ['bell', 'R', 0.9], ['tray', 'L', 1.5], ['wanderer', 'D307', 2.2], ['elite', 'R', 2.8]],
+    ] },
+  ],
+};
+export const LEVELS = [LEVEL1, LEVEL2, LEVEL3];
 // ---- v0.4 Breakroom bonus round (between Floor 3 and Floor 4): one screen, built to the current view width at start.
 // Thieves come out of the staff door and both screen edges, raid a snack spot for a couple of seconds, then run.
 export const BONUS = { time: 45, every: [1.3, 2.3], cap: 4, raid: 2.3, stop: 500, saved: 150, perfect: 3000,

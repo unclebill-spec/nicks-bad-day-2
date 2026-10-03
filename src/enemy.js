@@ -34,10 +34,11 @@ export class Enemy extends Actor {
   constructor(kind, x, y, variant = 0) {
     const d = ENEMIES[kind];
     super(VARIANTS[kind] ? VARIANTS[kind][variant % VARIANTS[kind].length] : lookFor(kind, variant), x, y);
-    this.kind = kind; this.d = d; this.maxHp = this.hp = Math.round(d.hp * W.diff.hp * (W.heroes.length > 1 ? 1.25 : 1));
+    // v0.5: radiology variants reuse another patient's AI (d.ai); this.type keeps the patient's own id
+    this.kind = d.ai || kind; this.type = kind; this.d = d; this.maxHp = this.hp = Math.round(d.hp * W.diff.hp * (W.heroes.length > 1 ? 1.25 : 1));
     this.cd = 0.8 + W.rnd() * 1.2; this.armor = d.armor || 0; this.armorT = 0; this.big = !!d.big; this.h = d.big ? 62 : 50; this.w = d.big ? 20 : 14;
     this.side = W.rnd() < 0.5 ? -1 : 1; this.wob = W.rnd() * 6; this.target = null; this.tx = x; this.ty = y; this.speechT = 2 + W.rnd() * 6;
-    this.tank = kind === 'o2'; this.runT = 0; this.beepT = 0;
+    this.tank = this.kind === 'o2'; this.runT = 0; this.beepT = 0;
   }
   hittable() { return !['dead', 'thrown', 'enter_door'].includes(this.st) && !(this.st === 'down' || this.st === 'getup'); }
   grabbable() { return ['idle', 'walk', 'hurt', 'dizzy', 'flee'].includes(this.st) && this.z === 0; }
@@ -151,7 +152,8 @@ export class Enemy extends Actor {
       ivswing: ['I need ice chips!', 'Fore!'], sundowner: ['Who are you?!', 'Get off my lawn!'], visitor: ['Who is in charge?!', 'I know my rights!'],
       crutch: ['Outta my way!', 'I can walk fine!'], bell: ['*DING DING DING*', 'Room service!'], elite: ["I've been here 40 times!", 'I want my usual room!'],
       runner: ['Freedom!', "You can't catch me!", 'I am NOT a fall risk!'], tray: ['This is NOT what I ordered!', 'Cold AGAIN?!', 'Send it back!'], o2: ['Just getting some air!', 'Mind the tank, dear.'] }[K];
-      if (L) { floatText(L[Math.floor(W.rnd() * L.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 }); } }
+      const L2 = d.lines || L;
+      if (L2) { floatText(L2[Math.floor(W.rnd() * L2.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 }); } }
     if (K === 'runner') return this.runAway(dt, h);
     let gx, gy = h.y, want = d.reach * 0.85;
     const busy = this.tokens(h) >= (W.diff.cap >= 5 ? 3 : 2) && !this.attacking();
@@ -172,7 +174,7 @@ export class Enemy extends Actor {
     if (K === 'elite') return;
     if (this.cd <= 0 && !busy && Math.abs(dy) < (K === 'spammer' || K === 'tray' ? 10 : 6)) {
       if (K === 'spammer' && adx > 50) return this.begin('windup');
-      if (K === 'tray' && adx > 50) { this.throwKind = W.rnd() < 0.55 ? 'tray' : 'jello'; return this.begin('windup'); }
+      if (K === 'tray' && adx > 50) { this.throwKind = d.proj || W.rnd() >= 0.55 ? 'jello' : 'tray'; return this.begin('windup'); }
       const reach = K === 'o2' && !this.tank ? 24 : d.reach;
       if (K !== 'spammer' && K !== 'sundowner' && K !== 'tray' && adx < reach + 6 && adx > 6) return this.begin('windup');
       if (K === 'sundowner' && adx < 30) return this.begin('windup');
@@ -194,7 +196,10 @@ export class Enemy extends Actor {
     if (!this.hitDone && this.t > (K === 'o2' && this.tank ? 0.1 : 0.04)) {
       this.hitDone = true;
       if (K === 'tray') {
-        if (this.throwKind === 'jello') {
+        if (this.throwKind === 'jello' && d.proj) {  // v0.5 Contrast Chugger: a lobbed cup of barium (chalky white puddle)
+          addShot({ kind: 'enemy', spr: 'p_cup', x: this.x + this.face * 8, y: this.y, z: 48, vx: this.face * 120, vz: 165, grav: 330, owner: this, dmg: 6, spin: 7, splash: d.proj, life: 2.4 });
+          sfx('whoosh', { vol: 0.45, rate: 0.9 }); if (W.rnd() < 0.5) floatText(['BOTTOMS UP!', 'DRINK YOUR CONTRAST!', 'BANANA FLAVOR!'][Math.floor(W.rnd() * 3)], this.x, this.y, 62, '#ffffff');
+        } else if (this.throwKind === 'jello') {
           addShot({ kind: 'enemy', spr: 'p_jello', x: this.x + this.face * 8, y: this.y, z: 48, vx: this.face * 115, vz: 165, grav: 330, owner: this, dmg: 6, spin: 6, splash: 'jello', life: 2.4 });
           sfx('whoosh', { vol: 0.45, rate: 0.9 }); if (W.rnd() < 0.5) floatText('HAVE SOME JELLO!', this.x, this.y, 62, '#ffffff');
         } else {

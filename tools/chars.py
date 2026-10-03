@@ -196,6 +196,11 @@ def holder(kind):
             S.ellipse((x0 + 4, y0 - 1), 3, 1.2, "#f4f4f8", rim=False); S.rect(int(x0 + 3), int(y0 - 2), 3, 1, "#c86a3a")
             S.rect(int(x0 + 8), int(y0 - 3), 3, 3, "#5ad85a"); S.set(int(x0 + 8), int(y0 - 3), "#aaffaa")
             S.rect(int(x0 + 12), int(y0 - 5), 3, 5, "#f4f4f8"); S.rect(int(x0 + 12), int(y0 - 3), 3, 1, "#4a8ad8")
+        elif kind == "cup":  # v0.5 barium contrast cup with a bendy straw
+            S.rect(int(hx - 2), int(hy - 4), 6, 7, INK); S.rect(int(hx - 1), int(hy - 3), 4, 5, "#f4f6fa"); S.rect(int(hx - 1), int(hy - 1), 4, 1, "#3a6ad8")
+            S.line((hx + 1, hy - 4), (hx + 3, hy - 7), "#ff6ab0")
+        elif kind == "film":  # v0.5 X-ray film sheet (Lou's frisbee)
+            S.rect(int(hx - 6), int(hy - 8), 12, 10, INK); S.rect(int(hx - 5), int(hy - 7), 10, 8, "#2a5aa0"); S.rect(int(hx), int(hy - 6), 1, 6, "#d8f4ff")
         elif kind == "jello":
             S.rect(int(hx - 2), int(hy - 3), 6, 6, INK); S.rect(int(hx - 1), int(hy - 2), 4, 4, "#5ad85a"); S.set(int(hx - 1), int(hy - 2), "#bfffbf")
         elif kind == "o2drag":  # oxygen tank on a little two-wheel dolly, dragged behind by its handle
@@ -281,6 +286,17 @@ def bodies():
                           **gown, pants=sk["light"][0], pants_s=sk["light"][1], **socks)
     B["o2"] = hero_body(thigh=10, shin=10, torso=15, torso_w=10.5, skin=sk["old"][0], skin_s=sk["old"][1], hair_c="#eef0f4", hair_s="#b8bcc8",
                         hair=bald_ring, **{**gown, "gown_len": 10}, **sock)
+    # v0.5 Radiology patients: the Contrast Chugger (barium cup + bendy straw) and the Lead-Apron Hugger (heavy apron)
+    B["barium"] = hero_body(thigh=10, shin=10, torso=15, torso_w=11, belly=1.5, skin=sk["tan"][0], skin_s=sk["tan"][1], hair_c="#2a1a12", hair_s="#140c08",
+                            hair=hair_cap(top=-0.1, back=0.35, grow=1.2, spikes=2, seed=12), mouth="#f4f6fa", **gown, pants=sk["tan"][0], pants_s=sk["tan"][1], **socks)
+    B["apron"] = hero_body(thigh=10.5, shin=10, torso=17, torso_w=13, belly=1.5, skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#6b4a2a", hair_s="#4a3018",
+                           hair=hair_cap(top=-0.25, back=0.3, grow=0.7, seed=13), beard="#6b4a2a",
+                           **{**gown, "shirt": "#3a6ad8", "shirt_s": "#2a4aa8", "gown_len": 12}, pants=sk["light"][0], pants_s=sk["light"][1], **socks)
+    # v0.5 mini-boss LEAD-APRON LOU: a gentle giant ex-linebacker wearing three lead aprons like shoulder pads, ~2.2x a nurse's height
+    B["lou"] = hero_body(thigh=24, shin=23, torso=46, head=15.4, uarm=19, farm=18, arm_w=12.6, leg_w=16, torso_w=50, fist=6.2, foot=4.8, foot_len=9, belly=8.4,
+                         skin=sk["brown"][0], skin_s=sk["brown"][1], hair_c="#2a1a12", hair_s="#140c08", hair=hair_cap(top=-0.35, back=0.2, grow=0.5, seed=14),
+                         **{**gown, "shirt": "#2a6a9a", "shirt_s": "#1c4c74", "gown_len": 10}, pants=sk["brown"][0], pants_s=sk["brown"][1],
+                         shoe=SOCK[0], shoe_s=SOCK[1], sock=SOCK[0])
     return B
 
 
@@ -465,6 +481,29 @@ def enemy_anims(kind):
         A["idle2"] = [P(ua_f=20, fa_f=60, ua_b=-6, fa_b=20, lean=8, face="hurt"), P(ua_f=20, fa_f=64, ua_b=-6, fa_b=20, lean=8, hy=1, face="norm")]
         A["walk2"] = walk_cycle(swing=12, arm=12, lean=10)
         A["atk2"] = [P(lean=-6, ua_f=170, fa_f=176, ua_b=-20, fa_b=30, face="yell"), P(lean=16, ua_f=86, fa_f=70, ua_b=-30, fa_b=20, th_f=20, th_b=-20, face="yell")]
+    elif kind == "barium":  # contrast chugger: sips, then lobs the cup
+        cp = holder("cup")
+        A["idle"] = [P(ua_f=60, fa_f=150, hold=cp, ua_b=-6, fa_b=20, face="grin"), P(ua_f=64, fa_f=160, hold=cp, ua_b=-6, fa_b=20, hy=1, face="norm")]
+        A["walk"] = walk_cycle(swing=16, arm=8)
+        for f in A["walk"]:
+            f.update(ua_f=60, fa_f=150, hold=cp)
+        A["atk"] = [P(lean=-12, ua_f=-150, fa_f=-165, ua_b=40, fa_b=80, th_f=20, th_b=-24, hold=cp, face="grin"),
+                    P(lean=14, ua_f=100, fa_f=96, ua_b=-20, fa_b=20, th_f=30, sh_f=10, th_b=-26, face="yell")]
+        A["lob"] = A["atk"]
+    elif kind == "apron":
+        return {**enemy_anims("wanderer")}
+    elif kind == "lou":  # mini-boss: stance, lumbering walk, linebacker charge, stomp, film throw, winded
+        A["idle"] = [P(lean=10, ua_f=40, fa_f=110, ua_b=30, fa_b=100, th_f=18, th_b=-16, face="grin"), P(lean=10, ua_f=40, fa_f=114, ua_b=30, fa_b=104, th_f=18, th_b=-16, hy=1, face="grin")]
+        A["walk"] = walk_cycle(swing=18, arm=14, lean=10)
+        A["charge"] = walk_cycle(swing=40, arm=0, lean=38, bob=2)
+        for f in A["charge"]:
+            f.update(ua_f=-50, fa_f=-20, ua_b=-60, fa_b=-30, head=-14, face="yell")
+        A["stomp"] = [P(lean=-6, th_f=80, sh_f=10, ua_f=-140, fa_f=-150, ua_b=-140, fa_b=-150, face="yell", lift=4),
+                      P(lean=18, th_f=20, sh_f=0, th_b=-20, ua_f=60, fa_f=60, ua_b=50, fa_b=50, face="yell", hy=3)]
+        A["throw"] = [P(lean=-12, ua_f=-150, fa_f=-170, hold=holder("film"), ua_b=40, fa_b=80, th_f=20, th_b=-24, face="grin"),
+                      P(lean=16, ua_f=100, fa_f=96, ua_b=-20, fa_b=20, th_f=30, sh_f=10, th_b=-26, face="yell")]
+        A["tired"] = [P(lean=34, head=10, ua_f=60, fa_f=30, ua_b=50, fa_b=24, th_f=20, sh_f=10, th_b=-10, sh_b=-6, face="hurt", hy=3),
+                      P(lean=36, head=12, ua_f=62, fa_f=30, ua_b=52, fa_b=24, th_f=20, sh_f=10, th_b=-10, sh_b=-6, face="sleep", hy=4)]
     base = hero_anims("nick")
     for k in ("hurt", "fall", "down", "getup", "dizzy"):
         A[k] = base[k]

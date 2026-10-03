@@ -2,6 +2,57 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-03: v0.5 "Hold Still, Please" (Bill's last suggestions: Radiology, the MRI boss, the night shift)
+- **A whole shift is now playable from start to finish.** Floor 3 Med-Surg (Turbo Tilly) → Breakroom Bonus → comic cutscene → **Floor 4: Radiology** → cutscene → **Night Shift** → ending cutscene → **THE END** → high scores.
+  - Score, lives, meter, continues used and 2P all carry from floor to floor. Each floor's tally total becomes your score, and the ON TIME bonus is now measured from that floor's own clock.
+  - High scores are recorded at THE END or on game over. "Floors cleared" now goes up to 3.
+  - A 2P partner who was knocked out gets a fresh continue countdown on the next floor.
+- **Level 2 "Floor 4: Radiology"** (3500 px, 6 zones), with Bill's gloom-and-glow look.
+  - **Look:** dark slate halls lit by neon-blue X-ray lightboxes (chest, hand, skull and a rubber duck), blinking red IN USE lamps, radiation signs, a "NO METAL" poster and a violet MRI sign.
+  - **New lighting system:** a darkness layer with retro, stepped pools of light, plus a soft coloured glow (neon blue first, then violet, then red). Lights come from wall pieces, glowing props, sparks and projectiles.
+  - **Kickable radiology props** on the existing kick/break system: lead-apron racks, contrast carts (amber glow, sparks), film viewers (blue glow), and more wheelchairs. Each has its own debris (aprons, barium bottles, X-ray film).
+  - **New patients:**
+    - **Contrast Chugger:** lobs cups of barium ("BOTTOMS UP!") that leave a slippery white puddle ("CHALKY!", "BANANA FLAVOR?!").
+    - **Lead-Apron Hugger:** his lead apron shrugs off two jabs before a real hit gets through.
+  - Its own music (Radiology theme, plus an MRI boss theme) and new sounds: hum, KNOCK, quench hiss, table slam, power-down, film whoosh, stomp, clunk, the MRI's voice.
+- **Mini-boss: LEAD-APRON LOU,** a gentle-giant ex-linebacker in three lead aprons, about **2.2x a nurse's height** (Bill's 2–3x rule).
+  - **Charge:** he drops into a three-point stance (his lane flashes), then charges across the screen and ends up winded. That's his weak point: full damage. Otherwise he's armored (half damage, no flinch).
+  - **Other attacks:** a stomp shock ring and X-ray film frisbees.
+  - **Phase 2:** at half health he yells "FOURTH QUARTER! HIKE!" and calls two helpers.
+  - **Defeat:** he naps where he fell ("Good game, nurses... zzz"), dropping fruit snacks and a gold star.
+- **Boss: MAGNA-SCAN 3000, the MRI magnet,** with a live LCD face: eyes track you, angry while pulling, X-eyes while venting, asleep when beaten.
+  - **Size:** 2.5x a nurse's height, 6.6x her width and 23x her area. A boss 5x as tall (about 280 px) can't fit on the 224 px screen, so it meets Bill's 5x rule by area and width, and is as tall as the screen allows.
+  - **MAGNET ON:**
+    - It drags the nurses toward it, and walking away resists.
+    - It yanks metal weapons right out of their hands ("IT TOOK MY IV POLE!").
+    - Metal on the floor (IV poles, crutches, bedpans, canes) and metal props (carts, wheelchairs, IV stands, apron racks) fly in and smash on it, hurting any nurse in the way. Touching its face zaps you.
+  - **QUENCH:** after each pull it vents helium and its coil glows red. That's the weak point (full damage, otherwise 20% and CLANK!).
+  - **KNOCK:** sound waves roll along the floor lanes. Jump them or change lanes.
+  - **TABLE:** the patient table shoots out along your lane after the lane flashes red. Jump it.
+  - **Phase 2 (SUPERCONDUCTING!, violet):** a stronger pull that ends in a REPEL blast, double tables, more waves, and "NEXT PATIENT, PLEASE!" backup.
+  - **Defeat:** it powers down ("SCAN COMPLETE. HAVE A NICE DAY.") and every patient it paged takes a nap.
+- **Level 3 "Night Shift":** back on Floor 3 at 11 PM.
+  - **Lights out:** the lights flicker and die during the intro (KA-CHUNK! LIGHTS OUT!).
+  - **What still glows:** red EXIT signs, blinking call lights over every door, the station monitors, moonlit windows and little night-lights, each casting its own pool of light.
+  - **Flashlights:** every nurse carries one, which throws a cone and a pool of light ahead of her.
+  - **Patients:** they shuffle out of the dark with glowing eyes and their own night music.
+  - **Finale:** clear LAST CALL and the power comes back ("POWER'S BACK!") before the tally.
+- **New cutscenes:**
+  - Before the MRI: "PLEASE HOLD STILL. SCANNING... EVERYTHING!" / "Why is my badge clip FLOATING?"
+  - Into the night shift: "Quiet night, right?" / KA-CHUNK / "WHO SAID THE Q-WORD?!"
+  - The 7 AM ending: "NOPE! See you tomorrow!"
+  - The "next floor" cutscene glow is now neon blue.
+- **New THE END screen** with each nurse's final score and NEW HIGH SCORE.
+- **Tests:**
+  - New `tests/v05.py`, in 7 sections:
+    - Radiology patients and props, Lou, and the MRI (pull, yank, floor metal, props, vent, far-lane hits, waves, table jump and hit, phase 2, repel, backup, defeat).
+    - The night lights (lights-out ramp, glow sources, flashlight brightness, power back on).
+    - The full flow with every cutscene.
+    - 2P carry-over and continues, gamepad, and touch.
+    - A bot playing Radiology and the Night Shift start to finish.
+  - `flow.py` and `v04.py` now follow the new flow instead of the teaser.
+- **Debug:** `?level=2` / `?level=3` (with `&zone=N`). `__nbd.loadLevel(i)`. Service worker cache bumped to `nbd2-app-v8`.
+
 ## 2026-10-03: v0.4 "Shift Change" (Bill's request: add all five suggestions)
 - **Three new Level 1 patients.** They wear the same checked gown and yellow grip socks as the others, with their own hair, and get random looks per spawn.
   - **Bed-Alarm Runner** (blonde spikes, blinking red bed alarm): beeps and runs away from the nearest nurse, juking up and down. Catch him in time and he drops fruit snacks (35% chance of a gold star too, and a one-time 15% chance of a ZYNN tin) plus a +1000 CAUGHT! bonus. If you don't catch him in about 13 seconds he runs off screen. That never blocks a zone.

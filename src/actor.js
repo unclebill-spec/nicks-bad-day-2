@@ -63,7 +63,7 @@ export function strike(a, { box, z = [10, 50], depth = 10, dmg, kb = 40, stun = 
     if (!t.alive || t === a || !t.hittable || !t.hittable()) continue;
     if (once && once.has(t)) continue;
     const dep = depth + (t.big ? 5 : 0);
-    if (Math.abs(t.y - a.y) > dep) continue;
+    if (!t.depthAny && Math.abs(t.y - a.y) > dep) continue;  // the MRI fills the whole floor depth
     const tw = t.w / 2 + (t.big ? 6 : 0);
     if (t.x + tw < lo || t.x - tw > hi) continue;
     if (t.z + t.h < za || t.z > zb) continue;
