@@ -2,7 +2,7 @@
 // elevators, projectiles, the boss, and the end-of-floor sequence.
 import { G } from './gfx.js';
 import { Y_MIN, Y_MAX, VARIANTS } from './data.js';
-import { W, openDoor, openElev, addFx, addShot, floatText, word, shake, spark, dropItem, breakProp, hitProp, propBox, addScore } from './world.js';
+import { W, openDoor, openElev, addFx, addShot, floatText, word, shake, spark, dropItem, breakProp, hitProp, propBox, addScore, makeProp } from './world.js';
 import { Enemy } from './enemy.js';
 import { Tilly } from './boss.js';
 import { MRI, Lou } from './mri.js';
@@ -141,7 +141,11 @@ export const Director = {
         if (s.z <= 0) {
           s.z = 0;
           if (s.roll) { s.vx *= Math.exp(-dt * 0.5); s.vz = 0; if (Math.abs(s.vx) < 6) s.vx = 0; }
-          else if (s.kind === 'enemy') { s.life = 0; if (s.splash) splashAt(s); else addFx({ type: 'dust', x: s.x, y: s.y, dur: 0.3 }); }
+          else if (s.kind === 'enemy') {
+            s.life = 0; if (s.splash) splashAt(s); else addFx({ type: 'dust', x: s.x, y: s.y, dur: 0.3 });
+            // v0.6: a missed meal tray stays on the floor as a loose, throwable prop (a few at most)
+            if (s.spr === 'p_tray' && W.props.filter((p) => p.kind === 'mealtray' && p.st < 2).length < 4 && s.x > W.camX + 10 && s.x < W.camX + G.VW - 10) W.props.push(makeProp('mealtray', s.x, Math.max(Y_MIN, Math.min(Y_MAX, s.y))));
+          }
         }
       }
       if (s.kind === 'enemy') {

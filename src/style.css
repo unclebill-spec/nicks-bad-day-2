@@ -22,6 +22,8 @@ canvas#view{position:absolute;inset:0;width:100%;height:100%;image-rendering:pix
 #b_jmp{right:0;bottom:2cqh;background:#2a8ae8}
 #b_grab{left:0;top:0;background:#e88a1e}
 #b_grab.ctx{background:#2a9ae8;border-color:#ffe84a;animation:ctxpulse .5s ease-in-out infinite alternate}
+#b_grab{white-space:pre-line;line-height:.95}
+#b_grab.thr{background:#e83a5a}
 @keyframes ctxpulse{to{filter:brightness(1.35)}}
 #b_sp{right:1cqh;top:0;background:#8a3ae0}
 html:not([data-input=touch]) #pad, html:not([data-input=touch]) #joyzone, html:not([data-input=touch]) #joy{display:none}

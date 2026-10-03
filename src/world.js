@@ -194,9 +194,48 @@ function burst(p, n, power) {  // chunky debris: a mix of the prop's own bits (d
 }
 export const breakProp = (p, dmg, from) => hitProp(p, dmg, { dir: from ? (Math.sign(p.x - from.x) || from.face || 1) : 1, kb: dmg * 8, from });
 export function propBox(p) { return { x0: p.x - p.def.w / 2, x1: p.x + p.def.w / 2, y: p.y, z1: (p.def.h || (p.def.big ? 60 : 30)) + 10 }; }  // +10: jump kicks still connect
+// ---- v0.6 thrown props: a nurse lifts a small / medium prop overhead and hurls it. It flies flat and fast, bowls over
+// every patient in its path (and the boss, at boss armour), and breaks when it lands or slams into another prop / a wall.
+export const THROW = { vx: 320, vz: 70, airVz: -140, grav: 260, z: 40, vy: 110 };
+export function throwDmg(p, h) { return Math.round((12 + p.def.dmg * 1.1) * ((h && h.d && h.d.power) || 1) * (p.flying && p.flying.air ? 1.25 : 1)); }
+function flyProp(p, dt) {
+  const F = p.flying, d = p.def;
+  p.vz -= THROW.grav * dt; p.z += p.vz * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+  p.spin = (p.spin || 0) + dt * 13 * (Math.sign(p.vx) || 1);
+  if (p.y < Y_MIN) { p.y = Y_MIN; p.vy = 0; } else if (p.y > Y_MAX) { p.y = Y_MAX; p.vy = 0; }
+  const dir = Math.sign(p.vx) || F.dir, h = F.owner, dmg = throwDmg(p, h);
+  if ((F.trail = (F.trail || 0) + dt) > 0.05) { F.trail = 0; addFx({ type: 'dust', x: p.x - dir * 6, y: p.y, z: p.z + 6, dur: 0.18 }); }
+  for (const e of [...W.enemies, ...(W.boss ? [W.boss] : [])]) {
+    if (!e.alive || F.hit.has(e) || !e.hittable || !e.hittable()) continue;
+    if (!e.depthAny && Math.abs(e.y - p.y) > 13 + (e.big ? 8 : 0)) continue;
+    if (Math.abs(e.x - p.x) > d.w / 2 + e.w / 2 || p.z > e.z + e.h + 16 || p.z + (d.h || 20) < e.z) continue;
+    F.hit.add(e);
+    e.takeHit({ dmg: e.isBoss ? Math.round(dmg * 0.8) : dmg, dir, kb: 190, stun: 0.5, down: true, from: h });
+    e.propSet = new Set([p]);
+    spark(e.x, e.y, Math.max(16, p.z), 'bigspark'); sfx('heavy', { vol: 0.85 }); shake(3); W.stop = Math.max(W.stop, 0.06);
+    if (!p.wordT || W.t > p.wordT) { word(F.air ? 'w_wham' : 'w_pow', e.x, e.y, Math.max(10, p.z - 10)); p.wordT = W.t + 0.4; }
+    addScore(h, 200);
+    if (h && h.isHero) { h.combo = (h.combo || 0) + 1; h.comboT = 1.6; h.maxCombo = Math.max(h.maxCombo || 0, h.combo); h.meter = Math.min(100, (h.meter || 0) + 6); h.lastFoe = e; h.lastFoeT = W.t + 2.2; W.stats.throwHits = (W.stats.throwHits || 0) + 1; }
+    if (e.isBoss) return landProp(p);  // the boss is a wall: it breaks on her
+  }
+  for (const q of W.props) {  // slams into another prop: both take it, the thrown one breaks
+    if (q === p || q.st >= 2 || q.rider || q.flying || F.hit.has(q)) continue;
+    if (Math.abs(q.y - p.y) > 12 || Math.abs(q.x - p.x) > (d.w + q.def.w) / 2 || p.z > propBox(q).z1) continue;
+    F.hit.add(q); hitProp(q, 14, { dir, kb: 170, from: h });
+    return landProp(p);
+  }
+  const L = W.camX + 4, R = W.camX + G.VW - 4;
+  if (p.z <= 0 || (p.x < L && p.vx < 0) || (p.x > R && p.vx > 0)) return landProp(p);
+}
+function landProp(p) {
+  p.x = Math.max(W.camX + p.def.w / 2, Math.min(W.camX + G.VW - p.def.w / 2, p.x));
+  p.z = 0; p.vz = 0; p.vy = 0; p.spin = 0; p.flying = null; p.hitSet = new Set();
+  smashProp(p);
+}
 function updateProp(p, dt) {
   p.shake = Math.max(0, p.shake - dt); p.flash = Math.max(0, p.flash - dt);
   if (p.rider) return;  // a nurse is riding it: the hero drives it (hero.js s_ride)
+  if (p.flying) return flyProp(p, dt);  // v0.6: a nurse threw it
   if (p.z > 0 || p.vz > 0) { p.vz -= GRAV * dt; p.z += p.vz * dt; if (p.z <= 0) { p.z = 0; p.vz = 0; } }
   if (!moving(p)) { p.vx = p.vy = 0; return; }
   const d = p.def, fr = p.st >= 2 ? 5 : (d.fr || 2) + (p.nudge ? 6 : 0);
@@ -296,12 +335,15 @@ export function openElev(id) { const e = W.elevs[id]; if (e) { if (e.target < 1)
 export function drawProp(p) {
   const fast = moving(p) && p.st < 2 && p.def.move === 'roll';
   const X = Math.round(p.x - W.camX + (p.shake > 0 ? Math.sin(p.shake * 90) * 2 : 0)), Y = Math.round(p.y + OFF() - p.z - (fast && Math.floor(W.t * 30) % 2 ? 1 : 0));
-  const name = p.def.spr + Math.min(p.st, (p.def.states || 3) - 1);
+  if (p.def.single && p.st >= 2) return;  // a loose tray just shatters into debris
+  const name = propSprite(p);
   const [w, h] = sprSize(name);
-  ellipse(p.x - W.camX, p.y + OFF(), p.def.w / 2 + 3, 3, '#000', 0.25);
+  ellipse(p.x - W.camX, p.y + OFF(), (p.def.w / 2 + 3) * (p.z > 0 ? Math.max(0.4, 1 - p.z / 120) : 1), 3, '#000', 0.25);
+  if (p.flying) { spr(name, X, Y - h / 2 + 2, { ax: w / 2, ay: h / 2, rot: p.spin || 0 }); return; }  // tumbling through the air
   spr(name, X - w / 2, Y - h + 2);
   if (p.flash > 0) spr(name, X - w / 2, Y - h + 2, { light: true, alpha: Math.min(0.8, p.flash * 8) });
 }
+export const propSprite = (p) => (p.def.single ? p.def.spr : p.def.spr + Math.min(p.st, (p.def.states || 3) - 1));
 export function drawItem(it) {
   const X = it.x - W.camX, Y = it.y + OFF();
   ellipse(X, Y, 6, 2, '#000', 0.3);

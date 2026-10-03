@@ -374,6 +374,12 @@ def hero_anims(name):
     A["ride"] = [P(lean=22, hy=6, th_f=56, sh_f=-34, th_b=-34, sh_b=-76, ua_f=84, fa_f=96, ua_b=-70, fa_b=-30, face="yell"),
                  P(lean=18, hy=5, th_f=50, sh_f=-30, th_b=-30, sh_b=-72, ua_f=96, fa_f=110, ua_b=-80, fa_b=-40, face="grin")]
     A["team"] = [P(lean=-6, ua_f=176, fa_f=178, ua_b=150, fa_b=160, th_f=20, th_b=-20, face="yell")]
+    # v0.6: carrying a prop overhead (golden-axe style) and walking with it
+    up = dict(ua_f=146, fa_f=186, ua_b=140, fa_b=182)
+    A["lift"] = [P(lean=-2, th_f=12, th_b=-12, **up), P(lean=-2, th_f=12, th_b=-12, hy=1, **{**up, "fa_f": 180})]
+    A["carry"] = walk_cycle(swing=16, arm=0)
+    for f in A["carry"]:
+        f.update(lean=-1, **up)
     if name == "kim":  # Kim's quick 4th hit: spinning back kick
         A["atk4"] = [P(lean=0, th_f=10, sh_f=10, th_b=-96, sh_b=-96, ua_f=100, fa_f=110, ua_b=60, fa_b=90, face="yell", flip=True),
                      P(lean=-12, th_f=96, sh_f=94, th_b=-6, ua_f=-70, fa_f=-80, ua_b=-100, fa_b=-110, face="yell")]

@@ -6,7 +6,39 @@ import math
 from rig import INK, P, Raster, figure, hair_cap
 from chars import SKIN
 
-W, H, AX, AY = 120, 100, 60, 96
+# v0.6: Bill's rule is bosses >= 5x a nurse, so Tilly is drawn at SC x her old size (same layout, every
+# coordinate below is in "base units" and SR scales it to real pixels).
+SC = 1.8
+BW, BH, BAX, BAY = 120, 100, 60, 96
+W, H, AX, AY = int(BW * SC), int(BH * SC), int(BAX * SC), int(BAY * SC)
+
+
+class SR:
+    """Scaled raster: same calls as Raster but in base units; strokes and single pixels grow with the scale."""
+
+    def __init__(self, s):
+        self.s = s
+        self.R = Raster(W, H)
+
+    def _p(self, p):
+        return (p[0] * self.s, p[1] * self.s)
+
+    def rect(self, x, y, w, h, c):
+        s = self.s
+        x0, y0 = int(round(x * s)), int(round(y * s))
+        self.R.rect(x0, y0, max(1, int(round((x + w) * s)) - x0), max(1, int(round((y + h) * s)) - y0), c)
+
+    def set(self, x, y, c):
+        self.rect(x, y, 1, 1, c)
+
+    def ellipse(self, c, rx, ry, col, shade=None, rim=True):
+        self.R.ellipse(self._p(c), rx * self.s, ry * self.s, col, shade, rim)
+
+    def poly(self, pts, col, rim=True):
+        self.R.poly([self._p(p) for p in pts], col, rim)
+
+    def line(self, a, b, col):
+        self.R.capsule(self._p(a), self._p(b), self.s * 0.9, col, rim=False)
 
 
 def tilly_body():
@@ -21,8 +53,9 @@ def tilly_body():
 
 def pearls(S, T, hip, neck, lean, b):
     nx, ny = T(neck)
+    k = int(round(b.get("pscale", 1)))
     for i in range(5):
-        S.set(int(nx - 2 + i), int(ny + 2 + (1 if i in (0, 4) else 2 if i == 2 else 1.5)), "#ffffff")
+        S.rect(int(nx + (i - 2) * k * 1.4) - k // 2, int(ny + (2 + (1 if i in (0, 4) else 2 if i == 2 else 1.5)) * k), k, k, "#ffffff")
 
 
 def wheel(S, c, r, spin, col="#2a2a34", hub="#c8ccd6"):
@@ -36,11 +69,11 @@ def wheel(S, c, r, spin, col="#2a2a34", hub="#c8ccd6"):
 
 
 def frame(state="idle", k=0):
-    S = Raster(W, H)
-    g = AY  # ground y
+    S = SR(SC)
+    g = BAY  # ground y
     shake = (1 if k % 2 else -1) if state == "rev" else 0
     bob = 1 if (state in ("idle", "drive") and k % 2) else 0
-    ox = AX + shake
+    ox = BAX + shake
     spin = k * math.pi / 8 * (3 if state in ("drive", "rev") else 0.4)
     # flag pole + flag
     fx = ox - 26
@@ -90,17 +123,20 @@ def frame(state="idle", k=0):
         pose.update(lean=-16, face="sleep", ua_f=20, fa_f=10, ua_b=10, fa_b=0, head=-20)
     elif state == "laugh":
         pose.update(lean=-8, face="grin", ua_f=120, fa_f=150, head=-8)
-    b = tilly_body()
+    s = SC
+    b = {k: (v * s if isinstance(v, (int, float)) and not isinstance(v, bool) else v) for k, v in tilly_body().items()}
     b["pattern"] = pearls
-    fig, meta = figure(b, P(**pose), W=88, H=80, ax=44, ay=76)
+    b["pscale"] = s
+    fw, fh, fax, fay = int(88 * s), int(80 * s), int(44 * s), int(76 * s)
+    fig, meta = figure(b, P(**pose), W=fw, H=fh, ax=fax, ay=fay)
     # paste so her hips sit on the seat (hip in figure space is -(thigh+shin+foot) above the anchor)
-    hip_y = -(9 + 9 + 2)
-    px, py = int(ox - 8 - 44), int(g - 34 - (76 + hip_y)) - bob
+    hip_y = -(9 + 9 + 2) * s
+    px, py = int((ox - 8) * s - fax), int((g - 34) * s - (fay + hip_y) - bob * s)
     for y in range(fig.h):
         for x in range(fig.w):
             c = fig.p[y][x]
             if c:
-                S.set(px + x, py + y, c)
+                S.R.set(px + x, py + y, c)
     # armrest + joystick + horn on the front
     S.rect(ox - 6, g - 46, 18, 3, INK); S.rect(ox - 5, g - 45, 16, 1, "#3a3e4a")
     S.rect(ox + 10, g - 50, 2, 5, "#2a2a34"); S.ellipse((ox + 11, g - 51), 1.6, 1.6, "#ff3a3a")
@@ -123,7 +159,7 @@ def frame(state="idle", k=0):
     if state == "defeat" and k % 2:
         for (x, y) in ((ox - 14, g - 40), (ox - 10, g - 44)):
             S.ellipse((x, y), 2.5, 2.5, "#9a9aa4", rim=False)
-    return S
+    return S.R
 
 
 ANIMS = {"idle": ("idle", 2), "drive": ("drive", 4), "rev": ("rev", 2), "honk": ("honk", 2), "call": ("call", 1),

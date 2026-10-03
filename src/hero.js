@@ -2,11 +2,15 @@
 // per-hero desperation special (costs a little health) and the Code Blue super (meter).
 // v0.4: gurney rides (GRAB or ATK+JUMP next to a gurney; touch shows a RIDE button) and the 2-player Charge Nurse team-up
 // (both hold SP near each other with half a meter each: a screen-clearing combined move).
+// v0.6: lift small / medium props overhead (GRAB, or ATK when no patient is in reach) and throw them (ATK or GRAB; hold
+// up / down to throw along the floor's depth, ATK+JUMP throws backward, jump + ATK is a jump-throw). Getting hit drops it.
 import { G, frame, spr, sprSize, ellipse, text, rect, ring } from './gfx.js';
 import { HEROES, ATTACKS, WEAPONS, Y_MIN, Y_MAX } from './data.js';
-import { W, offY, dropItem, addShot, addFx, word, floatText, shake, spark, addScore, smashProp, hitProp, bumpProps } from './world.js';
+import { W, offY, dropItem, addShot, addFx, word, floatText, shake, spark, addScore, smashProp, hitProp, bumpProps, THROW, propSprite } from './world.js';
 import { Actor, strike, clampY } from './actor.js';
 import { sfx } from './sound.js';
+
+const CARRY_OK = new Set(['idle', 'walk', 'jump', 'land', 'lift', 'toss']);  // states a nurse can hold a prop overhead in
 
 export class Hero extends Actor {
   constructor(id, slot, x, y) {
@@ -18,11 +22,13 @@ export class Hero extends Actor {
   }
   hittable() { return this.inv <= 0 && !['fall', 'down', 'getup', 'dead', 'super', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup'].includes(this.st); }
   canAct() { return ['idle', 'walk', 'run'].includes(this.st); }
+  set(st) { super.set(st); if (this.carry && !CARRY_OK.has(st)) this.releaseProp(false, st === 'win' || st === 'enter' || st === 'teamup'); }  // any hit / grab / KO drops the prop
   get spd() { return this.speedT > 0 ? 1.4 : 1; }
 
   takeHit({ dmg, dir, kb, stun, down, dizzy, from }) {
     if (!this.hittable()) return;
     if (this.held) this.release();
+    if (this.carry) this.releaseProp(false);
     if (this.grabber) this.grabber = null;
     const d = dmg * W.diff.dmg;
     this.hp -= d; this.flash = 0.12; this.meter = Math.min(100, this.meter + d * 0.35); this.combo = 0;
@@ -75,7 +81,7 @@ export class Hero extends Actor {
   s_win() {}
   s_idle(dt, I) {
     const moving = Math.hypot(I.mx, I.my) > 0.15;
-    if (moving) { this.move(dt, I); this.st = I.run && Math.abs(I.mx) > 0.5 ? 'run' : 'walk'; }
+    if (moving) { if (this.carry) { this.move(dt, { ...I, run: false }, 0.74); this.st = 'walk'; } else { this.move(dt, I); this.st = I.run && Math.abs(I.mx) > 0.5 ? 'run' : 'walk'; } }
     this.common(dt, I);
   }
   s_walk(dt, I) { this.s_idle(dt, I); if (Math.hypot(I.mx, I.my) <= 0.15) this.st = 'idle'; this.autoGrab(dt, I); }
@@ -86,12 +92,15 @@ export class Hero extends Actor {
     this.common(dt, I);
   }
   common(dt, I) {
+    if (this.carry) return this.carryInput(I);
+    if (I.prs.grab && !this.weapon) { const e = this.grabTarget(24); if (e) return this.grab(e); }  // a patient in reach beats everything
     if ((this.wantBack || I.prs.grab) && !(this.held && this.held.st === 'held')) { const g = this.nearGurney(); if (g) { this.wantBack = false; return this.mount(g); } }
     if (this.wantBack) { this.wantBack = false; this.set('back'); this.hitDone = false; sfx('whoosh', { vol: 0.5 }); return; }
     if (I.prs.sp) return this.special();
     if (I.jmp) { this.set('jump'); this.vz = this.d.jump; this.vx = I.mx * (I.run ? this.d.run : this.d.walk) * this.spd; this.vy = I.my * this.d.depth * 0.8; this.kicked = false; sfx('jump', { vol: 0.4 }); return; }
     if (I.atk) {
       if (this.weapon) return this.useWeapon(I);
+      if (this.gap > (this.d.comboGap || 0.6) && !this.foeNear()) { const p = this.liftTarget(true); if (p) return this.lift(p); }  // ATK at a prop with nobody to hit: pick it up
       return this.attack();
     }
     if (I.prs.grab) return this.grabOrPick();
@@ -140,6 +149,11 @@ export class Hero extends Actor {
   }
   s_jump(dt, I) {
     this.vx += I.mx * 60 * dt;
+    if (this.carry) {  // jump-throw: ATK (or GRAB) in the air hurls it down at an angle
+      if (I.atk || I.prs.grab || this.buf === 'atk') { this.buf = null; this.tossDir = I.mx ? Math.sign(I.mx) : this.face; this.face = this.tossDir; this.tossVy = I.my || 0; this.releaseProp(true); this.airTossT = W.t + 0.25; }
+      if (this.airborne(1 / 60 * (dt * 60))) { this.vx = 0; this.vy = 0; this.set('land'); }
+      return;
+    }
     if ((I.atk || this.buf === 'atk') && !this.kicked) { this.buf = null; this.kicked = true; this.kickSet = new Set(); sfx('whoosh', { vol: 0.4 }); }
     if (this.kicked) {
       const A = ATTACKS.jkick;
@@ -152,7 +166,7 @@ export class Hero extends Actor {
   s_dizzy(dt, I) { if (this.t > this.stun) this.set('idle'); }
   // ---- grabs
   autoGrab(dt, I) {
-    if (this.weapon || !Math.abs(I.mx)) { this.pushT = 0; return; }
+    if (this.weapon || this.carry || !Math.abs(I.mx)) { this.pushT = 0; return; }
     const e = this.grabTarget(16);
     if (e && Math.sign(e.x - this.x) === Math.sign(I.mx)) { this.pushT = (this.pushT || 0) + dt; if (this.pushT > 0.22) this.grab(e); } else this.pushT = 0;
   }
@@ -166,13 +180,77 @@ export class Hero extends Actor {
     }
     return best;
   }
-  grabOrPick() {
+  grabOrPick() {  // GRAB priority: patient > gurney (in common) > weapon on the floor > liftable prop > throw your weapon
     const e = this.grabTarget(24);
     if (e && !this.weapon) return this.grab(e);
     const it = this.itemHere(true);
     if (it) { this.set('pickup'); this.pick = it; return; }
+    const p = this.liftTarget();
+    if (p) { if (this.weapon) this.dropWeapon(); return this.lift(p); }
     if (this.weapon) return this.throwWeapon();
   }
+  // ---- v0.6 carrying props overhead
+  foeNear() {  // is a patient (or the boss) close enough in front to punch? then ATK punches instead of lifting
+    for (const e of [...W.enemies, ...(W.boss ? [W.boss] : [])]) {
+      if (!e.alive || !e.hittable || !e.hittable() || e.st === 'dead') continue;
+      if (!e.depthAny && Math.abs(e.y - this.y) > 14 + (e.big ? 6 : 0)) continue;
+      const dx = (e.x - this.x) * this.face, ew = e.w / 2;
+      if (dx > -ew - 4 && dx < 46 + ew) return true;
+    }
+    return false;
+  }
+  liftTarget(strict = false) {  // the closest carryable prop at the nurse's feet / just in front (ATK uses a tighter reach)
+    let best = null, bd = 1e9;
+    for (const p of W.props) {
+      const d = p.def;
+      if (!d.carry || p.st >= 2 || p.rider || p.flying || p.magnet || p.z > 6 || Math.abs(p.vx) > 40) continue;
+      const dy = Math.abs(p.y - this.y); if (dy > (strict ? 10 : 13)) continue;
+      const dx = (p.x - this.x) * this.face;
+      if (dx < -(d.w / 2 + 4) || dx > d.w / 2 + (strict ? 8 : 14)) continue;
+      const sc = Math.abs(dx) + dy * 1.5; if (sc < bd) { bd = sc; best = p; }
+    }
+    return best;
+  }
+  canLift() { return !this.carry && this.canAct() && !this.nearGurney() && !(this.grabTarget(24) && !this.weapon) && !this.itemHere(true) && !!this.liftTarget(); }
+  lift(p) {
+    const i = W.props.indexOf(p); if (i >= 0) W.props.splice(i, 1);  // out of the world while it's overhead
+    p.vx = p.vy = p.vz = 0; p.z = 0; p.shake = 0; p.nudge = false; p.magnet = false; p.carrier = this;
+    this.carry = p; this.liftDX = (p.x - this.x) * this.face; this.liftDY = p.y - this.y; this.vx = 0; this.pushT = 0;
+    if (Math.abs(p.x - this.x) > 3) this.face = Math.sign(p.x - this.x) || this.face;
+    this.set('lift'); sfx('whoosh', { vol: 0.35, rate: 0.7 }); W.stats.lifts = (W.stats.lifts || 0) + 1;
+  }
+  s_lift(dt) { if (this.t > 0.24) this.set('idle'); }
+  carryInput(I) {
+    if (I.prs.sp) { this.releaseProp(false, true); return this.special(); }
+    if (this.wantBack) { this.wantBack = false; return this.toss(-this.face, I); }  // ATK+JUMP: throw it behind you
+    if (I.jmp) { this.set('jump'); this.vz = this.d.jump * 0.88; this.vx = I.mx * this.d.walk * 0.8; this.vy = I.my * this.d.depth * 0.7; this.kicked = false; sfx('jump', { vol: 0.4 }); return; }
+    if (I.atk || I.prs.grab) return this.toss(Math.abs(I.mx) > 0.3 ? Math.sign(I.mx) : this.face, I);
+  }
+  toss(dir, I) { this.face = dir; this.tossDir = dir; this.tossVy = Math.abs(I.my || 0) > 0.3 ? Math.sign(I.my) : 0; this.set('toss'); this.tossed = false; }
+  s_toss(dt) {
+    if (!this.tossed && this.t > 0.1) this.releaseProp(true);
+    if (this.t > 0.3) this.set('idle');
+  }
+  releaseProp(thrown, gentle = false) {
+    const p = this.carry; if (!p) return;
+    this.carry = null; p.carrier = null; this.tossed = true;
+    p.hitSet = new Set([this]); p.kicker = this; p.spin = 0;
+    if (thrown) {
+      const air = this.z > 8, dir = this.tossDir || this.face;
+      p.x = this.x + dir * 10; p.y = this.y; p.z = this.z + THROW.z;
+      p.vx = dir * THROW.vx; p.vy = (this.tossVy || 0) * THROW.vy; p.vz = air ? THROW.airVz : THROW.vz;
+      p.flying = { owner: this, hit: new Set(), dir, air };
+      sfx('whoosh', { vol: 0.85, rate: 0.75 }); addScore(this, 50); W.stats.throws = (W.stats.throws || 0) + 1;
+      if (air) floatText('JUMP THROW!', this.x, this.y, this.z + 70, '#8ad8ff');
+    } else if (gentle) {  // set it down in front (SP while carrying)
+      p.x = this.x + this.face * (p.def.w / 2 + 6); p.y = this.y; p.z = 0; p.vx = p.vy = p.vz = 0;
+    } else {  // knocked out of your hands: it tumbles off behind you and takes a knock
+      p.x = this.x; p.y = this.y; p.z = this.z + 34; p.vz = 60; p.vx = -this.face * 50; p.vy = 0;
+    }
+    W.props.push(p);
+    if (!thrown && !gentle) { p.hp -= 1; if (p.hp <= 0) { p.z = 0; p.vz = 0; smashProp(p); } else p.st = Math.max(p.st, p.hp <= Math.ceil(p.def.hp / 2) ? Math.min(1, (p.def.states || 3) - 2) : 0); }
+  }
+
   grab(e) {
     this.held = e; e.set('held'); e.holder = this; this.set('grab'); this.knees = 0; this.pushT = 0;
     e.face = -this.face; sfx('punch0', { vol: 0.3 });
@@ -383,13 +461,15 @@ export class Hero extends Actor {
   pose() {
     const t = this.t, st = this.st;
     switch (st) {
-      case 'idle': case 'land': return ['idle', Math.floor(W.t * 2.2)];
-      case 'walk': case 'enter': return ['walk', Math.floor(W.t * 8)];
+      case 'idle': case 'land': return this.carry ? ['lift', Math.floor(W.t * 2.2)] : ['idle', Math.floor(W.t * 2.2)];
+      case 'walk': case 'enter': return this.carry ? ['carry', Math.floor(W.t * 6)] : ['walk', Math.floor(W.t * 8)];
+      case 'lift': return t < 0.1 ? ['pickup', 0] : ['lift', 0];
+      case 'toss': return ['throw', t < 0.1 ? 0 : 1];
       case 'run': return ['run', Math.floor(W.t * 12)];
       case 'atk': { const A = this.atk; const n = this.atkName; const k = t / (A.dur * (this.id === 'kim' ? 0.85 : this.id === 'will' ? 1.12 : 1)); return [n, n === 'atk3' ? (k < 0.3 ? 0 : k < 0.75 ? 1 : 2) : (k < 0.4 ? 0 : 1)]; }
       case 'dash': return ['dash', 0];
       case 'back': return ['back', 0];
-      case 'jump': case 'respawn': return this.kicked ? ['jkick', 0] : ['jump', this.vz > 0 ? 0 : 1];
+      case 'jump': case 'respawn': return this.carry ? ['lift', 0] : (this.airTossT || 0) > W.t ? ['throw', 1] : this.kicked ? ['jkick', 0] : ['jump', this.vz > 0 ? 0 : 1];
       case 'grab': return ['grab', 0];
       case 'knee': return ['knee', 0];
       case 'throw': return ['throw', t < 0.14 ? 0 : 1];
@@ -416,6 +496,17 @@ export class Hero extends Actor {
     }
     return ['idle', 0];
   }
+  drawCarry(name, i) {  // the prop rides on her hands, overhead (it swings up from the floor during the lift)
+    const p = this.carry, h = this.handOf(name, i), sn = propSprite(p), [w, ph] = sprSize(sn);
+    const top = Math.min(h[1], h[4] ?? h[1]);
+    let X = this.x - W.camX + this.face * ((h[0] + (h[3] ?? h[0])) / 2), Y = this.y + offY() - this.z + top + 3;
+    if (this.st === 'lift' && this.t < 0.18) {  // lerp from where it stood
+      const k = Math.min(1, this.t / 0.18), fx = this.x - W.camX + this.face * this.liftDX, fy = this.y + offY() + this.liftDY;
+      X = fx + (X - fx) * k; Y = fy + (Y - fy) * k;
+    }
+    if (this.inv > 0 && Math.floor(W.t * 20) % 2) return;
+    spr(sn, Math.round(X - w / 2), Math.round(Y - ph));
+  }
   draw() {
     if (this.st === 'out') return;
     const [name, i] = this.pose();
@@ -433,6 +524,7 @@ export class Hero extends Actor {
       const f = this.face < 0;
       spr(w.spr, X, Y, { ax: w.grip[0], ay: w.grip[1], rot: f ? -rot : rot, flip: f });
     }
+    if (this.carry && CARRY_OK.has(this.st)) this.drawCarry(name, i);
     if (this.st === 'dizzy') spr('dizzy' + (Math.floor(W.t * 8) % 3), this.x - W.camX, this.y + offY() - this.z - this.h - 4, { ax: 11 });
     if (this.st === 'teamwait' && Math.floor(W.t * 6) % 2) text('TEAM UP? HOLD SP!', this.x - W.camX, this.y + offY() - this.h - 26, { col: '#ffe84a', align: 'center' });
     if (this.slot !== undefined && W.heroes.length > 1 && this.st !== 'dead') text(`${this.slot + 1}P`, this.x - W.camX, this.y + offY() - this.z - this.h - 14, { col: this.slot ? '#8ad8ff' : '#ffe84a', align: 'center' });

@@ -87,6 +87,9 @@ export class MRI extends Actor {
     for (const h of liveHeroes()) {
       if (h.st === 'ride' || h.z > 40) continue;
       h.x += pull * dt;
+      if (h.carry && h.carry.def.metal) {  // v0.6: a metal prop held overhead gets torn away too (and the magnet reels it in)
+        floatText('HEY! THAT\'S MINE!', h.x, h.y, 70, '#bfeaff'); h.releaseProp(false, true); sfx('whoosh', { vol: 0.5 });
+      }
       if (h.weapon && h.weapon.w.metal) {  // your IV pole / crutch / bedpan gets yanked right out of your hands
         const w = h.weapon; h.weapon = null;
         addShot({ kind: 'yank', spr: w.w.spr, x: h.x, y: h.y, z: 30, vx: 300, life: 2, owner: this });

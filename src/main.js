@@ -195,7 +195,7 @@ function loadLevel(idx, zone = 0) {
   buildLevel(lv); Director.reset(); W.camX = 0; W.camMin = 0; W.clock = lv.clock || 7 * 60; W.stats.time = 0;
   if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else W.nightBg = W.bg;
   W.heroes.forEach((h, i) => {
-    h.kos = 0; h.maxCombo = 0; h.combo = 0; h.weapon = null; h.held = null; h.grabber = null; h.ride = null; h.z = 0; h.vx = h.vy = h.vz = 0; h.inv = 0;
+    h.kos = 0; h.maxCombo = 0; h.combo = 0; h.weapon = null; h.carry = null; h.held = null; h.grabber = null; h.ride = null; h.z = 0; h.vx = h.vy = h.vz = 0; h.inv = 0;
     if (h.st === 'out') { if (game.continuesLeft() > 0) h.continueT = 10; h.x = 56 + i * 22; return; }  // a KO'd partner can still continue here
     h.hp = h.maxHp; h.x = 56 + i * 22; h.y = 126 + i * 2; h.set('enter'); h.face = 1;
   });
@@ -203,7 +203,7 @@ function loadLevel(idx, zone = 0) {
   game.scene = 'intro'; game.t = 0; game.tally = null; setScene('game');
   if (zone > 0 && zone < lv.zones.length) {
     const z = lv.zones[zone]; W.zone = zone - 1; W.camX = W.camMin = Math.max(0, z.lock - 60); W.camMax = z.lock;
-    W.heroes.forEach((h, i) => { if (h.st === 'out') return; h.x = z.at + 4 + i * 20; h.y = 172; h.set('idle'); }); game.t = 2.4;
+    W.heroes.forEach((h, i) => { if (h.st === 'out') return; h.carry = null; h.x = z.at + 4 + i * 20; h.y = 172; h.set('idle'); }); game.t = 2.4;
   }
   if (lv.lightsOut) { W.dark = 0; W.lightsOutT = zone > 0 ? 9 : 0; if (zone > 0) W.dark = lv.dark; }
   playMusic(lv.music || 'stage'); preloadMusic([lv.bossMusic || 'boss', 'clear']);
@@ -377,6 +377,8 @@ function drawWorld() {
   for (const f of W.fx) drawFx(f);
   // gurney hint: RIDE! over a gurney a nurse is standing next to
   for (const h of W.heroes) { if (!h.canAct()) continue; const g = h.nearGurney(); if (g && Math.floor(W.t * 3) % 2) text('RIDE!', g.x - W.camX, g.y + offY() - 44, { col: '#8ad8ff', align: 'center' }); }
+  // v0.6 lift hint: PICK UP over the prop a nurse would lift with GRAB
+  for (const h of W.heroes) { if (h.carry || grabContext(h) !== 'PICK UP') continue; const p = h.liftTarget(); if (p && Math.floor(W.t * 3) % 2) text('PICK UP', p.x - W.camX, p.y + offY() - (p.def.h || 24) - 12, { col: '#8ae87a', align: 'center' }); }
   c.restore();
   if (W.flash > 0) rect(0, 0, G.VW, G.VH, W.flashCol, Math.min(0.75, W.flash * 0.8));
   drawTeamFront();
@@ -408,10 +410,19 @@ function drawEyes() {
 }
 // touch: the GRAB button turns into RIDE next to a gurney
 let rideLabel = 'GRAB';
+// the touch GRAB button is context-sensitive: RIDE next to a gurney, PICK UP at a liftable prop, THROW while carrying one
+function grabContext(h) {
+  if (!h || !(game.scene === 'play' || game.scene === 'bonus')) return 'GRAB';
+  if (h.carry) return 'THROW';
+  if (!h.canAct()) return 'GRAB';
+  if (h.grabTarget(24) && !h.weapon) return 'GRAB';
+  if (h.nearGurney()) return 'RIDE';
+  return h.canLift() ? 'PICK UP' : 'GRAB';
+}
 function updateRideLabel() {
-  const h = W.heroes[0], want = (game.scene === 'play' || game.scene === 'bonus') && h && h.canAct() && h.nearGurney() ? 'RIDE' : 'GRAB';
+  const want = grabContext(W.heroes[0]);
   if (want === rideLabel) return; rideLabel = want;
-  const b = document.getElementById('b_grab'); if (b) { b.textContent = want; b.classList.toggle('ctx', want === 'RIDE'); }
+  const b = document.getElementById('b_grab'); if (b) { b.textContent = want === 'PICK UP' ? 'PICK\nUP' : want; b.classList.toggle('ctx', want !== 'GRAB'); b.classList.toggle('thr', want === 'THROW'); b.dataset.ctx = want; }
 }
 function drawBonusTally() {
   const VW = G.VW, VH = G.VH;
@@ -445,7 +456,7 @@ function drawTitle() {
   HERO_ORDER.forEach((id, i) => { const A = anim(id, 'idle'); frame(id, A.s + (Math.floor(game.t * 2 + i) % A.n), xs[i], 212, { flip: i > 1 }); });
   // Tilly cruises back and forth along the bottom, behind the menu
   const per = 14, ph = (game.t % per) / per, dir = ph < 0.5 ? 1 : -1, u = ph < 0.5 ? ph * 2 : (1 - ph) * 2;
-  const T = anim('tilly', 'drive'); frame('tilly', T.s + (Math.floor(game.t * 8) % T.n), -70 + u * (VW + 140), 226, { flip: dir < 0 });
+  const T = anim('tilly', 'drive'); frame('tilly', T.s + (Math.floor(game.t * 8) % T.n), -90 + u * (VW + 180), 226, { flip: dir < 0, scale: 0.62 });
   if (!game.overlay) panel(VW / 2 - 76, 124, 152, 74, '#0a1030', '#3a4c92', 0.82);
   text(`HI ${String(save.hi[0] ? save.hi[0].s : 0).padStart(7, '0')}`, VW - 6, 4, { col: '#ffe84a', align: 'right' });
   if (!game.overlay) drawMenu(game.menu);

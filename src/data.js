@@ -76,6 +76,8 @@ export const ENEMIES = {
 };
 export const VARIANTS = {};  // v0.2: looks are randomized at runtime instead (src/enemy.js lookFor)
 
+// v0.3 breakables: every floor prop can be smashed; most can be kicked. v0.6: carry = a nurse can lift it overhead and
+// throw it (crash carts, supply carts, gurneys and the vending machine are too big: kick-only).
 // v0.3 breakables: every floor prop can be smashed; most can be kicked. move: 'roll' (casters, glides far) or 'slide'
 // (scoots and stops), fr = friction per second, push = launch speed factor, dmg = damage to patients it plows into,
 // mass = how hard it is to shove (other props / falling patients), bits = debris sprites, deb = debris chunk colours.
@@ -84,34 +86,37 @@ export const BREAKABLES = {
     bits: ['deb_drawer', 'deb_gauze', 'deb_pill', 'deb_syringe', 'deb_wheel', 'deb_gauze'], deb: ['#d8303c', '#a01c28', '#b8c0cc', '#3aa860'], hit: 'clang', brk: 'crash' },
   supplycart: { metal: true, name: 'SUPPLY CART', spr: 'supplycart', hp: 4, w: 28, h: 36, move: 'roll', fr: 0.6, push: 0.95, dmg: 12, mass: 2, loot: 'cart',
     bits: ['deb_box', 'deb_gauze', 'deb_glove', 'deb_rod', 'deb_wheel'], deb: ['#b8c0cc', '#c8a070', '#4a8ad8'], hit: 'clang', brk: 'crash' },
-  medcart: { metal: true, name: 'MED CART', spr: 'medcart', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.6, push: 1.0, dmg: 12, mass: 1.8, loot: 'cart',
+  medcart: { carry: true, metal: true, name: 'MED CART', spr: 'medcart', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.6, push: 1.0, dmg: 12, mass: 1.8, loot: 'cart',
     bits: ['deb_pill', 'deb_gauze', 'deb_wheel'], deb: ['#e84a5a', '#a82838', '#b8c0cc'], hit: 'clang', brk: 'crash' },
-  wheelchair: { metal: true, name: 'WHEELCHAIR', spr: 'wheelchair', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.5, push: 1.1, dmg: 12, mass: 1.4, loot: 'small',
+  wheelchair: { carry: true, metal: true, name: 'WHEELCHAIR', spr: 'wheelchair', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.5, push: 1.1, dmg: 12, mass: 1.4, loot: 'small',
     bits: ['deb_wheel', 'deb_rod', 'deb_seat'], deb: ['#2a5aa8', '#2a2e3a', '#9aa4b4'], hit: 'clang', brk: 'crash' },
-  linen: { name: 'LINEN HAMPER', spr: 'linen', hp: 3, w: 20, h: 30, move: 'roll', fr: 0.85, push: 0.9, dmg: 10, mass: 1.2, loot: 'linen',
+  linen: { carry: true, name: 'LINEN HAMPER', spr: 'linen', hp: 3, w: 20, h: 30, move: 'roll', fr: 0.85, push: 0.9, dmg: 10, mass: 1.2, loot: 'linen',
     bits: ['deb_linen', 'deb_linen', 'deb_rod'], deb: ['#4a7ac8', '#f4f4f8'], hit: 'thunk', brk: 'crash' },
-  ivstand: { metal: true, name: 'IV STAND', spr: 'ivstand', hp: 2, w: 12, h: 54, states: 2, move: 'roll', fr: 0.9, push: 1.1, dmg: 8, mass: 0.7, loot: 'small',
+  ivstand: { carry: true, metal: true, name: 'IV STAND', spr: 'ivstand', hp: 2, w: 12, h: 54, states: 2, move: 'roll', fr: 0.9, push: 1.1, dmg: 8, mass: 0.7, loot: 'small',
     bits: ['deb_rod', 'deb_glass'], deb: ['#b8c0cc', '#cfe8ff'], hit: 'clang', brk: 'smash' },
-  chair: { name: 'CHAIR', spr: 'chair', hp: 2, w: 18, h: 26, move: 'slide', fr: 3.2, push: 0.85, dmg: 8, mass: 1, loot: 'small',
+  chair: { carry: true, name: 'CHAIR', spr: 'chair', hp: 2, w: 18, h: 26, move: 'slide', fr: 3.2, push: 0.85, dmg: 8, mass: 1, loot: 'small',
     bits: ['deb_seat', 'deb_rod'], deb: ['#5a8ad8', '#7c8696'], hit: 'thunk', brk: 'crash' },
-  trash: { name: 'TRASH CAN', spr: 'trash', hp: 2, w: 14, h: 24, move: 'slide', fr: 2.4, push: 1.05, dmg: 7, mass: 0.6, loot: 'trash',
+  trash: { carry: true, name: 'TRASH CAN', spr: 'trash', hp: 2, w: 14, h: 24, move: 'slide', fr: 2.4, push: 1.05, dmg: 7, mass: 0.6, loot: 'trash',
     bits: ['deb_paper', 'deb_can', 'deb_paper', 'deb_box'], deb: ['#8a94a4', '#5c6676'], hit: 'clang', brk: 'crash' },
-  plant: { name: 'PLANT', spr: 'potplant', hp: 2, w: 16, h: 34, move: 'slide', fr: 4, push: 0.7, dmg: 6, mass: 1, loot: 'small',
+  plant: { carry: true, name: 'PLANT', spr: 'potplant', hp: 2, w: 16, h: 34, move: 'slide', fr: 4, push: 0.7, dmg: 6, mass: 1, loot: 'small',
     bits: ['deb_shard', 'deb_leaf', 'deb_shard', 'deb_leaf'], deb: ['#c86a3a', '#5a3a24', '#3a8a3a'], hit: 'thunk', brk: 'shatter' },
-  wetfloor: { name: 'WET FLOOR SIGN', spr: 'wetfloor', hp: 2, w: 14, h: 26, states: 2, move: 'slide', fr: 2.6, push: 1.2, dmg: 5, mass: 0.4, loot: 'small',
+  wetfloor: { carry: true, name: 'WET FLOOR SIGN', spr: 'wetfloor', hp: 2, w: 14, h: 26, states: 2, move: 'slide', fr: 2.6, push: 1.2, dmg: 5, mass: 0.4, loot: 'small',
     bits: ['deb_sign', 'deb_sign'], deb: ['#ffd84a', '#d8a820'], hit: 'thunk', brk: 'thunk' },
   // v0.4: a rideable gurney (GRAB / ATK+JUMP / the RIDE touch button) and the O2 tank an O2 Wanderer drops
   gurney: { metal: true, name: 'GURNEY', spr: 'gurneyp', hp: 6, w: 52, h: 26, move: 'roll', fr: 0.5, push: 0.85, dmg: 14, mass: 2.4, loot: 'cart', ride: true,
     bits: ['deb_wheel', 'deb_linen', 'deb_rod', 'deb_linen'], deb: ['#f4f6fa', '#7ab0e8', '#b8c0cc'], hit: 'clang', brk: 'crash' },
-  o2tank: { metal: true, name: 'O2 TANK', spr: 'o2tank', hp: 4, w: 14, h: 30, move: 'roll', fr: 0.7, push: 1.15, dmg: 12, mass: 1.0, loot: 'small', hiss: true,
+  o2tank: { carry: true, metal: true, name: 'O2 TANK', spr: 'o2tank', hp: 4, w: 14, h: 30, move: 'roll', fr: 0.7, push: 1.15, dmg: 12, mass: 1.0, loot: 'small', hiss: true,
     bits: ['deb_rod', 'deb_wheel'], deb: ['#3aa860', '#267a44', '#b8c0cc'], hit: 'clang', brk: 'hiss' },
   // v0.5 Radiology props (metal ones get yanked by the MRI magnet; glow = it lights the dark floor around it)
-  apronrack: { metal: true, name: 'LEAD APRON RACK', spr: 'apronrack', hp: 4, w: 30, h: 44, move: 'roll', fr: 0.6, push: 0.9, dmg: 13, mass: 2, loot: 'cart',
+  apronrack: { carry: true, metal: true, name: 'LEAD APRON RACK', spr: 'apronrack', hp: 4, w: 30, h: 44, move: 'roll', fr: 0.6, push: 0.9, dmg: 13, mass: 2, loot: 'cart',
     bits: ['deb_apron', 'deb_rod', 'deb_wheel', 'deb_apron'], deb: ['#3a6ad8', '#8a4ad8', '#2aa8a0', '#b8c0cc'], hit: 'clang', brk: 'crash' },
-  contrastcart: { metal: true, name: 'CONTRAST CART', spr: 'contrastcart', hp: 3, w: 28, h: 42, move: 'roll', fr: 0.6, push: 1.0, dmg: 12, mass: 1.8, loot: 'cart', zap: true, glow: '#ffb03a',
+  contrastcart: { carry: true, metal: true, name: 'CONTRAST CART', spr: 'contrastcart', hp: 3, w: 28, h: 42, move: 'roll', fr: 0.6, push: 1.0, dmg: 12, mass: 1.8, loot: 'cart', zap: true, glow: '#ffb03a',
     bits: ['deb_bottle', 'deb_gauze', 'deb_wheel', 'deb_bottle'], deb: ['#b8c0cc', '#f4f6fa', '#3a6ad8'], hit: 'clang', brk: 'crash' },
-  viewer: { metal: true, name: 'FILM VIEWER', spr: 'viewer', hp: 2, w: 24, h: 44, move: 'roll', fr: 0.9, push: 1.0, dmg: 9, mass: 0.9, loot: 'small', glow: '#3aa8ff',
+  viewer: { carry: true, metal: true, name: 'FILM VIEWER', spr: 'viewer', hp: 2, w: 24, h: 44, move: 'roll', fr: 0.9, push: 1.0, dmg: 9, mass: 0.9, loot: 'small', glow: '#3aa8ff',
     bits: ['deb_film', 'deb_glass', 'deb_rod', 'deb_film'], deb: ['#bfeaff', '#1c3a66', '#8a94a4'], hit: 'clang', brk: 'smash' },
+  // v0.6: a loose meal tray (the Tray Thrower's trays land as these): light, carryable, shatters in one hit
+  mealtray: { carry: true, single: true, name: 'MEAL TRAY', spr: 'p_tray', hp: 1, w: 14, h: 8, move: 'slide', fr: 4, push: 1.2, dmg: 5, mass: 0.3, loot: 'none',
+    deb: ['#c8ccd6', '#8a94a4', '#e8a040'], hit: 'clang', brk: 'clang' },
   vending: { name: 'VENDING MACHINE', spr: 'vending', hp: 6, w: 30, h: 64, big: true, mass: 99, loot: 'vending',
     bits: ['deb_glass', 'deb_can', 'deb_glass', 'deb_box'], deb: ['#d83a4a', '#1a2a3a', '#cfe8ff'], hit: 'clang', brk: 'smash' },
 };
@@ -142,10 +147,10 @@ export const LEVEL1 = {
   props: [ // breakables on the floor: [x, y, kind, guaranteed drops[]] (plus one random LOOT roll each)
     // zone 1 (camera 0..)
     [150, 182, 'wetfloor', []], [236, 150, 'crashcart', ['energy']], [300, 204, 'trash', []], [334, 146, 'plant', []],
-    [470, 150, 'medcart', []], [392, 196, 'gurney', []],
+    [470, 150, 'medcart', []], [392, 196, 'gurney', []], [262, 194, 'mealtray', []],
     // zone 2 (camera 480..)
     [556, 198, 'chair', []], [612, 148, 'trash', []], [700, 164, 'crashcart', []], [804, 202, 'wetfloor', []], [880, 146, 'ivstand', ['w:ivpole']],
-    [1012, 196, 'linen', ['w:bedpan']], [640, 186, 'gurney', []],
+    [1012, 196, 'linen', ['w:bedpan']], [640, 186, 'gurney', []], [760, 150, 'mealtray', []],
     // zone 3: elevator bank (camera 1060..)
     [1118, 202, 'wheelchair', []], [1196, 146, 'trash', []], [1296, 190, 'crashcart', ['snacks']], [1366, 148, 'chair', []], [1388, 150, 'chair', []],
     [1500, 148, 'supplycart', []], [1190, 176, 'gurney', []],
@@ -157,6 +162,7 @@ export const LEVEL1 = {
     [2600, 148, 'ivstand', ['w:extinguisher']], [2680, 200, 'linen', ['zynn']], [2290, 182, 'gurney', []], [1690, 184, 'gurney', []],
     // dayroom (boss): Tilly plows through these
     [3130, 150, 'chair', []], [3156, 152, 'chair', []], [3300, 200, 'crashcart', []], [3470, 148, 'plant', []],
+    [3236, 198, 'mealtray', []], [3410, 196, 'trash', []],  // v0.6: ammo to throw at Tilly
   ],
   floorItems: [[700, 200, 'w:clipboard']],
   // zones: when the lead player passes `at`, the camera locks at [lock, lock + view width] until every wave is cleared

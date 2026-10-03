@@ -29,7 +29,7 @@ export function startBonus() {
   W.zone = -1; W.zoneOn = false; W.wave = 0; W.queue = []; W.go = 0; W.lockX = 0; W.camMin = 0; W.camMax = 0; W.camX = 0; W.bossOn = false; W.cleared = false;
   W.heroes.forEach((h, i) => {
     if (h.st === 'out') return;
-    h.x = 70 + i * 34; h.y = 178 + i * 6; h.z = 0; h.vx = h.vy = h.vz = 0; h.set('idle'); h.face = 1; h.hp = h.maxHp; h.inv = 0; h.held = null; h.grabber = null; h.ride = null;
+    h.x = 70 + i * 34; h.y = 178 + i * 6; h.z = 0; h.vx = h.vy = h.vz = 0; h.set('idle'); h.face = 1; h.hp = h.maxHp; h.inv = 0; h.held = null; h.grabber = null; h.ride = null; h.carry = null;
     h.bStops = 0; h.bSaved = 0;
   });
   Object.assign(B, { phase: 'intro', t: 0, left: BONUS.time, spawnT: 0.6, stopped: 0, escaped: 0, saved: 0, fridgeOpen: 0, n: 0, done: false, endT: 0 });
