@@ -1,6 +1,6 @@
 // The level: pre-rendered hospital hallway, wall features (doors and elevators that open), breakables, floor items,
 // projectiles, effects, the camera and the zone / wave spawner.
-import { G, spr, sprSize, rect, text, ellipse, ring, bolt, frame } from './gfx.js';
+import { G, spr, sprSize, rect, text, ellipse, ring, bolt, frame, textW } from './gfx.js';
 import { Y_MIN, Y_MAX, LEVEL1, BREAKABLES, ITEMS, WEAPONS, DIFF, GRAV } from './data.js';
 import { sfx } from './sound.js';
 
@@ -177,7 +177,7 @@ export function drawFx(f) {
   else if (f.type === 'dust') { const i = Math.min(3, Math.floor(k * 4)); spr('dust' + i, X, Y, { ax: 10, ay: 10 }); }
   else if (f.type === 'smoke') { const i = Math.min(2, Math.floor(k * 3)); spr('smoke' + i, X, Y - k * 10, { ax: 8, ay: 8 }); }
   else if (f.type === 'word') { const [w, h] = sprSize(f.name); const s = k < 0.15 ? 0.6 + k / 0.15 * 0.6 : k < 0.25 ? 1.2 - (k - 0.15) * 2 : 1; spr(f.name, X, Y - k * 6, { ax: w / 2, ay: h / 2, scale: s, alpha: k > 0.8 ? (1 - k) * 5 : 1 }); }
-  else if (f.type === 'txt') text(f.s, X, Y - k * 16, { col: f.col, align: 'center', alpha: k > 0.75 ? (1 - k) * 4 : 1 });
+  else if (f.type === 'txt') text(f.s, Math.max(textW(f.s) / 2 + 2, Math.min(G.VW - textW(f.s) / 2 - 2, X)), Y - k * 16, { col: f.col, align: 'center', alpha: k > 0.75 ? (1 - k) * 4 : 1 });
   else if (f.type === 'zzz') spr('zzz', X, Y - k * 8, { alpha: 1 - k * 0.5 });
   else if (f.type === 'heart') spr('heart', X, Y - k * 14, { alpha: 1 - k });
   else if (f.type === 'speed') rect(X, Y, 10, 1, '#fff', 1 - k);

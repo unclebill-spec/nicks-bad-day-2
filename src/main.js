@@ -261,10 +261,10 @@ function botInput(h) {
   return o;
 }
 function toTally() {
-  game.scene = 'tally'; game.t = 0; playMusic('clear');
+  game.scene = 'tally'; game.t = 0; playMusic('clear'); setScene('menu');
   for (const h of W.heroes) if (h.alive && h.st !== 'out') { h.set('win'); h.inv = 0; }
   const timeBonus = Math.max(0, Math.round((9 * 60 - W.clock) * 40));
-  game.tally = W.heroes.map((h) => ({ h, rows: [['SCORE', h.score], ['PATIENTS TUCKED IN', h.kos * 100], ['BEST COMBO', (h.maxCombo || 0) * 50], ['ON-TIME BONUS', h.st === 'out' ? 0 : timeBonus]], shown: 0 }));
+  game.tally = W.heroes.map((h) => ({ h, rows: [['SCORE', h.score], [`TUCKED IN x${h.kos}`, h.kos * 100], [`COMBO x${h.maxCombo || 0}`, (h.maxCombo || 0) * 50], ['ON TIME', h.st === 'out' ? 0 : timeBonus]], shown: 0 }));
   for (const t of game.tally) t.total = t.rows.reduce((s, r, i) => s + (i ? r[1] : 0), t.rows[0][1]);
   save.best = Math.max(save.best, 1); writeSave();
 }
@@ -279,7 +279,7 @@ function finishRun(cleared) {
   }
   writeSave();
 }
-function toGameOver() { game.scene = 'gameover'; game.t = 0; stopMusic(); sfx('explosion'); finishRun(false); }
+function toGameOver() { setScene('menu'); game.scene = 'gameover'; game.t = 0; stopMusic(); sfx('explosion'); finishRun(false); }
 
 // ------------------------------------------------------------------ drawing
 function drawWorld() {
@@ -371,7 +371,7 @@ function drawTally() {
     panel(x, y, pw, 118);
     spr(`face_${T.h.id}`, x + 4, y + 4); text(T.h.d.name, x + 44, y + 10, { col: T.h.slot ? '#8ad8ff' : '#ffe84a' });
     const reveal = Math.min(T.rows.length, Math.floor(game.t * 2));
-    T.rows.forEach((r, j) => { if (j >= reveal) return; text(r[0], x + 6, y + 44 + j * 14, { col: '#c8d4f0' }); text(String(r[1]), x + pw - 6, y + 52 + j * 14 - 8 + 8, { col: '#ffffff', align: 'right' }); });
+    T.rows.forEach((r, j) => { if (j >= reveal) return; text(r[0], x + 6, y + 44 + j * 14, { col: '#c8d4f0' }); text(String(r[1]), x + pw - 6, y + 44 + j * 14, { col: '#ffffff', align: 'right' }); });
     if (reveal >= T.rows.length) text(`TOTAL ${T.total}`, x + pw / 2, y + 104, { col: '#ffe84a', align: 'center' });
   });
   if (game.t > 3) text(Math.floor(game.t * 2) % 2 ? 'PRESS ATTACK' : '', VW / 2, VH - 30, { col: '#ffffff', align: 'center' });

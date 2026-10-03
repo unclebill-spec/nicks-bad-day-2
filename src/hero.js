@@ -43,13 +43,14 @@ export class Hero extends Actor {
     else if (atk && jmp) { atk = jmp = false; this.wantBack = true; }
     else if ((atk || jmp) && this.canAct() && !this.weapon) { this.buf = atk ? 'atk' : 'jmp'; this.bufT = 0; atk = jmp = false; }
     const I = { ...inp, atk, jmp };
-    if (this.fallStep(dt, 0.8)) { if (this.st === 'dead') this.onDead(); return; }
-    const fn = this['s_' + this.st]; if (fn) fn.call(this, dt, I);
+    const falling = this.fallStep(dt, 0.8);
+    if (!falling) { const fn = this['s_' + this.st]; if (fn) fn.call(this, dt, I); }
     this.y = clampY(this.y);
     const L = W.camX + 10, R = W.camX + G.VW - 10;
-    if (this.st !== 'enter') this.x = Math.max(L, Math.min(R, this.x));
-    this.pickups();
+    if (this.st !== 'enter' && this.st !== 'out') this.x = Math.max(L, Math.min(R, this.x));
+    if (!falling) this.pickups();
   }
+  s_dead() { this.onDead(); }
   onDead() {
     if (this.t < 0.05) { this.lives -= 1; this.respawnT = 0; sfx('explosion', { vol: 0.4 }); }
     this.respawnT += 1 / 60;
