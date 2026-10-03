@@ -2,6 +2,26 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-03: v0.2 "Gown Check" (Bill's art + gameplay notes)
+- **Patients:**
+  - Every patient now wears a traditional checked hospital gown, in pale green or faded olive, with yellow grip socks.
+  - Standard patients get random hair colors and skin tones. Sheets are recolored at runtime by `tintSheet` in `src/gfx.js` and `lookFor` in `src/enemy.js`.
+  - The old palette-swap sheets `wanderer2` and `escape2` are removed.
+- **New weapon patients:**
+  - **Crutch Crusader** pokes with a crutch.
+  - **Bell Ringer** whips a call bell on its cord, which dizzies. IV-pole Swingers stay.
+  - Both drop their weapon 50% of the time, and nurses can pick it up and use it: new weapons **crutch**, **call bell** and **cane**.
+- **Elite "Frequent Flyer":**
+  - Beehive hairdo with curlers, red or blue grip socks, and 1 armor.
+  - Canes you up close. From range it throws syringe darts, or lobs full urinals that splash ("SPLOOSH!") and leave a slippery yellow puddle.
+  - It's cartoonish, with no gore.
+- **Nurse drops:**
+  - The **energy drink** (small heal) and **fruit snacks** (big heal) replace coffee and pizza.
+  - A round **ZYNN** tin replaces the Double Shift token for +1 life. It's a parody label with no real logo.
+- **Level 1 waves** now mix in crutch, bell and elite patients, and add an extra wave in the elevator bank and in zone 4. Tilly's backup calls bring crutch and bell patients.
+- **New sprites:** splash FX, comic words SPLOOSH!, DING! and POKE!, syringe, urinal, and the new weapon pickups. Service worker cache bumped to `nbd2-app-v2`.
+- **Tests:** new `tests/patients.py` (random looks, elite throws, splash and puddle, KO drops, new pickups) and `tests/before_after.py` (the art comparison in `docs/art_before_after.png`).
+
 ## 2026-10-03: v0.1 "First Shift" (Level 1 playable)
 - **Published** to GitHub Pages at https://unclebill-spec.github.io/nicks-bad-day-2/
 - **Game runtime** (`src/`):
