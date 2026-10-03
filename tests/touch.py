@@ -23,7 +23,8 @@ with sync_playwright() as p:
     m = pg.evaluate('__nbd.game.menu.rects[0]'); tapxy(*L2C(m[0] + m[2] / 2, m[1] + m[3] / 2)); time.sleep(0.4)
     print('select', pg.evaluate(S)); 
     c = pg.evaluate('__nbd.game.cardRects[3]'); x, y = L2C(c[0] + c[2] / 2, c[1] + c[3] / 2); tapxy(x, y); tapxy(x, y)
-    time.sleep(1); pg.screenshot(path='tests/out/t_select.png'); time.sleep(3.2); print('play', pg.evaluate(S))
+    time.sleep(1); pg.screenshot(path='tests/out/t_select.png'); time.sleep(0.6); print('cutscene', pg.evaluate('__nbd.game.scene'))
+    tapxy(*L2C(150, 100)); time.sleep(3.0); print('play', pg.evaluate(S))  # v0.4: a tap skips the cutscene
     # joystick: hold in the left zone and push right, while tapping HIT
     jx, jy = W * 0.18, H * 0.7
     touch('touchStart', [(1, jx, jy)]); time.sleep(0.05)

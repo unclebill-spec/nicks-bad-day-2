@@ -1,8 +1,10 @@
 // The four nurses: movement, combos, jump kick, dash attack, grab / knee / throw, back attack, weapons, the
 // per-hero desperation special (costs a little health) and the Code Blue super (meter).
-import { G, frame, spr, sprSize, ellipse, text } from './gfx.js';
+// v0.4: gurney rides (GRAB or ATK+JUMP next to a gurney; touch shows a RIDE button) and the 2-player Charge Nurse team-up
+// (both hold SP near each other with half a meter each: a screen-clearing combined move).
+import { G, frame, spr, sprSize, ellipse, text, rect, ring } from './gfx.js';
 import { HEROES, ATTACKS, WEAPONS, Y_MIN, Y_MAX } from './data.js';
-import { W, offY, dropItem, addShot, addFx, word, floatText, shake, spark, addScore } from './world.js';
+import { W, offY, dropItem, addShot, addFx, word, floatText, shake, spark, addScore, smashProp, hitProp, bumpProps } from './world.js';
 import { Actor, strike, clampY } from './actor.js';
 import { sfx } from './sound.js';
 
@@ -14,7 +16,7 @@ export class Hero extends Actor {
     this.weapon = null; this.held = null; this.step = 0; this.gap = 9; this.buf = null; this.bufT = 0; this.speedT = 0; this.mash = 0; this.respawnT = 0; this.ctl = null;
     this.h = id === 'kim' || id === 'will' ? 48 : 54; this.w = id === 'will' ? 18 : 14;
   }
-  hittable() { return this.inv <= 0 && !['fall', 'down', 'getup', 'dead', 'super', 'respawn', 'enter', 'win', 'out'].includes(this.st); }
+  hittable() { return this.inv <= 0 && !['fall', 'down', 'getup', 'dead', 'super', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup'].includes(this.st); }
   canAct() { return ['idle', 'walk', 'run'].includes(this.st); }
   get spd() { return this.speedT > 0 ? 1.4 : 1; }
 
@@ -84,6 +86,7 @@ export class Hero extends Actor {
     this.common(dt, I);
   }
   common(dt, I) {
+    if ((this.wantBack || I.prs.grab) && !(this.held && this.held.st === 'held')) { const g = this.nearGurney(); if (g) { this.wantBack = false; return this.mount(g); } }
     if (this.wantBack) { this.wantBack = false; this.set('back'); this.hitDone = false; sfx('whoosh', { vol: 0.5 }); return; }
     if (I.prs.sp) return this.special();
     if (I.jmp) { this.set('jump'); this.vz = this.d.jump; this.vx = I.mx * (I.run ? this.d.run : this.d.walk) * this.spd; this.vy = I.my * this.d.depth * 0.8; this.kicked = false; sfx('jump', { vol: 0.4 }); return; }
@@ -252,8 +255,82 @@ export class Hero extends Actor {
     if (W2.ammo <= 0) { floatText('EMPTY!', this.x, this.y, 60, '#8ad8ff'); this.weapon = null; return this.set('idle'); }
     if (!I.held.atk && this.t > 0.25) this.set('idle');
   }
+  // ---- v0.4 gurney ride: hop on, it rolls forward ~2.6 s plowing patients and props, then crashes (JUMP bails early and
+  // sends the empty gurney rolling on). Up / down steers.
+  nearGurney() {
+    for (const p of W.props) {
+      if (!p.def.ride || p.st >= 2 || p.rider || Math.abs(p.vx) > 40) continue;
+      if (Math.abs(p.y - this.y) < 14 && Math.abs(p.x - this.x) < p.def.w / 2 + 12) return p;
+    }
+    return null;
+  }
+  mount(g) {
+    this.ride = g; g.rider = this; g.kicker = this; g.vx = g.vy = 0; g.hitSet = new Set([this]);
+    this.rideDir = this.face; this.set('ride'); this.rideSet = new Set([g]); this.hopX = this.x; this.rolling = false;
+    sfx('jump', { vol: 0.5 }); floatText('GURNEY RIDE!', this.x, this.y, 70, '#8ad8ff'); W.stats.rides = (W.stats.rides || 0) + 1;
+  }
+  s_ride(dt, I) {
+    const g = this.ride;
+    if (!g || g.st >= 2) return this.dismount(false);
+    const hop = 0.22;
+    if (this.t < hop) { const k = this.t / hop; this.x = this.hopX + (g.x - this.hopX) * k; this.y += (g.y + 0.5 - this.y) * Math.min(1, dt * 12); this.z = Math.sin(k * Math.PI) * 18 + k * 12; return; }
+    const d = this.rideDir, sp = Math.min(290, 200 + (this.t - hop) * 120);
+    if (!this.rolling) { this.rolling = true; sfx('rattle', { vol: 0.7 }); shake(2); }
+    g.x += d * sp * dt; g.y = clampY(g.y + I.my * 70 * dt); g.vx = d * sp;
+    this.x = g.x; this.y = g.y + 0.5; this.z = 12 + (Math.floor(W.t * 30) % 2); this.face = d;
+    if ((this.rattleT = (this.rattleT || 0) + dt) > 0.3) { this.rattleT = 0; sfx('rattle', { vol: 0.45 }); addFx({ type: 'dust', x: g.x - d * g.def.w / 2, y: g.y, z: 0, dur: 0.3 }); }
+    if (Math.floor(this.t * 30) % 2 === 0) addFx({ type: 'speed', x: g.x - d * (g.def.w / 2 + 14) - 5, y: g.y, z: 6 + W.rnd() * 34, dur: 0.18 });
+    for (const e of [...W.enemies, ...(W.boss ? [W.boss] : [])]) {  // plow through the crowd
+      if (!e.alive || this.rideSet.has(e) || !e.hittable() || e.z > 30) continue;
+      if (Math.abs(e.y - g.y) > 13 + (e.big ? 6 : 0) || Math.abs(e.x - (g.x + d * 6)) > g.def.w / 2 + e.w / 2) continue;
+      this.rideSet.add(e);
+      if (e.isBoss) { e.takeHit({ dmg: 14, dir: d, from: this }); spark(e.x, e.y, 26, 'bigspark'); return this.dismount(true); }
+      e.takeHit({ dmg: 16 * this.d.power, dir: d, kb: 200, stun: 0.5, down: true, from: this });
+      spark(e.x, e.y, 26, 'bigspark'); sfx('heavy', { vol: 0.8 }); shake(3); W.stop = Math.max(W.stop, 0.04);
+      word(['w_wham', 'w_pow', 'w_smack'][Math.floor(W.rnd() * 3)], e.x, e.y, 14); addScore(this, 200);
+      this.combo = (this.combo || 0) + 1; this.comboT = 1.6; this.maxCombo = Math.max(this.maxCombo || 0, this.combo); this.meter = Math.min(100, this.meter + 6); this.lastFoe = e; this.lastFoeT = W.t + 2.2;
+    }
+    bumpProps({ x: g.x + d * (g.def.w / 2), y: g.y, z: 0 }, 14, d, this, this.rideSet, 4);  // carts and chairs in the way go flying
+    const edge = (d > 0 && g.x > W.camX + G.VW - g.def.w / 2 - 2) || (d < 0 && g.x < W.camX + g.def.w / 2 + 2);
+    if (I.jmp) return this.dismount(false);
+    if (edge || this.t > hop + 2.6) return this.dismount(true);
+  }
+  dismount(crash) {
+    const g = this.ride, d = this.rideDir || this.face; this.ride = null; this.rolling = false;
+    if (g) {
+      g.rider = null;
+      if (crash && g.st < 2) { g.vx = d * 40; smashProp(g); shake(6); floatText('WHOA!', this.x, this.y, 70, '#ffffff'); W.stats.crashes = (W.stats.crashes || 0) + 1; }
+      else if (g.st < 2) { g.vx = d * 240; g.hitSet = new Set([this]); g.nudge = false; g.kicker = this; }
+    }
+    this.set('jump'); this.vz = 210; this.vx = d * (crash ? 50 : -40); this.vy = 0; this.z = Math.max(this.z, 8);
+    this.kicked = true; this.kickSet = new Set(g ? [g] : []); this.inv = Math.max(this.inv, 0.5);
+  }
+  // ---- v0.4 Charge Nurse team-up (2P): both hold SP within reach of each other with >= half a meter each
+  partner() {
+    if (W.heroes.length < 2) return null;
+    const o = W.heroes.find((q) => q !== this && q.alive && !['out', 'dead'].includes(q.st));
+    return o && Math.abs(o.x - this.x) < 110 && Math.abs(o.y - this.y) < 40 ? o : null;
+  }
+  s_teamwait(dt, I) {
+    const p = this.partner();
+    if (p && p.st === 'teamwait') return startTeam(p, this);
+    if (!p || !(I.held && I.held.sp) || this.t > 1.2) { this.set('idle'); this.soloSpecial(); }
+  }
+  s_teamup(dt) {
+    const T = W.team; this.z = Math.sin(Math.min(1, this.t / 1.5) * Math.PI) * 16;
+    if (T && T.a === this) { T.t = this.t; if (!T.hit && this.t > 0.75) { T.hit = true; teamBlast(T); } }
+    if (this.t > 1.6) { this.z = 0; this.set('idle'); if (T && T.a === this) W.team = null; }
+  }
   // ---- specials
   special() {
+    const p = this.partner();
+    if (p && this.meter >= 50 && p.meter >= 50) {
+      if (p.st === 'teamwait') return startTeam(p, this);
+      this.set('teamwait'); sfx('blip', { vol: 0.6 }); return;
+    }
+    return this.soloSpecial();
+  }
+  soloSpecial() {
     if (this.meter >= 100) return this.codeBlue();
     if (this.hp <= 1) { floatText('TOO TIRED!', this.x, this.y, 60, '#ff8ac0'); return; }
     this.hp = Math.max(1, this.hp - 8); this.set('special'); this.spDone = false; this.hitSet = new Set(); this.inv = Math.max(this.inv, 0.4);
@@ -327,6 +404,9 @@ export class Hero extends Actor {
       case 'spray': return ['spray', 0];
       case 'win': return ['win', Math.floor(W.t * 3)];
       case 'super': return ['win', 0];
+      case 'ride': return this.t < 0.22 ? ['jump', 0] : ['ride', Math.floor(W.t * 8)];
+      case 'teamwait': return ['team', 0];
+      case 'teamup': return ['team', 0];
       case 'special': {
         if (this.id === 'nick') return ['special', t < 0.3 ? 0 : t < 0.6 ? 1 : 2];
         if (this.id === 'kim') return ['special', Math.floor(t * 18)];
@@ -340,6 +420,7 @@ export class Hero extends Actor {
     if (this.st === 'out') return;
     const [name, i] = this.pose();
     if (this.st === 'super') { const X = this.x - W.camX, Y = this.y + offY() - 30; ellipse(X, Y, 26 + Math.sin(W.t * 30) * 3, 30, '#8ad8ff', 0.35); }
+    if (this.st === 'teamwait' || this.st === 'teamup') { const X = this.x - W.camX, Y = this.y + offY() - this.z - 28; ellipse(X, Y, 22 + Math.sin(W.t * 24) * 3, 30, this.st === 'teamup' ? '#ffffff' : '#ffe84a', 0.35); }
     if (this.speedT > 0 && Math.floor(W.t * 10) % 2) ellipse(this.x - W.camX, this.y + offY() - 26, 14, 28, '#ffe84a', 0.18);
     this.drawSprite(name, i);
     // weapon in hand
@@ -353,7 +434,61 @@ export class Hero extends Actor {
       spr(w.spr, X, Y, { ax: w.grip[0], ay: w.grip[1], rot: f ? -rot : rot, flip: f });
     }
     if (this.st === 'dizzy') spr('dizzy' + (Math.floor(W.t * 8) % 3), this.x - W.camX, this.y + offY() - this.z - this.h - 4, { ax: 11 });
+    if (this.st === 'teamwait' && Math.floor(W.t * 6) % 2) text('TEAM UP? HOLD SP!', this.x - W.camX, this.y + offY() - this.h - 26, { col: '#ffe84a', align: 'center' });
     if (this.slot !== undefined && W.heroes.length > 1 && this.st !== 'dead') text(`${this.slot + 1}P`, this.x - W.camX, this.y + offY() - this.z - this.h - 14, { col: this.slot ? '#8ad8ff' : '#ffe84a', align: 'center' });
   }
 }
 const A_DASH = ATTACKS.dash.dur;
+
+// ---- Charge Nurse team-up
+function startTeam(a, b) {
+  for (const h of [a, b]) { h.meter = Math.max(0, h.meter - 50); if (h.held) h.release(); h.set('teamup'); h.inv = 2; h.vx = 0; }
+  const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+  W.team = { t: 0, x: cx, y: cy, a, b, hit: false };
+  W.stop = 0.12; W.flash = 1; W.flashCol = '#ffffff'; sfx('charge'); shake(4);
+  word('w_charge', cx, cy, 64); floatText('CHARGE NURSE, COMING THROUGH!', cx, cy, 96, '#ffe84a');
+  W.stats.teamups = (W.stats.teamups || 0) + 1;
+}
+function teamBlast(T) {
+  shake(10); sfx('explosion'); sfx('zap'); W.flash = 0.9; W.flashCol = '#ffe84a';
+  let n = 0;
+  for (const e of W.enemies) {
+    if (!e.alive || e.st === 'dead' || e.x < W.camX - 10 || e.x > W.camX + G.VW + 10) continue;
+    const by = n++ % 2 ? T.b : T.a;
+    e.takeHit({ dmg: 70, dir: Math.sign(e.x - T.x) || 1, kb: 200, down: true, from: by, force: true });
+    addFx({ type: 'spark', kind: 'bigspark', x: e.x, y: e.y, z: 30, dur: 0.3 }); addFx({ type: 'spark', kind: 'bluespark', x: e.x, y: e.y, z: 16, dur: 0.3 });
+  }
+  if (W.boss && W.boss.alive) W.boss.takeHit({ dmg: W.boss.maxHp * 0.15, dir: 1, from: T.a, force: true });
+  for (const p of W.props) if (p.st < 2 && p.x > W.camX - 10 && p.x < W.camX + G.VW + 10) hitProp(p, 30, { dir: Math.sign(p.x - T.x) || 1, kb: 240, from: T.a });
+  addScore(T.a, 1500); addScore(T.b, 1500);
+}
+const RAYC = ['#ffe84a', '#ffffff', '#ff8ac0', '#ffffff'];
+export function drawTeamBack() {  // rotating starburst behind everyone
+  const T = W.team; if (!T) return;
+  const c = G.ctx, X = T.x - W.camX, Y = T.y + offY() - 34, t = T.t;
+  c.save(); c.globalAlpha = Math.min(0.6, 0.25 + t * 2) * (t > 1.3 ? Math.max(0, (1.6 - t) / 0.3) : 1);
+  const n = 18, R = 520;
+  for (let i = 0; i < n; i++) {
+    const a0 = i / n * Math.PI * 2 + t * 1.6, a1 = a0 + Math.PI / n * 0.7;
+    c.fillStyle = RAYC[i % 4]; c.beginPath(); c.moveTo(X, Y); c.lineTo(X + Math.cos(a0) * R, Y + Math.sin(a0) * R); c.lineTo(X + Math.cos(a1) * R, Y + Math.sin(a1) * R); c.closePath(); c.fill();
+  }
+  c.restore();
+}
+export function drawTeamFront() {  // shock rings, pixel confetti and the arcade cut-in band with both nurses
+  const T = W.team; if (!T) return;
+  const VW = G.VW, X = T.x - W.camX, Y = T.y + offY(), t = T.t;
+  if (t > 0.75) { const k = t - 0.75; ['#ffe84a', '#ff8ac0', '#8ad8ff'].forEach((col, j) => { const r = k * 460 - j * 34; if (r > 4) ring(X, Y, r, r * 0.34, col, 3, Math.max(0, 1 - k * 1.1)); }); }
+  for (let i = 0; i < 28; i++) {
+    const a = i * 2.4 + t * 4, r = 14 + ((t * 140 + i * 19) % 170), s = (i % 3) + 2;
+    rect(Math.round(X + Math.cos(a) * r), Math.round(Y - 34 + Math.sin(a) * r * 0.6), s, s, ['#ffffff', '#ffe84a', '#ff8ac0', '#8ad8ff'][i % 4]);
+  }
+  if (t < 1.0) {
+    const k = Math.min(1, t / 0.18), out = t > 0.8 ? (t - 0.8) / 0.2 : 0, by = 72, bh = 54;
+    const off = Math.round((1 - k) * -VW + out * VW);
+    rect(off, by - 3, VW, bh + 6, '#ffe84a', 0.95); rect(off, by, VW, bh, '#1a1020', 0.92);
+    for (let i = 0; i < 12; i++) rect(off + ((i * 53 + Math.floor(t * 600)) % (VW + 40)) - 20, by + 6 + (i * 13) % (bh - 10), 18, 1, '#ffffff', 0.5);
+    const fa = `face_${T.a.id}`, fb = `face_${T.b.id}`;
+    spr(fa, off + 10, by + 3, { scale: 1.35 }); spr(fb, off + VW - 10, by + 3, { scale: 1.35, flip: true });
+    const [w, h] = sprSize('w_charge'); spr('w_charge', off + VW / 2, by + bh / 2, { ax: w / 2, ay: h / 2, scale: Math.min(1, (VW - 130) / w) * (0.9 + Math.sin(t * 30) * 0.05) });
+  }
+}

@@ -218,3 +218,114 @@ def bits():
     S = Raster(6, 5); box(S, 1, 1, 4, 3, "#5a8ad8", "#3a64a8"); out["deb_seat"] = S
     S = Raster(5, 5); box(S, 1, 1, 3, 3, "#cfe8ff", "#9ac4f0"); out["deb_glass"] = S
     return out
+
+
+# ================================================================== v0.4
+def gurney(state):
+    """Rideable stretcher: white mattress + blue sheet on a steel frame, side rail, pillow, 3 casters."""
+    S = Raster(60, 32)
+    if state < 2:
+        tilt = 0 if state == 0 else 1
+        S.rect(4, 15, 52, 2, STEEL_S); S.rect(4, 15, 52, 1, STEEL)                     # frame
+        box(S, 5, 10 + tilt, 50, 5, "#f4f6fa", "#c8ccd6", "#ffffff")                    # mattress
+        box(S, 20, 9 + tilt, 34, 4, "#7ab0e8", "#4a7ac8", "#a8d0ff")                    # sheet
+        box(S, 6, 7, 11, 4, "#ffffff", "#d8dce4")                                       # pillow
+        S.rect(22, 5, 30, 1, STEEL_S); S.rect(22, 5, 1, 5, STEEL_S); S.rect(51, 5, 1, 5, STEEL_S)  # side rail
+        for x in (10, 30, 50):
+            S.rect(x, 17, 2, 9, STEEL); caster(S, x + 1, 28)
+        S.rect(2, 4, 2, 12, STEEL_S); S.rect(1, 3, 4, 2, TIRE)                         # push handle
+        if state == 1:
+            S.line((26, 5), (34, 8), INK); S.line((40, 11), (46, 13), INK); S.rect(52, 6, 3, 1, STEEL_S)
+    else:
+        S.poly([(4, 24), (30, 20), (34, 27), (6, 29)], "#f4f6fa"); S.poly([(28, 26), (52, 22), (56, 28), (30, 30)], "#7ab0e8")
+        S.line((4, 30), (40, 26), STEEL_S); S.line((30, 30), (56, 30), STEEL); caster(S, 54, 29); caster(S, 12, 30)
+        box(S, 40, 16, 9, 4, "#ffffff", "#d8dce4")
+    return S
+
+
+def o2_tank(state):
+    """Loose oxygen tank on its little dolly (knocked off an O2 Wanderer): kickable, rolls."""
+    S = Raster(20, 32)
+    if state < 2:
+        S.capsule((9, 6), (9, 24), 7, "#3aa860" if state == 0 else "#2e9452", "#267a44"); S.rect(8, 1, 3, 4, "#b8c0cc"); S.rect(6, 3, 7, 1, STEEL_S)
+        S.rect(6, 13, 7, 2, "#ffffff"); S.rect(7, 13, 1, 2, "#3aa860")
+        S.line((3, 29), (16, 29), STEEL_S); caster(S, 5, 29); caster(S, 14, 29); S.line((16, 29), (18, 18), STEEL_S)
+        if state == 1:
+            S.line((7, 18), (11, 22), INK); S.set(10, 2, "#e4f4ff")
+    else:
+        S.capsule((3, 26), (16, 23), 6, "#2e9452", "#267a44"); S.rect(16, 21, 3, 3, "#b8c0cc"); caster(S, 6, 30)
+    return S
+
+
+def proj_tray():
+    S = Raster(20, 9)
+    S.rect(1, 4, 18, 3, INK); S.rect(2, 5, 16, 1, "#c8a070")
+    S.ellipse((6, 4), 3, 1.2, "#f4f4f8", rim=False); S.rect(5, 3, 3, 1, "#c86a3a")
+    S.rect(10, 1, 3, 3, "#5ad85a"); S.rect(14, 0, 3, 4, "#f4f4f8"); S.rect(14, 2, 3, 1, "#4a8ad8")
+    return S
+
+
+def proj_jello():
+    S = Raster(10, 10)
+    S.rect(1, 2, 8, 7, INK); S.rect(2, 3, 6, 5, "#5ad85a"); S.rect(2, 3, 2, 2, "#bfffbf"); S.rect(2, 7, 6, 1, "#38a838")
+    return S
+
+
+def jello_splat():
+    S = Raster(28, 8)
+    S.ellipse((14, 4), 12, 3, "#5ad85a", "#38a838", rim=False)
+    S.rect(5, 3, 3, 2, "#2a8a2a"); S.rect(18, 2, 4, 2, "#bfffbf"); S.rect(11, 5, 2, 1, "#2a8a2a")
+    return S
+
+
+# ---- breakroom (bonus round) background pieces
+def fridge(open_=False):
+    S = Raster(36, 72)
+    box(S, 2, 2, 32, 68, "#eef0f4", "#b8c0cc", "#ffffff")
+    S.rect(3, 24, 30, 1, "#b8c0cc")
+    S.rect(28, 8, 2, 12, STEEL_S); S.rect(28, 30, 2, 18, STEEL_S)
+    for x, y, c in ((7, 8, "#ff5a5a"), (12, 11, "#ffd84a"), (8, 34, "#4a8ad8"), (16, 40, "#5ad85a")):
+        S.rect(x, y, 3, 3, c)
+    box(S, 9, 46, 14, 10, "#fff7b0", "#e0d080"); tinyfont.text(S, 10, 48, "LBL", "#c82a2a")
+    if open_:
+        S.rect(3, 25, 30, 44, "#cfe8ff"); S.rect(5, 38, 26, 1, STEEL); S.rect(5, 52, 26, 1, STEEL)
+        S.rect(7, 30, 6, 7, "#ffd84a"); S.rect(16, 32, 5, 5, "#e84a5a"); S.rect(8, 44, 8, 7, "#c8a070"); S.rect(20, 45, 6, 6, "#5ad85a")
+    return S
+
+
+def counter():
+    S = Raster(120, 40)
+    box(S, 2, 12, 116, 26, "#b07a4a", "#8a5a30", "#d09a68")
+    for x in (4, 34, 64, 94):
+        S.rect(x, 18, 26, 18, "#9a6a3a"); S.rect(x + 22, 25, 2, 4, "#e4e8f0")
+    S.rect(1, 10, 118, 3, "#d8d0c0"); S.rect(1, 10, 118, 1, "#f4ecdc")
+    box(S, 8, 0, 24, 10, "#3a3e4a", "#22262e", "#5a6070"); S.rect(10, 2, 14, 6, "#1a1a22"); S.rect(26, 3, 4, 1, "#5aff8a"); S.rect(26, 6, 4, 1, "#e4e8f0")  # microwave
+    box(S, 44, 2, 10, 8, "#2a2a32", "#14141a"); S.rect(45, 6, 8, 3, "#5a3a20"); S.rect(52, 3, 1, 1, "#ff3a3a")   # coffee maker
+    S.rect(66, 8, 18, 2, STEEL); S.rect(76, 4, 1, 4, STEEL_S)  # sink
+    for i, c in enumerate(("#ff8a1e", "#4a8ad8", "#ffd84a")):
+        box(S, 92 + i * 7, 4, 4, 6, c)   # mugs
+    return S
+
+
+def cabinets():
+    S = Raster(120, 22)
+    for i in range(4):
+        box(S, 2 + i * 29, 2, 27, 18, "#c08a58", "#8e5e36", "#dcae7c"); S.rect(2 + i * 29 + 22, 9, 2, 4, "#e4e8f0")
+    return S
+
+
+def table():
+    S = Raster(64, 30)
+    box(S, 8, 8, 48, 4, "#e4e8f0", "#b8c0cc", "#ffffff"); S.rect(30, 12, 4, 15, STEEL_S); S.rect(22, 26, 20, 2, STEEL_S)
+    for x in (2, 52):
+        box(S, x, 4, 4, 12, "#e84a5a", "#a82838"); box(S, x, 15, 10 if x == 2 else 10, 3, "#e84a5a", "#a82838"); S.rect(x + 1, 18, 1, 9, STEEL_S)
+    S.rect(16, 5, 6, 3, "#ffffff"); S.rect(40, 4, 5, 4, "#8a5a2a")   # napkin, coffee cup
+    return S
+
+
+def food_note():
+    S = Raster(34, 22)
+    box(S, 2, 2, 30, 18, "#fff7b0", "#e0d080")
+    tinyfont.text(S, 4, 4, "LABEL", "#c82a2a"); tinyfont.text(S, 4, 11, "FOOD!", "#2a2a32")
+    S.rect(16, 0, 2, 3, "#e84a5a")
+    return S

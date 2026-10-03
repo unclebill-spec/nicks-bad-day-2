@@ -54,7 +54,7 @@ def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
 B = chars.bodies()
 for h in ("nick", "kim", "will", "jackie"):
     char_sheet(h, chars.hero_anims(h), B[h])
-PATIENTS = ("wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite")
+PATIENTS = ("wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite", "runner", "tray", "o2")
 for e in PATIENTS + ("visitor",):
     big = e == "visitor"
     char_sheet(e, chars.enemy_anims(e), B[e], cell=(96, 88) if big else (88, 80), anchor=(48, 84) if big else (44, 76))
@@ -155,6 +155,12 @@ for st in range(2):
 add("potplant0", plants[1]); add("potplant1", BR.crack_pot(SPR["plant1"])); add("potplant2", BR.plant_wreck())
 for k, S in BR.bits().items():
     add(k, S)
+# v0.4: gurney, loose O2 tank, tray/jello projectiles, breakroom pieces
+for st in range(3):
+    add(f"gurneyp{st}", BR.gurney(st)); add(f"o2tank{st}", BR.o2_tank(st))
+add("p_tray", BR.proj_tray()); add("p_jello", BR.proj_jello()); add("puddle_g", BR.jello_splat())
+add("fridge", BR.fridge()); add("fridge_open", BR.fridge(True)); add("counter", BR.counter()); add("cabinets", BR.cabinets()); add("btable", BR.table())
+add("note_food", BR.food_note()); add("sign_breakroom", PR.sign("BREAKROOM", "#c86a1a")); add("vend_wall", PR.vending(0))
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
              ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
              ("w_clipboard", PR.w_clipboard), ("w_bedpan", PR.w_bedpan), ("w_mop", PR.w_mop), ("w_extinguisher", PR.w_extinguisher),
@@ -217,6 +223,14 @@ for k, t, c1, c2 in (("w_pow", "POW!", "#ffe84a", "#ff9a1e"), ("w_wham", "WHAM!"
                      ("w_sploosh", "SPLOOSH!", "#fff27a", "#e8c82a"), ("w_ding", "DING!", "#ffffff", "#c8d0dc"), ("w_poke", "POKE!", "#8ae8ff", "#3aa0e8")):
     SPR[k] = word(t, 16, c1, c2)
 SPR["w_codeblue"] = word("CODE BLUE!", 26, "#9ae0ff", "#3a6aff", stroke=3)
+SPR["w_charge"] = word("CHARGE NURSE!", 28, "#ffffff", "#ffd84a", stroke=3)
+SPR["w_bonus"] = word("BREAKROOM BONUS!", 22, "#ffe84a", "#ff8a1e", stroke=3)
+SPR["w_stopped"] = word("STOPPED!", 16, "#8ae87a", "#3aa860")
+SPR["w_crash"] = word("CRASH!", 18, "#ffe84a", "#ff5a3a")
+SPR["w_beep"] = word("BEEP!", 14, "#ff8a8a", "#e83a3a")
+SPR["w_splat"] = word("SPLAT!", 16, "#aaff8a", "#3aa83a")
+SPR["w_caught"] = word("CAUGHT!", 18, "#ffe84a", "#ff8a1e")
+SPR["w_timeup"] = word("TIME UP!", 30, "#ff8ac0", "#e83a6a", stroke=3)
 SPR["w_ready"] = word("CLOCK IN!", 30, "#ffe84a", "#ff8a1e", stroke=3)
 SPR["w_clear_stage"] = word("FLOOR CLEARED!", 26, "#ffe84a", "#ff8a1e", stroke=3)
 SPR["w_gameover"] = word("SHIFT OVER", 30, "#ff8ac0", "#e83a6a", stroke=3)

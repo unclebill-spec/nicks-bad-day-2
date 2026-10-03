@@ -49,7 +49,7 @@ with sync_playwright() as p:
     check('jump kick sends the crash cart rolling', v0['vx'] > 150, v0)
     check('rolling cart knocks the patient down', seen_down, pg.evaluate("[E.st, E.hp, E.maxHp]"))
     vw = pg.evaluate("__nbd.G.VW"); cam = pg.evaluate("__nbd.W.camX")
-    pg.evaluate(f"(()=>{{const W=__nbd.W,p=W.props[{ci}],h=W.heroes[0]; p.vx=0; p.x=W.camX+{vw}-90; p.y=172; h.x=p.x-26; h.y=172; h.face=1; h.set('idle');}})()")
+    pg.evaluate(f"(()=>{{const W=__nbd.W,p=W.props[{ci}],h=W.heroes[0]; W.props.forEach(q=>{{if(q!==p&&q.x>W.camX+{vw}-160&&q.x<W.camX+{vw}+60) q.x+=600;}}); p.vx=0; p.x=W.camX+{vw}-90; p.y=172; h.x=p.x-26; h.y=172; h.face=1; h.set('idle');}})()")
     key(pg, 'KeyK', 0.06, 0.12); key(pg, 'KeyJ', 0.05, 0.0); max_x, flipped = 0, False
     for i in range(25):
         s = pg.evaluate(P(ci)); max_x = max(max_x, s['x']); flipped = flipped or s['vx'] < 0; time.sleep(0.04)

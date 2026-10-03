@@ -12,7 +12,9 @@ with sync_playwright() as p:
     pg.goto(URL); pg.wait_for_function('window.__loaded === true', timeout=30000)
     time.sleep(1); pg.screenshot(path=f'{out}/s_title.png')
     pg.keyboard.press('Enter'); time.sleep(0.6); pg.screenshot(path=f'{out}/s_select.png')
-    pg.keyboard.press('KeyD'); time.sleep(0.2); pg.keyboard.press('KeyJ'); time.sleep(1.5)
+    pg.keyboard.press('KeyD'); time.sleep(0.2); pg.keyboard.press('KeyJ'); time.sleep(2.0)
+    pg.screenshot(path=f'{out}/s_cutscene.png'); print('cutscene:', pg.evaluate('__nbd.game.scene'))
+    pg.keyboard.press('KeyK'); time.sleep(1.2)  # v0.4: any button skips the shift-change cutscene
     pg.screenshot(path=f'{out}/s_intro.png')
     time.sleep(2.0)
     pg.keyboard.down('KeyD'); time.sleep(2.5); pg.keyboard.up('KeyD')

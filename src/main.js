@@ -1,5 +1,7 @@
 // Nick's Very Bad, Terrible Bad Day Part II: boot, the fixed-step loop, scenes (title, hero select, stage, tally,
 // teaser, game over, high scores), pause / settings / how-to menus, saves, display presets and fullscreen / install.
+// v0.4 flow: select -> [cutscene start] -> intro -> play -> [cutscene boss] -> Tilly -> tally -> [cutscene lunch] ->
+// Breakroom Bonus -> bonus tally -> [cutscene next] -> teaser. Cutscenes skip with any button / tap (auto-skipped with ?bot / ?nocut).
 import { G, initGfx, resize, present, text, spr, rect, panel, frame, anim, textW, sprSize, frameRect, ellipse } from './gfx.js';
 import { loaded, Q, audio } from '../kit/common.js';
 import { createDisplay } from '../kit/display.js';
@@ -9,8 +11,10 @@ import { HEROES, HERO_ORDER, LEVEL1, DIFF } from './data.js';
 import { dropItem } from './world.js';
 import { W, buildLevel, drawBackground, updateWorld, updateCamera, drawProp, drawItem, drawShot, drawFx, offY, floatText, makeProp, hitProp, rollLoot } from './world.js';
 import { Director, spawn } from './stage.js';
-import { Hero } from './hero.js';
+import { Hero, drawTeamBack, drawTeamFront } from './hero.js';
 import { drawHUD } from './hud.js';
+import { makeCut, updateCut, drawCut } from './cutscene.js';
+import { B as BONUS_STATE, buildBreakroom, startBonus, updateBonus, drawBonusHUD, bonusRows } from './bonus.js';
 
 // ------------------------------------------------------------------ save
 const SAVE_KEY = 'nbd2.save';
@@ -137,8 +141,9 @@ function drawHelp(m) {
   ];
   const cw = (w - 16) / 4;
   L.forEach((r, i) => r.forEach((c, j) => text(c, x + 8 + j * cw, y + 20 + i * 11, { col: i === 0 ? '#8ad8ff' : j === 0 ? '#ffe84a' : '#ffffff', scale: 1 })));
-  const tips = ['RUN + ATTACK = DASH ATTACK.  JUMP + ATTACK = KICK.', 'WALK INTO A PATIENT TO GRAB. ATTACK = KNEE,', 'JUMP/GRAB = THROW. GRAB ON A WEAPON PICKS IT UP.', 'SP COSTS A LITTLE HEALTH. FULL METER = CODE BLUE!', '2P ON ONE KEYBOARD: P1 WASD+HJKL, P2 ARROWS+,./M'];
-  tips.forEach((s, i) => text(s, x + 8, y + 124 + i * 11, { col: '#c8d4f0', scale: 1 }));
+  const tips = ['RUN + ATTACK = DASH ATTACK.  JUMP + ATTACK = KICK.', 'WALK INTO A PATIENT TO GRAB. ATTACK = KNEE,', 'JUMP/GRAB = THROW. GRAB ON A WEAPON PICKS IT UP.', 'SP COSTS A LITTLE HEALTH. FULL METER = CODE BLUE!',
+    'GURNEY: GRAB OR ATK+JUMP (TOUCH: RIDE) = RIDE IT', '2P: BOTH HOLD SP, CLOSE TOGETHER = CHARGE NURSE!', '2P ON ONE KEYBOARD: P1 WASD+HJKL, P2 ARROWS+,./M'];
+  tips.forEach((s, i) => text(s, x + 8, y + 122 + i * 10, { col: '#c8d4f0', scale: 1 }));
   m.rects = [[x, y + h - 18, w, 16]];
   text('> BACK', VW / 2, y + h - 14, { col: '#ffe84a', align: 'center' });
 }
@@ -148,7 +153,34 @@ function hitMenu(m, lx, ly) {
 }
 
 // ------------------------------------------------------------------ scenes
+// ---- v0.4 cutscenes
+const noCuts = () => !!(Q.get('bot') || Q.get('nocut') || ((Q.get('autostart') || Q.get('zone')) && !Q.get('cuts')));  // test URLs skip them unless &cuts=1
+function startCut(id, done) {
+  game.cut = makeCut(id); game.cutDone = done; game.cutSkip = false; game.scene = 'cutscene'; game.t = 0; setScene('menu');
+}
+function anyButton() { return (C.lastCodes || []).length > 0 || Object.values(C.devs).some((d) => Object.values(d.prs).some(Boolean)); }
+// ---- v0.4 breakroom bonus between Floor 3 and Floor 4
+function goLunch() {
+  buildBreakroom();
+  const go = () => { startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); playMusic('stage'); };
+  if (noCuts()) go(); else startCut('lunch', go);
+}
+function toBonusTally() {
+  game.scene = 'btally'; game.t = 0; setScene('menu'); playMusic('clear'); sfx('fanfare', { vol: 0.7 });
+  for (const h of W.heroes) if (h.alive && h.st !== 'out') { h.set('win'); h.inv = 0; }
+  game.btally = W.heroes.map((h) => {
+    const r = bonusRows(h); h.score += r.total;
+    const T = game.tally && game.tally.find((t) => t.h === h); if (T) T.total += h.score - T.score0;
+    return { h, ...r };
+  });
+}
+function goNext() {
+  finishRun(true);
+  const go = () => { game.scene = 'teaser'; game.t = 0; setScene('menu'); };
+  if (noCuts()) go(); else startCut('next', go);
+}
 function toTitle() {
+  W.bgHook = null; W.team = null;
   game.scene = 'title'; game.t = 0; game.menu = titleMenu(); W.heroes = []; W.enemies = []; W.boss = null; W.shots = []; W.fx = []; game.overlay = null;
   C.split = false; buildLevel(LEVEL1); W.camX = 0; playMusic('title'); setScene('menu');
 }
@@ -195,7 +227,8 @@ function selectTap(lx, ly) {
 function startGame() {
   const S = game.sel;
   W.heroes = []; W.enemies = []; W.boss = null; W.shots = []; W.fx = []; W.stats = { kos: 0, time: 0 }; W.clock = 7 * 60; W.t = 0; W.vc = 0;
-  applySettings(); buildLevel(LEVEL1); Director.reset(); W.camX = 0; W.camMin = 0;
+  applySettings(); buildLevel(LEVEL1); Director.reset(); W.camX = 0; W.camMin = 0; W.hallBg = W.bg; W.bgHook = null; W.team = null;
+  W.onBossCut = (go) => { if (noCuts()) return go(); startCut('boss', () => { game.scene = 'play'; game.t = 0; setScene('game'); go(); }); };
   S.p.forEach((p, i) => {
     const h = new Hero(HERO_ORDER[p.cur], i, 56 + i * 22, 126 + i * 2);
     h.devs = game.mode === 2 ? [p.dev] : null; h.set('enter'); h.face = 1;
@@ -207,7 +240,7 @@ function startGame() {
   if (zj > 0 && zj < W.lv.zones.length) {
     const z = W.lv.zones[zj]; W.zone = zj - 1; W.camX = W.camMin = Math.max(0, z.lock - 60); W.camMax = z.lock;
     W.heroes.forEach((h, i) => { h.x = z.at + 4 + i * 20; h.y = 172; h.set('idle'); }); game.t = 2.4;
-  }
+  } else if (!noCuts()) startCut('start', () => { game.scene = 'intro'; game.t = 0; setScene('game'); });
   playMusic('stage'); preloadMusic(['boss', 'clear']);
 }
 function dropIn(d) {  // a second player presses Start mid-game
@@ -228,10 +261,15 @@ function playUpdate(dt) {
   let pause = (C.lastCodes || []).some((c) => c === 'Escape' || c === 'Pause');
   for (const h of W.heroes) { const I = readPlayer(h); if (I.prs.start && h.st !== 'out') pause = true; }
   if (pause && !game.overlay) { game.overlay = pauseMenu(); sfx('select'); return; }
-  if (W.stop > 0) { W.stop -= dt; for (const f of W.fx) f.t += dt * 0.25; return; }
+  if (W.stop > 0) {  // hit-stop: freeze the action, but buffer button presses so none are lost
+    W.stop -= dt; for (const f of W.fx) f.t += dt * 0.25;
+    for (const h of W.heroes) { const I = readPlayer(h); for (const k in I.prs) if (I.prs[k]) (h.pend || (h.pend = {}))[k] = true; }
+    return;
+  }
   W.t += dt; W.stats.time += dt; W.clock += dt / 1.5;
   for (const h of W.heroes) {
     const I = Q.get('bot') && h.slot === 0 ? botInput(h) : readPlayer(h);
+    if (h.pend) { for (const k in h.pend) I.prs[k] = true; h.pend = null; }
     if (Q.get('god')) { h.hp = h.maxHp; }
     h.update(dt, I);
     if (h.st === 'out') {
@@ -265,7 +303,7 @@ function toTally() {
   game.scene = 'tally'; game.t = 0; playMusic('clear'); setScene('menu');
   for (const h of W.heroes) if (h.alive && h.st !== 'out') { h.set('win'); h.inv = 0; }
   const timeBonus = Math.max(0, Math.round((9 * 60 - W.clock) * 40));
-  game.tally = W.heroes.map((h) => ({ h, rows: [['SCORE', h.score], [`TUCKED IN x${h.kos}`, h.kos * 100], [`COMBO x${h.maxCombo || 0}`, (h.maxCombo || 0) * 50], ['ON TIME', h.st === 'out' ? 0 : timeBonus]], shown: 0 }));
+  game.tally = W.heroes.map((h) => ({ h, score0: h.score, rows: [['SCORE', h.score], [`TUCKED IN x${h.kos}`, h.kos * 100], [`COMBO x${h.maxCombo || 0}`, (h.maxCombo || 0) * 50], ['ON TIME', h.st === 'out' ? 0 : timeBonus]], shown: 0 }));
   for (const t of game.tally) t.total = t.rows.reduce((s, r, i) => s + (i ? r[1] : 0), t.rows[0][1]);
   save.best = Math.max(save.best, 1); writeSave();
 }
@@ -288,6 +326,7 @@ function drawWorld() {
   const sx = W.shakeAmt > 0 ? Math.round((Math.random() - 0.5) * W.shakeAmt) : 0, sy = W.shakeAmt > 0 ? Math.round((Math.random() - 0.5) * W.shakeAmt) : 0;
   c.save(); c.translate(sx, sy);
   drawBackground();
+  drawTeamBack();
   const list = [];
   for (const p of W.props) list.push({ y: p.y - 2, d: () => drawProp(p) });
   for (const it of W.items) list.push({ y: it.y - 1, d: () => drawItem(it) });
@@ -298,8 +337,34 @@ function drawWorld() {
   list.sort((a, b) => a.y - b.y);
   for (const o of list) o.d();
   for (const f of W.fx) drawFx(f);
+  // gurney hint: RIDE! over a gurney a nurse is standing next to
+  for (const h of W.heroes) { if (!h.canAct()) continue; const g = h.nearGurney(); if (g && Math.floor(W.t * 3) % 2) text('RIDE!', g.x - W.camX, g.y + offY() - 44, { col: '#8ad8ff', align: 'center' }); }
   c.restore();
   if (W.flash > 0) rect(0, 0, G.VW, G.VH, W.flashCol, Math.min(0.75, W.flash * 0.8));
+  drawTeamFront();
+}
+// touch: the GRAB button turns into RIDE next to a gurney
+let rideLabel = 'GRAB';
+function updateRideLabel() {
+  const h = W.heroes[0], want = (game.scene === 'play' || game.scene === 'bonus') && h && h.canAct() && h.nearGurney() ? 'RIDE' : 'GRAB';
+  if (want === rideLabel) return; rideLabel = want;
+  const b = document.getElementById('b_grab'); if (b) { b.textContent = want; b.classList.toggle('ctx', want === 'RIDE'); }
+}
+function drawBonusTally() {
+  const VW = G.VW, VH = G.VH;
+  rect(0, 0, VW, VH, '#05060c', Math.min(0.6, game.t));
+  const [w] = sprSize('w_bonus'); spr('w_bonus', VW / 2, 16, { ax: w / 2, scale: Math.min(1, (VW - 20) / w) });
+  text(`THIEVES STOPPED ${BONUS_STATE.stopped}   SNACKS LOST ${BONUS_STATE.escaped}`, VW / 2, 44, { col: '#c8d4f0', align: 'center' });
+  const n = game.btally.length, pw = Math.min(210, (VW - 20) / n - 6);
+  game.btally.forEach((T, i) => {
+    const x = Math.round(VW / 2 - (n * (pw + 6)) / 2 + i * (pw + 6)), y = 58;
+    panel(x, y, pw, 112);
+    spr(`face_${T.h.id}`, x + 4, y + 4); text(T.h.d.name, x + 44, y + 10, { col: T.h.slot ? '#8ad8ff' : '#ffe84a' });
+    const reveal = Math.min(T.rows.length, Math.floor(game.t * 2));
+    T.rows.forEach((r, j) => { if (j >= reveal) return; text(r[0], x + 6, y + 44 + j * 14, { col: j === 2 && r[1] ? '#8ae87a' : '#c8d4f0' }); text(String(r[1]), x + pw - 6, y + 44 + j * 14, { col: '#ffffff', align: 'right' }); });
+    if (reveal >= T.rows.length) text(`BONUS ${T.total}`, x + pw / 2, y + 96, { col: '#ffe84a', align: 'center' });
+  });
+  if (game.t > 3) text(Math.floor(game.t * 2) % 2 ? 'PRESS ATTACK' : '', VW / 2, VH - 30, { col: '#ffffff', align: 'center' });
 }
 function drawTitle() {
   const VW = G.VW, VH = G.VH;
@@ -431,7 +496,14 @@ function step(dt) {
       break;
     }
     case 'play': playUpdate(dt); break;
-    case 'tally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) { game.scene = 'teaser'; game.t = 0; finishRun(true); } break;
+    case 'cutscene': { const skip = game.t > 0.6 && (anyButton() || game.cutSkip); game.cutSkip = false; if (updateCut(game.cut, dt, skip)) { const d = game.cutDone; game.cut = null; game.cutDone = null; if (d) d(); } break; }
+    case 'bonus': {
+      if (BONUS_STATE.phase === 'intro') { W.t += dt; for (const h of W.heroes) h.update(dt, { mx: 0, my: 0, held: {}, prs: {} }); updateWorld(dt); updateBonus(dt); }
+      else { playUpdate(dt); if (game.scene === 'bonus' && !game.overlay && updateBonus(dt)) toBonusTally(); }
+      break;
+    }
+    case 'btally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) goNext(); break;
+    case 'tally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) goLunch(); break;
     case 'teaser': if (game.t > 1.5 && any) toTitle(); break;
     case 'gameover': if (game.t > 1.5 && any) { game.scene = 'scores'; game.t = 0; } break;
     case 'scores': if (game.t > 0.4 && (any || menuIntents().some((i) => i.a === 'back'))) toTitle(); break;
@@ -445,12 +517,16 @@ function render() {
     case 'select': drawSelect(); break;
     case 'intro': case 'play': drawWorld(); drawHUD(game); if (game.scene === 'intro') drawIntro(); break;
     case 'tally': drawWorld(); drawTally(); break;
+    case 'cutscene': drawCut(game.cut); break;
+    case 'bonus': drawWorld(); drawHUD(game); drawBonusHUD(); break;
+    case 'btally': drawWorld(); drawBonusTally(); break;
     case 'teaser': drawTeaser(); break;
     case 'gameover': drawWorld(); drawGameOver(); break;
     case 'scores': drawScores(); break;
   }
   if (game.overlay) drawMenu(game.overlay);
   if (game.scene !== 'play' && game.scene !== 'intro' && game.toasts.length) { const t = game.toasts[0]; const w = textW(t.s) + 16; panel((G.VW - w) / 2, G.VH - 40, w, 16, '#1a2450', '#8ad8ff'); text(t.s, G.VW / 2, G.VH - 36, { col: '#fff', align: 'center' }); }
+  updateRideLabel();
   present();
   const clk = document.getElementById('clock');
   if (clk) { const m = Math.floor(W.clock), hh = Math.floor(m / 60) % 12 || 12; clk.textContent = `${hh}:${String(m % 60).padStart(2, '0')} ${Math.floor(m / 60) % 24 < 12 ? 'AM' : 'PM'}`; }
@@ -476,7 +552,7 @@ async function boot() {
   if (bar) bar.style.width = '100%';
   // HUD buttons
   document.getElementById('fsbtn').addEventListener('click', (e) => { e.stopPropagation(); display.toggleFS(); });
-  document.getElementById('pausebtn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (game.scene === 'play') { if (game.overlay) resume(); else { game.overlay = pauseMenu(); sfx('select'); } } });
+  document.getElementById('pausebtn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (game.scene === 'play' || game.scene === 'bonus') { if (game.overlay) resume(); else { game.overlay = pauseMenu(); sfx('select'); } } });
   addEventListener('keydown', (e) => {
     if (e.code === 'Backquote') { display.toggleFS(); return; }
     const m = activeMenu();
@@ -499,16 +575,19 @@ async function boot() {
       } else if (m.help && m.back) m.back();
       return;
     }
+    if (game.scene === 'cutscene') { game.cutSkip = true; return; }
     if (game.scene === 'select') selectTap(lx, ly);
     else if (['teaser', 'gameover', 'scores'].includes(game.scene) && game.t > 1.2) { if (game.scene === 'teaser') toTitle(); else if (game.scene === 'gameover') { game.scene = 'scores'; game.t = 0; } else toTitle(); }
-    else if (game.scene === 'tally' && game.t > 3) { game.scene = 'teaser'; game.t = 0; finishRun(true); }
+    else if (game.scene === 'tally' && game.t > 3) goLunch();
+    else if (game.scene === 'btally' && game.t > 3) goNext();
   });
   view.addEventListener('pointermove', (e) => { const m = activeMenu(); if (!m || e.pointerType !== 'mouse') return; const [lx, ly] = toLogical(e); const i = hitMenu(m, lx, ly); if (i >= 0 && i !== m.sel) m.sel = i; });
   toTitle();
   loaded();
   requestAnimationFrame(frameLoop);
   // test hooks
-  window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, Director, display };
-  if (Q.get('autostart') || Q.get('zone')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); }
+  window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, Director, display,
+    cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch };
+  if (Q.get('autostart') || Q.get('zone')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } }
 }
 boot().catch((e) => { const t = document.getElementById('loadtxt'); if (t) t.textContent = 'Could not load: ' + e.message; console.error(e); });

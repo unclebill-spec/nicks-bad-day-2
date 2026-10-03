@@ -17,6 +17,8 @@ const LAYER = {  // wall features: vertical placement by kind
   door: (w, h) => FLOOR_Y - h, elev: (w, h) => FLOOR_Y - 82, callpanel: () => 74, floornum3: () => 40, station: (w, h) => FLOOR_Y + 2 - h,
   chairs: (w, h) => FLOOR_Y + 4 - h, plant0: (w, h) => FLOOR_Y + 3 - h, plant1: (w, h) => FLOOR_Y + 3 - h, plant2: (w, h) => FLOOR_Y + 3 - h,
   gurney: (w, h) => FLOOR_Y + 3 - h, fountain: (w, h) => FLOOR_Y - 4 - h + 4, wheelchair: (w, h) => FLOOR_Y + 3 - h,
+  // v0.4 breakroom pieces
+  fridge: (w, h) => FLOOR_Y + 3 - h, counter: (w, h) => FLOOR_Y + 3 - h, vend_wall: (w, h) => FLOOR_Y + 3 - h, btable: (w, h) => FLOOR_Y + 5 - h, cabinets: () => 30, note_food: () => 46, sign_breakroom: () => 37,
 };
 function wallY(kind, w, h) {
   if (LAYER[kind]) return LAYER[kind](w, h);
@@ -48,7 +50,8 @@ export function buildLevel(lv) {
   x.fillStyle = 'rgba(30,40,60,0.22)'; x.fillRect(0, FLOOR_Y, lv.width, 4);
   x.fillStyle = 'rgba(255,255,255,0.10)'; x.fillRect(0, FLOOR_Y + 40, lv.width, 2); x.fillRect(0, FLOOR_Y + 70, lv.width, 1);
   // dayroom: a different floor tint past the boss line
-  x.fillStyle = 'rgba(160,120,220,0.12)'; x.fillRect(lv.bossArena - 40, FLOOR_Y, lv.width, 106);
+  if (lv.bossArena) { x.fillStyle = 'rgba(160,120,220,0.12)'; x.fillRect(lv.bossArena - 40, FLOOR_Y, lv.width, 106); }
+  if (lv.tint) { x.fillStyle = lv.tint; x.fillRect(0, 0, lv.width, 224); }
   for (const [wx, kind, extra] of lv.wall) {
     if (kind === 'door') {  // door frame drawn live (it opens); room number plate drawn into the wall
       W.doors[extra] = { x: wx, open: 0, target: 0, t: 0, num: extra };
@@ -87,6 +90,7 @@ export function drawBackground() {
   c.drawImage(W.bg, cx, 0, G.VW, 224, 0, OFF(), G.VW, 224);
   for (const d of Object.values(W.doors)) if (d.x - cx > -40 && d.x - cx < G.VW + 4) drawDoor(d);
   for (const e of Object.values(W.elevs)) if (e.x - cx > -84 && e.x - cx < G.VW + 4) drawElev(e);
+  if (W.bgHook) W.bgHook();
 }
 
 // ---------------------------------------------------------------- items, props, projectiles
@@ -107,6 +111,7 @@ const moving = (p) => Math.abs(p.vx) > 4 || Math.abs(p.vy) > 4;
 // hit a prop: dmg decides how many "hp pips" it loses, dir/kb decide the shove. Returns true if something happened.
 export function hitProp(p, dmg, { dir = 1, kb = 60, from = null, quiet = false } = {}) {
   if (p.st >= 2) return false;
+  if (p.grace && p.grace > W.t) return false;  // just popped loose (an O2 tank): the hit that freed it can't also break it
   const d = p.def;
   p.hp -= dmg >= 18 ? 3 : dmg >= 10 ? 2 : 1; p.shake = 0.22; p.flash = 0.1;
   if (from && from.isHero) p.kicker = from; else if (from && from.kicker) p.kicker = from.kicker;
@@ -136,7 +141,8 @@ export function smashProp(p) {
   addFx({ type: 'dust', x: p.x, y: p.y + 1, z: 0, dur: 0.45 }); addFx({ type: 'spark', kind: 'bigspark', x: p.x, y: p.y, z: 20, dur: 0.22 });
   if (d.zap) for (let i = 0; i < 3; i++) addFx({ type: 'spark', kind: 'bluespark', x: p.x + (W.rnd() - 0.5) * 20, y: p.y, z: 16 + W.rnd() * 20, dur: 0.25 });
   burst(p, d.big ? 18 : 12, 1);
-  word(d.big ? 'w_wham' : 'w_pow', p.x, p.y, 10);
+  word(d.big ? 'w_wham' : d.ride ? 'w_crash' : 'w_pow', p.x, p.y, 10);
+  if (d.hiss) { for (let i = 0; i < 6; i++) addFx({ type: 'smoke', x: p.x + (W.rnd() - 0.5) * 14, y: p.y, z: 6 + W.rnd() * 22, dur: 0.6 + W.rnd() * 0.5 }); floatText('PSSSHHH!', p.x, p.y, 44, '#c8f0ff'); }
   for (const k of p.drops) dropItem(k, p.x + (W.rnd() - 0.5) * 20, p.y + 6);
   const loot = rollLoot(d.loot);
   if (loot) dropItem(loot, p.x + (W.rnd() - 0.5) * 16, p.y + 4);
@@ -168,6 +174,7 @@ export const breakProp = (p, dmg, from) => hitProp(p, dmg, { dir: from ? (Math.s
 export function propBox(p) { return { x0: p.x - p.def.w / 2, x1: p.x + p.def.w / 2, y: p.y, z1: (p.def.h || (p.def.big ? 60 : 30)) + 10 }; }  // +10: jump kicks still connect
 function updateProp(p, dt) {
   p.shake = Math.max(0, p.shake - dt); p.flash = Math.max(0, p.flash - dt);
+  if (p.rider) return;  // a nurse is riding it: the hero drives it (hero.js s_ride)
   if (p.z > 0 || p.vz > 0) { p.vz -= GRAV * dt; p.z += p.vz * dt; if (p.z <= 0) { p.z = 0; p.vz = 0; } }
   if (!moving(p)) { p.vx = p.vy = 0; return; }
   const d = p.def, fr = p.st >= 2 ? 5 : (d.fr || 2) + (p.nudge ? 6 : 0);

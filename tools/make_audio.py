@@ -127,5 +127,7 @@ s = X.babble("Out of my way, sweetie!", __import__("random").Random(42), pitch=1
 save("tilly", s, 0.7)
 import prop_sfx  # noqa: E402  (v0.3 crash / rattle / thunk / shatter)
 prop_sfx.build()
+import v04_sfx  # noqa: E402  (v0.4 beep / hiss / splat / fling / charge / fanfare / raid)
+v04_sfx.build()
 print("music:", sorted(p.name for p in MUS.iterdir()))
 print("sfx:", sorted(p.name for p in SFX.iterdir()))

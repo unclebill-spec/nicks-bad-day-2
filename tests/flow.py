@@ -1,4 +1,5 @@
-# Flow test: boss defeat -> tally -> teaser -> title -> high scores; then a game over -> scores.
+# Flow test: boss defeat -> tally -> Breakroom Bonus (bot) -> bonus tally -> teaser -> title -> high scores; then a game over -> scores.
+# (?bot=1 auto-skips the v0.4 cutscenes; tests/v04.py covers them.)
 import time
 from playwright.sync_api import sync_playwright
 errs = []
@@ -12,6 +13,11 @@ with sync_playwright() as p:
     time.sleep(4); pg.evaluate('__nbd.W.boss.hp = 3; __nbd.W.boss.phase = 2')
     pg.wait_for_function("__nbd.game.scene === 'tally'", timeout=40000); time.sleep(3.5)
     pg.screenshot(path='tests/out/f_tally.png'); print(pg.evaluate(J))
+    pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(0.5)
+    pg.wait_for_function("__nbd.game.scene === 'bonus'", timeout=5000); time.sleep(6); pg.screenshot(path='tests/out/f_bonus.png')
+    pg.evaluate('__nbd.B.left = Math.min(__nbd.B.left, 4)'); print(pg.evaluate(J))
+    pg.wait_for_function("__nbd.game.scene === 'btally'", timeout=20000); time.sleep(3.3)
+    pg.screenshot(path='tests/out/f_btally.png'); print(pg.evaluate(J))
     pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(2)
     pg.screenshot(path='tests/out/f_teaser.png'); print(pg.evaluate(J))
     pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1); print(pg.evaluate(J))

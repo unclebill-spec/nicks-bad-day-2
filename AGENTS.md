@@ -8,8 +8,8 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-03, v0.3)
-- **Level 1 "Floor 3: Med-Surg" is fully playable** from the title screen through to the tally and the "Floor 4: Radiology" teaser.
+## Current state (2026-10-03, v0.4)
+- **Level 1 "Floor 3: Med-Surg" is fully playable** from the title screen through to the tally, the Breakroom Bonus round and the "Floor 4: Radiology" teaser.
   The level is 3560 px wide with 6 camera-lock zones: 5 wave zones, then the boss dayroom.
 - **4 heroes:**
   - Nick: balanced, Crash Cart special.
@@ -21,6 +21,10 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
 - **Patients:** all wear checked hospital gowns (pale green or faded olive) with yellow grip socks, and get random hair and skin at runtime.
   - Types: Wanderer (hugs), Call-light Spammer (throws remotes and pudding), Escape Artist (slaps and runs), IV-pole Swinger (sweeps),
     Sundowner (charges), Crutch Crusader (crutch poke), and Bell Ringer (call bell on a cord, whip that dizzies).
+  - **v0.4 patients:**
+    - Bed-Alarm Runner (`runner`): flees and beeps. Caught, he drops snacks and +1000. He escapes after `escape` seconds, so he never softlocks a zone.
+    - Food-Tray Thrower (`tray`): flat trays (`p_tray`) and lobbed jello (`p_jello`, which leaves a green slippery puddle).
+    - O2 Wanderer (`o2`): tank swing. `loseTank()` turns the tank into a kickable `o2tank` prop, and then he uses the `idle2`/`walk2`/`atk2` poses.
   - **Elite "Frequent Flyer":** beehive with curlers, red or blue socks, a cane up close, and from range syringe darts or lobbed urinals that splash and leave a slippery puddle.
   - The Belligerent Visitor is a tough guy in normal street clothes: plaid flannel (`plaid` body option), jeans, belt and white sneakers, with short brown hair, a beard and a yellow visitor badge. He's a visitor, so no gown, and he must not look like a tracksuit, cap, armor or red suit.
   - Each has its own KO line and falls asleep or gets tucked in. Crutch, bell and elite patients may drop their weapon.
@@ -34,6 +38,22 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
   - **Breaking:** a break makes debris (`chunk` fx), a drop roll (ZYNN capped at one per level), points, hit-stop and shake.
   - **Patients:** a knocked or thrown patient that hits a prop launches it, and Tilly's charge smashes props.
   - **Rules:** props are never solid, never hurt heroes, and never touch the camera or zone logic, so don't add any of that or progress could softlock.
+- **Gurney ride (v0.4):** the `gurney` prop (`ride:true`).
+  - **Mount:** GRAB or ATK+JUMP next to one (pad B or X+A). The touch GRAB button becomes RIDE (`#b_grab.ctx`).
+  - **Ride:** `hero.js` `mount`/`s_ride`/`dismount`. It's about 2.6s, plows patients and bumps props, then crashes (`smashProp`) at the timeout, the screen edge or the boss. JUMP bails.
+  - **Rules:** `updateProp` skips a prop that has a `rider`. Keep 'ride' non-hittable.
+- **Charge Nurse team-up (v0.4, 2P only):** both nurses within 110x/40y hold SP with a meter of at least 50.
+  - **Flow:** `teamwait`, then `startTeam`, then `s_teamup`. The blast at 0.75s does 70 forced damage to on-screen foes, 15% to the boss, and hits props. It costs 50 meter each.
+  - **Fallback:** a release, a 1.2s timeout or no partner gives the normal special or Code Blue.
+  - **FX:** `drawTeamBack`/`drawTeamFront`.
+- **Cutscenes (v0.4, `src/cutscene.js`):** 3-panel comic pages (`start`, `boss`, `lunch`, `next`), 8.6s each, skipped by any input after 0.6s.
+  - Test URLs (`autostart`/`zone`/`bot`/`nocut`) skip them unless `&cuts=1`.
+  - The boss one runs through `W.onBossCut`.
+- **Breakroom Bonus (v0.4, `src/bonus.js`, `BONUS` in data.js):** a 45s round where thieves raid the fridge, vending machine and counter.
+  - **Scoring:** 500 per stop, 150 per snack saved, and a 3000 perfect bonus. The tally (`btally`) adds it to the score.
+  - **Flow:** tally → lunch cut → bonus → btally → next cut → teaser.
+  - **Debug:** `?scene=bonus`, `__nbd.bonus()`, `__nbd.B`.
+- **Input:** presses that land during hit-stop are buffered (`h.pend`) and merged into the next live input.
 - **Boss: Turbo Tilly** in an electric wheelchair.
   - Phase 1: horn honk shock ring (dizzies), rev and charge. After a charge her battery panel opens as the weak point; she takes only 30% damage otherwise.
   - Phase 2 (turbo): faster charges, drops puddles and yarn, and calls patients for backup.
@@ -61,6 +81,8 @@ Debug query params:
 - `?zone=5` jumps to the boss (zones 0–5; 2 is the elevator bank).
 - `?god=1` keeps P1 at full HP.
 - `?bot=1` lets a simple bot drive P1 (used for tests and GIFs).
+- `?nocut=1` skips the cutscenes, and `&cuts=1` forces them back on for autostart/zone URLs.
+- `?autostart=1&scene=bonus` jumps straight to the Breakroom Bonus.
 
 Tests (Playwright + Chromium; the server must be running):
 ```bash
@@ -68,16 +90,17 @@ python3 tests/smoke.py      # desktop keyboard: title, select, first fight
 python3 tests/moves.py      # every hero: jump, kick, special cost, super, run/dash, weapon pickup + swing
 python3 tests/pad.py        # mocked gamepad: menus, select, move, attack, pause; 2P keyboard + pad
 python3 tests/touch.py      # emulated Pixel phone landscape: taps, floating joystick, buttons, pause, rotate prompt
-python3 tests/flow.py       # boss defeat -> tally -> teaser -> title; continue; game over -> high scores
+python3 tests/flow.py       # boss defeat -> tally -> bonus round -> bonus tally -> teaser -> title; continue; game over -> high scores
 python3 tests/will.py       # Will's look on title, select, in-game HUD, tally
 python3 tests/patients.py   # all patient types + random looks, elite syringe/urinal throws, splash + puddle, KO drops, new pickups
 python3 tests/props.py      # v0.3 breakables: roll/plow/bounce/break, every kind, patients into props, loot odds, 2P pad, touch, bot to boss
+python3 tests/v04.py        # v0.4: new patients, gurney (keys/pad/touch), 2P team-up + fallbacks, cutscenes + skips, bonus round + tally + flow
 python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
 python3 tests/shots.py "autostart=1&bot=1&god=1" 240 full 1280 720 6   # whole level with the bot
 python3 tests/video.py      # webm clips for the GIF (ffmpeg converts)
 ```
-Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `docs/gameplay.gif` and `docs/props.gif` are committed copies.
+Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `docs/gameplay.gif`, `docs/props.gif`, `docs/v04_patients.gif` and `docs/v04_gurney_teamup.gif` are committed copies.
 
 ## Rebuilding art and audio
 - Patient looks: `tools/chars.py` has `GOWN`, `GOWN_OLIVE`, `SOCK`, `SOCK_ELITE` and `HAIRS`. `make_art.py` writes them to `atlas.json`
@@ -87,7 +110,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
   - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients, `tools/boss.py` Tilly, `tools/props.py` the hospital art, and `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits.
   - It uses vendored copies of Master Builder's Gravewake `sprite_writer`/`pixel_writer` and brileta-sprites (plants, via node).
   - Never edit `/workspace/gravewake` itself. It belongs to another bot.
-- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter); `make_audio.py` calls it too.
+- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both.
 - `python3 tools/make_audio.py` rewrites `audio/music/*.mp3` (with loop points in `music.json`) and `audio/sfx/*.wav`, using the N64 suite in `/workspace/n64-suite` (music.compose with the chiptune fallback, sfx.make, babble).
 - All art is original. There are no copyrighted characters or sprites.
 
@@ -104,7 +127,9 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/world.js` | world state `W`, background pre-render, doors/elevators, props/items/shots/fx, camera (no scrolling back) |
 | `src/actor.js`, `src/hero.js`, `src/enemy.js`, `src/boss.js` | actor base + `strike()` hit logic, hero state machine, patient AI, Turbo Tilly |
 | `src/stage.js` | Director: zone triggers, camera locks, wave queue with cap, GO arrow, boss start/backup, projectiles |
-| `src/hud.js` | portraits, HP/meter, lives, score, combo, last-hit foe bar, boss bar, toasts, continue prompts |
+| `src/hud.js` | portraits, HP/meter (half-meter team tick), lives, score, combo, last-hit foe bar, boss bar, toasts, continue prompts |
+| `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
+| `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
 | `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`: **bump N on every release**) |
 
 ## Bill's standing preferences
@@ -120,13 +145,15 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 ## Known issues / caveats
 - Tested on emulated phones (Chromium, Pixel-size landscape) and desktop Chromium with a mocked gamepad. It has not been tested on real iPhone or Android hardware yet.
 - The heroes' skin tones and hair styles were guessed from Bill's short descriptions (they may be real coworkers). They are easy to change in `tools/chars.py` `bodies()`, followed by `python3 tools/make_art.py`.
-- Only Level 1 exists. The teaser points to Floor 4: Radiology.
+- Only Level 1 (plus the Breakroom Bonus) exists. The teaser points to Floor 4: Radiology.
 - Balance is first-pass: Tilly has 420 HP and patient damage scales by difficulty in `DIFF`. The elite waves make zones 2–4 noticeably harder.
 - The gown check pattern is drawn on a fixed pixel grid, so it doesn't move with the body. It shimmers very slightly during animation.
 - Online co-op is not implemented. That was optional in the spec.
 
 ## Next steps
 1. Bill plays on his phone and gives feedback on feel, difficulty and hero looks.
-2. Level 2 (Radiology), with new patient types, a new boss, and an X-ray hallway gimmick.
+2. **v0.5 (queued):** Floor 4 Radiology (new patients, a new boss, an X-ray hallway gimmick) plus a night-shift floor.
+   - **Size rule from Bill (not implemented yet):** new bosses must be **at least 5x the player's size** and mini-bosses **2–3x**.
+   - Check Turbo Tilly against this rule too.
 3. Character voice barks, plus an attract-mode demo on the title screen using the bot.
 4. More stages per the spec: lobby/ER, ICU, cafeteria, roof helipad.

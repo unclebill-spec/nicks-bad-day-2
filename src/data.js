@@ -56,6 +56,17 @@ export const ENEMIES = {
   bell: { name: 'BELL RINGER', sheet: 'bell', hp: 40, speed: 36, depth: 24, reach: 60, score: 400, atk: 'whip', cd: [1.5, 2.3], drop: ['w:callbell', 0.5], ko: ['*ding* ...zzz', 'Ring me later...'], voice: 'voice1' },
   elite: { name: 'FREQUENT FLYER', sheet: 'elite', hp: 74, speed: 38, depth: 26, reach: 36, score: 900, atk: 'cane', cd: [1.3, 2.1], keep: 100, armor: 1, elite: true, drop: ['w:cane', 0.35],
     ko: ['I know the way out... zzz', 'See you next week!', 'Put it on my tab.'], voice: 'voice3' },
+  // v0.4: the Bed-Alarm Runner never fights, it just runs (beeping) and gets away if you don't catch it; the Food-Tray
+  // Thrower keeps its distance and hurls trays / lobs jello; the O2 Wanderer swings its tank cart until a hard hit knocks it loose.
+  runner: { name: 'BED-ALARM RUNNER', sheet: 'runner', hp: 26, speed: 92, depth: 58, reach: 0, score: 700, atk: 'none', cd: [9, 9], runner: true, escape: 13,
+    drop: ['snacks', 1], ko: ["Fine, I'll go back to bed!", '*beep* ...zzz', 'You caught me fair and square.'], voice: 'voice5' },
+  tray: { name: 'FOOD-TRAY THROWER', sheet: 'tray', hp: 36, speed: 34, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.7, 2.7], keep: 118, drop: ['donut', 0.3],
+    ko: ['Compliments to the chef... zzz', 'Is it dessert time?', 'Fine. I will eat the peas.'], voice: 'voice1' },
+  o2: { name: 'O2 WANDERER', sheet: 'o2', hp: 50, speed: 26, depth: 22, reach: 48, score: 450, atk: 'swing', cd: [1.8, 2.7], drop: ['energy', 0.4],
+    ko: ['Just need a little air... zzz', 'Deep breaths... zzz'], voice: 'voice4' },
+  // v0.4 breakroom bonus: snack thieves never attack, they raid the fridge / vending machine / counter and run for it
+  thief: { name: 'SNACK THIEF', sheet: 'wanderer', hp: 14, speed: 62, depth: 40, reach: 0, score: 0, atk: 'none', cd: [9, 9],
+    ko: ['I was just LOOKING!', "Okay, okay, back to bed!", 'Midnight snack... zzz', 'It had no NAME on it!'], voice: 'voice5' },
   visitor: { name: 'BELLIGERENT VISITOR', sheet: 'visitor', hp: 110, speed: 44, depth: 26, reach: 34, score: 800, atk: 'punch', cd: [1.4, 2.2], armor: 3, ko: ['I want the manager... zzz', 'Visiting hours are over.'], voice: 'voice3', big: true },
 };
 export const VARIANTS = {};  // v0.2: looks are randomized at runtime instead (src/enemy.js lookFor)
@@ -84,6 +95,11 @@ export const BREAKABLES = {
     bits: ['deb_shard', 'deb_leaf', 'deb_shard', 'deb_leaf'], deb: ['#c86a3a', '#5a3a24', '#3a8a3a'], hit: 'thunk', brk: 'shatter' },
   wetfloor: { name: 'WET FLOOR SIGN', spr: 'wetfloor', hp: 2, w: 14, h: 26, states: 2, move: 'slide', fr: 2.6, push: 1.2, dmg: 5, mass: 0.4, loot: 'small',
     bits: ['deb_sign', 'deb_sign'], deb: ['#ffd84a', '#d8a820'], hit: 'thunk', brk: 'thunk' },
+  // v0.4: a rideable gurney (GRAB / ATK+JUMP / the RIDE touch button) and the O2 tank an O2 Wanderer drops
+  gurney: { name: 'GURNEY', spr: 'gurneyp', hp: 6, w: 52, h: 26, move: 'roll', fr: 0.5, push: 0.85, dmg: 14, mass: 2.4, loot: 'cart', ride: true,
+    bits: ['deb_wheel', 'deb_linen', 'deb_rod', 'deb_linen'], deb: ['#f4f6fa', '#7ab0e8', '#b8c0cc'], hit: 'clang', brk: 'crash' },
+  o2tank: { name: 'O2 TANK', spr: 'o2tank', hp: 4, w: 14, h: 30, move: 'roll', fr: 0.7, push: 1.15, dmg: 12, mass: 1.0, loot: 'small', hiss: true,
+    bits: ['deb_rod', 'deb_wheel'], deb: ['#3aa860', '#267a44', '#b8c0cc'], hit: 'clang', brk: 'hiss' },
   vending: { name: 'VENDING MACHINE', spr: 'vending', hp: 6, w: 30, h: 64, big: true, mass: 99, loot: 'vending',
     bits: ['deb_glass', 'deb_can', 'deb_glass', 'deb_box'], deb: ['#d83a4a', '#1a2a3a', '#cfe8ff'], hit: 'clang', brk: 'smash' },
 };
@@ -114,19 +130,19 @@ export const LEVEL1 = {
   props: [ // breakables on the floor: [x, y, kind, guaranteed drops[]] (plus one random LOOT roll each)
     // zone 1 (camera 0..)
     [150, 182, 'wetfloor', []], [236, 150, 'crashcart', ['energy']], [300, 204, 'trash', []], [334, 146, 'plant', []],
-    [470, 150, 'medcart', []],
+    [470, 150, 'medcart', []], [392, 196, 'gurney', []],
     // zone 2 (camera 480..)
     [556, 198, 'chair', []], [612, 148, 'trash', []], [700, 164, 'crashcart', []], [804, 202, 'wetfloor', []], [880, 146, 'ivstand', ['w:ivpole']],
-    [1012, 196, 'linen', ['w:bedpan']],
+    [1012, 196, 'linen', ['w:bedpan']], [640, 186, 'gurney', []],
     // zone 3: elevator bank (camera 1060..)
     [1118, 202, 'wheelchair', []], [1196, 146, 'trash', []], [1296, 190, 'crashcart', ['snacks']], [1366, 148, 'chair', []], [1388, 150, 'chair', []],
-    [1500, 148, 'supplycart', []],
+    [1500, 148, 'supplycart', []], [1190, 176, 'gurney', []],
     // zone 4 (camera 1600..)
     [1652, 148, 'plant', []], [1730, 200, 'linen', ['w:mop']], [1808, 162, 'crashcart', []], [1902, 202, 'wetfloor', []], [1958, 148, 'trash', []],
     [2090, 198, 'chair', []], [2110, 142, 'vending', ['candy', 'snacks', 'energy']], [2150, 200, 'chair', []],
     // zone 5 (camera 2200..)
     [2262, 150, 'wheelchair', []], [2330, 196, 'supplycart', ['w:clipboard']], [2424, 162, 'crashcart', []], [2504, 202, 'trash', []], [2562, 148, 'plant', []],
-    [2600, 148, 'ivstand', ['w:extinguisher']], [2680, 200, 'linen', ['zynn']],
+    [2600, 148, 'ivstand', ['w:extinguisher']], [2680, 200, 'linen', ['zynn']], [2290, 182, 'gurney', []], [1690, 184, 'gurney', []],
     // dayroom (boss): Tilly plows through these
     [3130, 150, 'chair', []], [3156, 152, 'chair', []], [3300, 200, 'crashcart', []], [3470, 148, 'plant', []],
   ],
@@ -135,28 +151,33 @@ export const LEVEL1 = {
   zones: [
     { at: 120, lock: 0, waves: [
       [['wanderer', 'R', 0.6], ['escape', 'L', 1.8]],
-      [['wanderer', 'D301', 0.2], ['spammer', 'R', 1.2]],
+      [['wanderer', 'D301', 0.2], ['spammer', 'R', 1.2], ['runner', 'D302', 2.4]],
     ] },
     { at: 560, lock: 480, waves: [
-      [['escape', 'D302', 0.2], ['wanderer', 'R', 1.0], ['ivswing', 'L', 2.2]],
-      [['spammer', 'D303', 0.3], ['crutch', 'R', 1.0], ['wanderer', 'L', 1.6], ['bell', 'D304', 2.4]],
+      [['escape', 'D302', 0.2], ['wanderer', 'R', 1.0], ['ivswing', 'L', 2.2], ['o2', 'R', 3.0]],
+      [['spammer', 'D303', 0.3], ['tray', 'R', 1.0], ['wanderer', 'L', 1.6], ['bell', 'D304', 2.4], ['crutch', 'R', 3.2]],
     ] },
     { at: 1150, lock: 1060, title: 'ELEVATOR BANK', waves: [
       [['wanderer', 'EB', 0.8], ['sundowner', 'EB', 1.1], ['escape', 'EB', 1.4]],
-      [['elite', 'EC', 0.8], ['spammer', 'EC', 1.2], ['crutch', 'R', 2.4]],
+      [['elite', 'EC', 0.8], ['tray', 'EC', 1.2], ['crutch', 'R', 2.4], ['runner', 'EB', 3.0]],
       [['visitor', 'EB', 0.6], ['bell', 'EB', 1.0], ['sundowner', 'L', 2.0]],
     ] },
     { at: 1700, lock: 1600, waves: [
-      [['ivswing', 'D306', 0.3], ['escape', 'L', 0.9], ['sundowner', 'R', 1.6]],
+      [['ivswing', 'D306', 0.3], ['o2', 'L', 0.9], ['sundowner', 'R', 1.6], ['escape', 'L', 2.6]],
       [['wanderer', 'D307', 0.2], ['bell', 'D308', 1.0], ['ivswing', 'R', 1.8], ['escape', 'L', 2.4]],
-      [['elite', 'R', 0.4], ['crutch', 'L', 1.0]],
+      [['elite', 'R', 0.4], ['crutch', 'L', 1.0], ['runner', 'D308', 1.8], ['tray', 'R', 2.4]],
     ] },
     { at: 2300, lock: 2200, waves: [
-      [['visitor', 'R', 0.4], ['wanderer', 'D310', 1.0], ['escape', 'L', 1.6]],
+      [['visitor', 'R', 0.4], ['wanderer', 'D310', 1.0], ['tray', 'L', 1.6], ['o2', 'R', 2.6]],
       [['sundowner', 'D311', 0.3], ['elite', 'R', 0.9], ['ivswing', 'L', 1.5], ['visitor', 'D309', 2.6], ['bell', 'L', 3.2]],
     ] },
     { at: 3080, lock: 3060, boss: 'tilly', waves: [] },
   ],
   bossArena: 3060,
 };
+// ---- v0.4 Breakroom bonus round (between Floor 3 and Floor 4): one screen, built to the current view width at start.
+// Thieves come out of the staff door and both screen edges, raid a snack spot for a couple of seconds, then run.
+export const BONUS = { time: 45, every: [1.3, 2.3], cap: 4, raid: 2.3, stop: 500, saved: 150, perfect: 3000,
+  loot: { fridge: ['donut', 'snacks', 'energy'], vending: ['candy', 'snacks', 'energy'], counter: ['donut', 'candy'] },
+  looks: ['wanderer', 'spammer', 'escape', 'runner', 'tray', 'sundowner', 'crutch', 'bell'] };
 export const DIFF = { easy: { dmg: 0.65, hp: 0.85, cap: 3 }, normal: { dmg: 1, hp: 1, cap: 4 }, hard: { dmg: 1.35, hp: 1.2, cap: 5 } };

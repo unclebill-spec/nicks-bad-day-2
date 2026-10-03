@@ -12,7 +12,7 @@ with sync_playwright() as p:
     key(pg, 'Enter'); time.sleep(0.4); key(pg, 'KeyD'); key(pg, 'KeyD'); time.sleep(0.3)
     print('cursor on', pg.evaluate("__nbd.game.sel.p[0].cur"), '(2 = Will)')
     pg.screenshot(path='tests/out/w_select.png')
-    key(pg, 'KeyJ'); time.sleep(4.5)
+    key(pg, 'KeyJ'); time.sleep(1.2); key(pg, 'KeyK'); time.sleep(3.3)  # skip the v0.4 cutscene
     print('playing as', pg.evaluate("__nbd.W.heroes[0].id"), pg.evaluate("__nbd.W.heroes[0].sheet"))
     pg.keyboard.down('KeyD'); time.sleep(1.2); pg.keyboard.up('KeyD'); key(pg, 'KeyJ'); key(pg, 'KeyJ')
     pg.screenshot(path='tests/out/w_game.png')

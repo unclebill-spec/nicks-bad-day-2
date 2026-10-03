@@ -36,6 +36,13 @@ export function spawn(kind, where) {
 
 // a lobbed urinal lands (or hits a nurse): splash FX, a SPLOOSH! word and a slippery yellow puddle
 function splashAt(s, h) {
+  if (s.splash === 'jello') {  // v0.4: lobbed jello cup, wobbly green splat that's just as slippery
+    addFx({ type: 'chunk', spr: null, col: '#5ad85a', sz: 3, x: s.x, y: s.y, z: 6, vx: -40, vy: 0, vz: 110, spin: 0, dur: 0.8 }); addFx({ type: 'chunk', spr: null, col: '#bfffbf', sz: 2, x: s.x, y: s.y, z: 6, vx: 50, vy: 0, vz: 130, spin: 0, dur: 0.8 });
+    word('w_splat', s.x, s.y, h ? 20 : 4); sfx('splat', { vol: 0.7 });
+    if (h) floatText(['JIGGLY!', 'NOT THE JELLO!', 'LIME? REALLY?'][Math.floor(W.rnd() * 3)], h.x, h.y, 66, '#8ae87a');
+    addShot({ kind: 'puddle', spr: 'puddle_g', x: s.x, y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
+    return;
+  }
   addFx({ type: 'splash', x: s.x, y: s.y, z: h ? Math.max(10, s.z) : 0, dur: 0.45 });
   word('w_sploosh', s.x, s.y, h ? 20 : 4); sfx('splash', { vol: 0.6 });
   if (h) floatText(['EWWW!', 'GROSS!', 'NOT MY SCRUBS!'][Math.floor(W.rnd() * 3)], h.x, h.y, 66, '#fff27a');
@@ -51,7 +58,7 @@ export const Director = {
     if (!W.zoneOn && W.zone + 1 < zs.length && lead >= zs[W.zone + 1].at) {
       W.zone++; W.zoneOn = true; W.wave = 0; const z = zs[W.zone];
       W.lockX = Math.min(z.lock, L.width - G.VW); W.go = 0;
-      if (z.boss) this.startBoss(); else this.startWave();
+      if (z.boss) { if (W.onBossCut) W.onBossCut(() => this.startBoss()); else this.startBoss(); } else this.startWave();
     }
     // spawn queue (capped on-screen count)
     const cap = W.diff.cap + (W.heroes.length > 1 ? 1 : 0);
@@ -78,8 +85,8 @@ export const Director = {
     floatText('DAYROOM', W.lockX + G.VW / 2, 150, 70, '#d8b4f4');
   },
   backup() {  // Tilly's call button: two patients answer
-    const kinds = ['wanderer', 'escape', 'crutch', 'bell'];
-    spawn(kinds[Math.floor(W.rnd() * 4)], 'D314'); spawn(kinds[Math.floor(W.rnd() * 4)], W.rnd() < 0.5 ? 'L' : 'R');
+    const kinds = ['wanderer', 'escape', 'crutch', 'bell', 'tray', 'o2'];
+    spawn(kinds[Math.floor(W.rnd() * kinds.length)], 'D314'); spawn(kinds[Math.floor(W.rnd() * kinds.length)], W.rnd() < 0.5 ? 'L' : 'R');
   },
   // ------------------------------------------------------------ projectiles
   shots(dt) {

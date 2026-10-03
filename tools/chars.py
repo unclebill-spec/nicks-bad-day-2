@@ -180,6 +180,33 @@ def holder(kind):
         elif kind == "paddles":
             S.capsule((hx - 1, hy), (hx + 3, hy), 4, "#e0e4ec", "#9aa0ae")
             S.set(int(hx + 1), int(hy - 2), "#f2d24a")
+        # ---- v0.4 patients
+        elif kind == "alarm":  # bed-alarm pad clipped on, cord dangling, red light
+            S.capsule((hx - 2, hy + 1), (hx + 2, hy + 1), 4.2, "#d8dce4", "#9aa0ae"); S.rect(int(hx), int(hy - 1), 2, 2, "#ff3a3a")
+            for k in range(7):
+                S.set(int(hx - 1 - (k % 2)), int(hy + 4 + k * 1.7), "#e8e8f0")
+        elif kind in ("tray", "tray_up", "tray_out"):  # meal tray: plate, jello cup, milk carton
+            if kind == "tray":
+                x0, y0 = hx - 3, hy - 1
+            elif kind == "tray_up":
+                x0, y0 = hx - 10, hy - 4
+            else:
+                x0, y0 = hx + 1, hy - 2
+            S.rect(int(x0) - 1, int(y0) - 1, 18, 4, INK); S.rect(int(x0), int(y0), 16, 2, "#c8a070"); S.rect(int(x0), int(y0) + 1, 16, 1, "#9a7448")
+            S.ellipse((x0 + 4, y0 - 1), 3, 1.2, "#f4f4f8", rim=False); S.rect(int(x0 + 3), int(y0 - 2), 3, 1, "#c86a3a")
+            S.rect(int(x0 + 8), int(y0 - 3), 3, 3, "#5ad85a"); S.set(int(x0 + 8), int(y0 - 3), "#aaffaa")
+            S.rect(int(x0 + 12), int(y0 - 5), 3, 5, "#f4f4f8"); S.rect(int(x0 + 12), int(y0 - 3), 3, 1, "#4a8ad8")
+        elif kind == "jello":
+            S.rect(int(hx - 2), int(hy - 3), 6, 6, INK); S.rect(int(hx - 1), int(hy - 2), 4, 4, "#5ad85a"); S.set(int(hx - 1), int(hy - 2), "#bfffbf")
+        elif kind == "o2drag":  # oxygen tank on a little two-wheel dolly, dragged behind by its handle
+            S.line((hx, hy), (hx - 6, hy + 10), "#7c8696")
+            S.capsule((hx - 9, hy + 9), (hx - 9, hy + 24), 6, "#3aa860", "#267a44"); S.rect(int(hx - 10), int(hy + 6), 3, 3, "#b8c0cc")
+            S.rect(int(hx - 12), int(hy + 15), 7, 1, "#ffffff")
+            S.line((hx - 13, hy + 26), (hx - 4, hy + 26), "#7c8696"); S.ellipse((hx - 7, hy + 28), 2.2, 2.2, "#2a2e3a")
+        elif kind == "o2_up":  # tank hoisted over the shoulder
+            S.capsule((hx - 14, hy - 12), (hx + 2, hy + 2), 6, "#3aa860", "#267a44"); S.rect(int(hx - 17), int(hy - 15), 3, 3, "#b8c0cc")
+        elif kind == "o2_h":  # swung out in front
+            S.capsule((hx - 2, hy), (hx + 18, hy - 2), 6, "#3aa860", "#267a44"); S.rect(int(hx + 19), int(hy - 4), 3, 3, "#b8c0cc")
         elif kind == "clipboard":
             S.poly([(hx - 2, hy - 6), (hx + 4, hy - 6), (hx + 4, hy + 2), (hx - 2, hy + 2)], "#b07a3e")
             S.rect(int(hx - 1), int(hy - 5), 4, 6, "#f4f0e4")
@@ -246,6 +273,14 @@ def bodies():
                              shirt=FLANNEL[0], shirt_s=FLANNEL[1], sleeve=FLANNEL[0], sleeve_s=FLANNEL[1], sleeve_len=0.62, plaid=(FLANNEL, FLANNEL_CHECK),
                              pants="#4a6a9a", pants_s="#344e78", belt="#3a2a1a", vneck=True, steth=False, badge="#f2d24a", shoe="#f4f4f4", shoe_s="#b0b8c4",
                              beard="#5a3a20", fist=2.2, foot_len=4.4, foot_w=3.0)
+    # v0.4 patients (gown + grip socks, random hair at runtime)
+    B["runner"] = hero_body(thigh=10.5, shin=10.5, torso=15, torso_w=9, skin=sk["fair"][0], skin_s=sk["fair"][1], hair_c="#f0d070", hair_s="#c0a040",
+                            hair=hair_cap(top=-0.3, back=0.3, spikes=5, seed=6), **{**gown, "gown_len": 7}, pants=sk["fair"][0], pants_s=sk["fair"][1], **socks)
+    B["tray"] = hero_body(thigh=10, shin=10, torso=16, torso_w=12, belly=2, skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#9a9aa6", hair_s="#6a6a78",
+                          hair=hair_cap(top=0.05, back=0.4, grow=1.8, bumps=1.4, seed=8, fringe=0), glasses="#3a3a44", mouth="#9a3a3a",
+                          **gown, pants=sk["light"][0], pants_s=sk["light"][1], **socks)
+    B["o2"] = hero_body(thigh=10, shin=10, torso=15, torso_w=10.5, skin=sk["old"][0], skin_s=sk["old"][1], hair_c="#eef0f4", hair_s="#b8bcc8",
+                        hair=bald_ring, **{**gown, "gown_len": 10}, **sock)
     return B
 
 
@@ -319,6 +354,10 @@ def hero_anims(name):
         A["special"] = [P(lean=-10, ua_f=-130, fa_f=-160, ua_b=40, fa_b=110, th_f=26, th_b=-26, hold=cb),
                         P(lean=18, ua_f=96, fa_f=90, ua_b=-30, fa_b=40, th_f=34, sh_f=10, th_b=-28, face="yell"),
                         P(lean=10, ua_f=60, fa_f=40, ua_b=-20, fa_b=40, th_f=26, th_b=-20)]
+    # v0.4: riding a gurney (crouched surf, arms out) and the Charge Nurse team-up pose
+    A["ride"] = [P(lean=22, hy=6, th_f=56, sh_f=-34, th_b=-34, sh_b=-76, ua_f=84, fa_f=96, ua_b=-70, fa_b=-30, face="yell"),
+                 P(lean=18, hy=5, th_f=50, sh_f=-30, th_b=-30, sh_b=-72, ua_f=96, fa_f=110, ua_b=-80, fa_b=-40, face="grin")]
+    A["team"] = [P(lean=-6, ua_f=176, fa_f=178, ua_b=150, fa_b=160, th_f=20, th_b=-20, face="yell")]
     if name == "kim":  # Kim's quick 4th hit: spinning back kick
         A["atk4"] = [P(lean=0, th_f=10, sh_f=10, th_b=-96, sh_b=-96, ua_f=100, fa_f=110, ua_b=60, fa_b=90, face="yell", flip=True),
                      P(lean=-12, th_f=96, sh_f=94, th_b=-6, ua_f=-70, fa_f=-80, ua_b=-100, fa_b=-110, face="yell")]
@@ -397,6 +436,35 @@ def enemy_anims(kind):
         A["walk"] = walk_cycle(swing=18, arm=16, lean=8)
         A["atk"] = [P(lean=-10, ua_f=20, fa_f=130, ua_b=-120, fa_b=-150, th_f=16, th_b=-20, face="yell"),
                     P(lean=22, ua_f=10, fa_f=130, ua_b=92, fa_b=90, th_f=34, sh_f=10, th_b=-28, face="yell")]
+    elif kind == "runner":  # bed-alarm runner: sprints away, alarm pad flapping
+        al = holder("alarm")
+        A["idle"] = [P(ua_f=30, fa_f=120, ua_b=-20, fa_b=40, hold_b=al, face="grin"), P(ua_f=30, fa_f=120, ua_b=-20, fa_b=40, hold_b=al, face="grin", hy=-1, lift=1)]
+        A["walk"] = walk_cycle(swing=44, arm=46, lean=20, bob=2)
+        for f in A["walk"]:
+            f.update(fa_f=f["ua_f"] + 80, fa_b=f["ua_b"] + 60, hold_b=al, face="grin")
+        A["atk"] = [P(lean=-6, ua_f=60, fa_f=90, ua_b=-20, fa_b=30, hold_b=al, face="grin"), P(lean=16, ua_f=86, fa_f=80, ua_b=-30, fa_b=20, th_f=20, th_b=-20, hold_b=al, face="yell")]
+    elif kind == "tray":  # food-tray thrower: cranky, hurls trays and jello
+        tr = holder("tray")
+        A["idle"] = [P(ua_f=40, fa_f=100, ua_b=30, fa_b=96, hold=tr, face="yell"), P(ua_f=40, fa_f=104, ua_b=30, fa_b=98, hold=tr, face="norm", hy=1)]
+        A["walk"] = walk_cycle(swing=16, arm=6)
+        for f in A["walk"]:
+            f.update(ua_f=40, fa_f=100, hold=tr)
+        A["atk"] = [P(lean=-12, ua_f=-150, fa_f=-165, ua_b=40, fa_b=80, th_f=20, th_b=-24, hold=holder("tray_up"), face="yell"),
+                    P(lean=14, ua_f=100, fa_f=96, ua_b=-20, fa_b=20, th_f=30, sh_f=10, th_b=-26, face="yell")]
+        A["lob"] = [P(lean=-12, ua_f=40, fa_f=100, hold=tr, ua_b=-160, fa_b=-175, hold_b=holder("jello"), th_f=20, th_b=-24, face="grin"),
+                    P(lean=8, ua_f=40, fa_f=100, hold=tr, ua_b=150, fa_b=140, th_f=24, th_b=-20, face="yell")]
+    elif kind == "o2":  # O2 wanderer: drags the tank dolly, swings it; *2 = after the tank is knocked loose
+        dr = holder("o2drag")
+        A["idle"] = [P(ua_f=20, fa_f=60, ua_b=-20, fa_b=10, hold_b=dr, lean=8, face="sleep"), P(ua_f=20, fa_f=64, ua_b=-20, fa_b=10, hold_b=dr, lean=8, hy=1, face="sleep")]
+        A["walk"] = walk_cycle(swing=12, arm=4, lean=10)
+        for f in A["walk"]:
+            f.update(ua_b=-20, fa_b=10, hold_b=dr)
+        A["atk"] = [P(lean=-12, ua_f=-140, fa_f=-150, ua_b=-150, fa_b=-160, hold=holder("o2_up"), th_f=16, th_b=-20, face="yell"),
+                    P(lean=18, ua_f=86, fa_f=92, ua_b=80, fa_b=90, th_f=28, th_b=-24, hold=holder("o2_h"), face="yell"),
+                    P(lean=22, ua_f=70, fa_f=80, ua_b=60, fa_b=76, th_f=30, th_b=-26, hold=holder("o2_h"), face="yell")]
+        A["idle2"] = [P(ua_f=20, fa_f=60, ua_b=-6, fa_b=20, lean=8, face="hurt"), P(ua_f=20, fa_f=64, ua_b=-6, fa_b=20, lean=8, hy=1, face="norm")]
+        A["walk2"] = walk_cycle(swing=12, arm=12, lean=10)
+        A["atk2"] = [P(lean=-6, ua_f=170, fa_f=176, ua_b=-20, fa_b=30, face="yell"), P(lean=16, ua_f=86, fa_f=70, ua_b=-30, fa_b=20, th_f=20, th_b=-20, face="yell")]
     base = hero_anims("nick")
     for k in ("hurt", "fall", "down", "getup", "dizzy"):
         A[k] = base[k]

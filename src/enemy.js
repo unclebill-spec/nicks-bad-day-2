@@ -3,9 +3,12 @@
 // v0.2: every patient wears the checked gown + yellow grip socks with randomized hair / skin; the Crutch Crusader pokes,
 // the Bell Ringer whips a call bell on its cord (dizzies), and the elite Frequent Flyer canes you up close and throws
 // syringe darts and (comedic) full urinals that splash and leave a slippery puddle.
-import { G, text, spr, tintSheet } from './gfx.js';
+// v0.4: the Bed-Alarm Runner flees beeping (catch it for a good drop, or it gets away), the Food-Tray Thrower hurls trays
+// and lobs jello (slippery green splat), and the O2 Wanderer swings its tank cart until a hard hit knocks the tank loose
+// (it becomes a kickable prop, and the patient is perfectly fine without it).
+import { G, text, spr, rect, tintSheet } from './gfx.js';
 import { ENEMIES, VARIANTS, Y_MIN, Y_MAX } from './data.js';
-import { W, offY, addShot, addFx, floatText, shake, spark, addScore, word, breakProp, propBox, dropItem, bumpProps } from './world.js';
+import { W, offY, addShot, addFx, floatText, shake, spark, addScore, word, breakProp, propBox, dropItem, bumpProps, makeProp } from './world.js';
 import { Actor, strike, clampY } from './actor.js';
 import { sfx } from './sound.js';
 
@@ -34,6 +37,7 @@ export class Enemy extends Actor {
     this.kind = kind; this.d = d; this.maxHp = this.hp = Math.round(d.hp * W.diff.hp * (W.heroes.length > 1 ? 1.25 : 1));
     this.cd = 0.8 + W.rnd() * 1.2; this.armor = d.armor || 0; this.armorT = 0; this.big = !!d.big; this.h = d.big ? 62 : 50; this.w = d.big ? 20 : 14;
     this.side = W.rnd() < 0.5 ? -1 : 1; this.wob = W.rnd() * 6; this.target = null; this.tx = x; this.ty = y; this.speechT = 2 + W.rnd() * 6;
+    this.tank = kind === 'o2'; this.runT = 0; this.beepT = 0;
   }
   hittable() { return !['dead', 'thrown', 'enter_door'].includes(this.st) && !(this.st === 'down' || this.st === 'getup'); }
   grabbable() { return ['idle', 'walk', 'hurt', 'dizzy', 'flee'].includes(this.st) && this.z === 0; }
@@ -45,6 +49,7 @@ export class Enemy extends Actor {
     this.hp -= dmg; this.flash = 0.12;
     if (from && from.isHero) this.lastHitBy = from;
     if (from) addScore(from, dmg * 8);
+    if (this.tank && (down || force || dmg >= 12 || this.hp <= 0)) this.loseTank(dir, from);
     if (this.hp <= 0) {
       this.hp = 0; if (this.holder) { this.holder.held = null; this.holder = null; }
       this.knock(dir, Math.max(kb || 0, 130), 200); this.koBy = from; return;
@@ -54,6 +59,14 @@ export class Enemy extends Actor {
     if (down || force) { if (this.holder) { this.holder.held = null; this.holder = null; } this.knock(dir, kb || 140, 190); return; }
     if (dizzy) { this.set('dizzy'); this.stun = dizzy; this.vx = 0; return; }
     this.set('hurt'); this.stun = stun || 0.3; this.vx = dir * (kb || 30);
+  }
+  loseTank(dir, from) {  // O2 Wanderer: the tank cart pops loose and rolls off as a kickable prop
+    this.tank = false;
+    const p = makeProp('o2tank', this.x - (dir || 1) * 4, this.y + 1, []);
+    p.vx = (dir || 1) * 150; p.kicker = from && from.isHero ? from : null; p.hitSet = new Set([this]); p.grace = W.t + 0.45;
+    W.props.push(p); W.stats.tanks = (W.stats.tanks || 0) + 1;
+    sfx('clang', { vol: 0.6 }); sfx('hiss', { vol: 0.3 }); addFx({ type: 'smoke', x: p.x, y: p.y, z: 26, dur: 0.6 });
+    floatText(W.rnd() < 0.5 ? 'MY OXYGEN!' : "I'm fine! It was mostly for show!", this.x, this.y, 64, '#ffffff');
   }
   thrownBy(h, dir, k) {
     this.holder = null; this.set('thrown'); this.face = -dir; this.vx = dir * 210 * k; this.vz = 170; this.z = 8; this.thrower = h; this.k = k; this.hitSet = new Set([this]);
@@ -88,6 +101,34 @@ export class Enemy extends Actor {
     addFx({ type: 'zzz', x: this.x + 4, y: this.y, z: 20, dur: 1.5 });
     sfx(this.d.voice, { vol: 0.35, rate: 0.8 });
     if (this.d.drop && W.rnd() < this.d.drop[1]) dropItem(this.d.drop[0], this.x, this.y);
+    if (this.d.runner) {  // caught the runner: a good drop and a bonus
+      word('w_caught', this.x, this.y, 20); sfx('powerup', { vol: 0.5 }); W.stats.caught = (W.stats.caught || 0) + 1;
+      if (k && k.isHero) { addScore(k, 1000); floatText('+1000', this.x, this.y, 70, '#ffe84a'); }
+      if (W.rnd() < 0.35) dropItem('star', this.x + 10, this.y);
+      if (!W.zynnRun && W.rnd() < 0.15) { W.zynnRun = true; dropItem('zynn', this.x - 10, this.y); }
+    }
+  }
+  // Bed-Alarm Runner: keeps away from the nearest nurse, jukes along the far lane when cornered, gets away after a while
+  runAway(dt, h) {
+    this.runT += dt;
+    if ((this.beepT -= dt) <= 0) { this.beepT = 0.55; sfx('beep', { vol: 0.22 }); if ((this.bw = (this.bw || 0) + 1) % 3 === 0) word('w_beep', this.x, this.y, 30); }
+    if (this.runT > this.d.escape) { this.set('escape_off'); this.fleeDir = this.x - W.camX < G.VW / 2 ? -1 : 1; floatText('SEE YOU AT DISCHARGE!', this.x, this.y, 64, '#ffffff'); return; }
+    const dx = this.x - h.x, dy = this.y - h.y, dist = Math.hypot(dx, dy * 2);
+    const L = W.camX + 16, R = W.camX + G.VW - 16, dir = Math.sign(dx) || this.side;
+    const cornered = (dir < 0 && this.x < L + 26) || (dir > 0 && this.x > R - 26);
+    if (cornered && dist < 64) {
+      this.set('flee'); this.fleeDir = -dir; this.jukeY = this.y < (Y_MIN + Y_MAX) / 2 ? Y_MAX - 4 : Y_MIN + 4;
+      if (W.rnd() < 0.5) floatText(W.rnd() < 0.5 ? 'Nyah nyah!' : 'Too slow!', this.x, this.y, 60, '#ffffff'); return;
+    }
+    if (dist > 160) { this.st = 'idle'; return; }
+    const gx = Math.max(L, Math.min(R, this.x + dir * 40)), gy = Math.max(Y_MIN + 2, Math.min(Y_MAX - 2, this.y + (Math.sign(dy) || 1) * 18));
+    const mx = gx - this.x, my = gy - this.y, ml = Math.hypot(mx, my) || 1, sp = this.d.speed * (dist > 100 ? 0.6 : 1);
+    this.x += mx / ml * sp * dt; this.y += my / ml * sp * 0.7 * dt; this.face = Math.abs(mx) > 2 ? Math.sign(mx) : this.face; this.st = 'walk';
+  }
+  s_escape_off(dt) {
+    this.x += this.fleeDir * this.d.speed * 1.25 * dt; this.face = this.fleeDir;
+    if ((this.beepT -= dt) <= 0) { this.beepT = 0.4; sfx('beep', { vol: 0.2 }); }
+    if (this.x < W.camX - 34 || this.x > W.camX + G.VW + 34) { this.alive = false; W.stats.escaped = (W.stats.escaped || 0) + 1; floatText('IT GOT AWAY!', Math.max(W.camX + 40, Math.min(W.camX + G.VW - 40, this.x)), this.y, 60, '#ff8ac0'); }
   }
   // ------------------------------------------------------------------ states
   s_enter(dt) {  // walk in from a screen edge, a door or an elevator to (tx, ty)
@@ -108,17 +149,20 @@ export class Enemy extends Actor {
     // speech bubbles now and then
     if (this.speechT <= 0 && W.rnd() < 0.003) { this.speechT = 6; const L = { wanderer: ['Are you my nurse?', 'Where am I?'], spammer: ['NURSE! NURSE!', 'My TV is broken!'], escape: ['Catch me!', "I'm going home!"],
       ivswing: ['I need ice chips!', 'Fore!'], sundowner: ['Who are you?!', 'Get off my lawn!'], visitor: ['Who is in charge?!', 'I know my rights!'],
-      crutch: ['Outta my way!', 'I can walk fine!'], bell: ['*DING DING DING*', 'Room service!'], elite: ["I've been here 40 times!", 'I want my usual room!'] }[K]; floatText(L[Math.floor(W.rnd() * L.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 }); }
+      crutch: ['Outta my way!', 'I can walk fine!'], bell: ['*DING DING DING*', 'Room service!'], elite: ["I've been here 40 times!", 'I want my usual room!'],
+      runner: ['Freedom!', "You can't catch me!", 'I am NOT a fall risk!'], tray: ['This is NOT what I ordered!', 'Cold AGAIN?!', 'Send it back!'], o2: ['Just getting some air!', 'Mind the tank, dear.'] }[K];
+      if (L) { floatText(L[Math.floor(W.rnd() * L.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 }); } }
+    if (K === 'runner') return this.runAway(dt, h);
     let gx, gy = h.y, want = d.reach * 0.85;
     const busy = this.tokens(h) >= (W.diff.cap >= 5 ? 3 : 2) && !this.attacking();
-    if (K === 'spammer' || (K === 'elite' && this.cd > 0.3)) { want = d.keep; this.side = Math.sign(this.x - h.x) || this.side; }
+    if (K === 'spammer' || K === 'tray' || (K === 'elite' && this.cd > 0.3)) { want = d.keep; this.side = Math.sign(this.x - h.x) || this.side; }
     else if (busy || this.cd > 0.6) { want = 62 + (this.wob % 3) * 14; gy = h.y + Math.sin(W.t * 0.8 + this.wob) * 22; }
     else this.side = Math.sign(this.x - h.x) || this.side;
     gx = h.x + this.side * want;
     // keep on screen
     gx = Math.max(W.camX + 12, Math.min(W.camX + G.VW - 12, gx));
     const mx = gx - this.x, my = gy - this.y, ml = Math.hypot(mx, my);
-    const sp = d.speed * (K === 'escape' ? 0.9 : 1);
+    const sp = d.speed * (K === 'escape' ? 0.9 : K === 'o2' && !this.tank ? 1.5 : 1);
     if (ml > 4) { this.x += mx / ml * sp * dt; this.y += my / ml * sp * 0.8 * dt; this.st = 'walk'; } else this.st = 'idle';
     if (K === 'sundowner' && this.cd <= 0 && Math.abs(dy) < 6 && adx > 40 && adx < 220) return this.begin('windup');
     if (K === 'elite' && this.cd <= 0 && !busy && Math.abs(dy) < 10) {  // cane up close, otherwise throw something
@@ -126,16 +170,18 @@ export class Enemy extends Actor {
       if (adx > 60 && adx < 260) { this.throwKind = W.rnd() < 0.55 ? 'toss' : 'lob'; return this.begin('windup'); }
     }
     if (K === 'elite') return;
-    if (this.cd <= 0 && !busy && Math.abs(dy) < (K === 'spammer' ? 10 : 6)) {
+    if (this.cd <= 0 && !busy && Math.abs(dy) < (K === 'spammer' || K === 'tray' ? 10 : 6)) {
       if (K === 'spammer' && adx > 50) return this.begin('windup');
-      if (K !== 'spammer' && K !== 'sundowner' && adx < d.reach + 6 && adx > 6) return this.begin('windup');
+      if (K === 'tray' && adx > 50) { this.throwKind = W.rnd() < 0.55 ? 'tray' : 'jello'; return this.begin('windup'); }
+      const reach = K === 'o2' && !this.tank ? 24 : d.reach;
+      if (K !== 'spammer' && K !== 'sundowner' && K !== 'tray' && adx < reach + 6 && adx > 6) return this.begin('windup');
       if (K === 'sundowner' && adx < 30) return this.begin('windup');
     }
   }
   begin(st) { this.set(st); this.face = this.target ? Math.sign(this.target.x - this.x) || this.face : this.face; this.hitDone = false; }
   s_windup(dt) {
     const K = this.kind;
-    const wt = { wanderer: 0.42, spammer: 0.4, escape: 0.22, ivswing: 0.5, sundowner: 0.55, visitor: 0.48, crutch: 0.42, bell: 0.4, elite: this.throwKind ? 0.42 : 0.36 }[K];
+    const wt = { wanderer: 0.42, spammer: 0.4, escape: 0.22, ivswing: 0.5, sundowner: 0.55, visitor: 0.48, crutch: 0.42, bell: 0.4, elite: this.throwKind ? 0.42 : 0.36, tray: 0.45, o2: this.tank ? 0.62 : 0.3 }[K] || 0.4;
     if (K === 'sundowner' && Math.floor(this.t * 20) % 2) this.x += (W.rnd() - 0.5) * 2;
     if (this.t >= wt) {
       if (K === 'wanderer') { this.set('hug'); this.vx = this.face * 90; this.hugT = 0; this.victim = null; }
@@ -145,9 +191,20 @@ export class Enemy extends Actor {
   }
   s_atk(dt) {
     const K = this.kind, d = this.d, dm = W.diff.dmg;
-    if (!this.hitDone && this.t > 0.04) {
+    if (!this.hitDone && this.t > (K === 'o2' && this.tank ? 0.1 : 0.04)) {
       this.hitDone = true;
-      if (K === 'spammer') {
+      if (K === 'tray') {
+        if (this.throwKind === 'jello') {
+          addShot({ kind: 'enemy', spr: 'p_jello', x: this.x + this.face * 8, y: this.y, z: 48, vx: this.face * 115, vz: 165, grav: 330, owner: this, dmg: 6, spin: 6, splash: 'jello', life: 2.4 });
+          sfx('whoosh', { vol: 0.45, rate: 0.9 }); if (W.rnd() < 0.5) floatText('HAVE SOME JELLO!', this.x, this.y, 62, '#ffffff');
+        } else {
+          addShot({ kind: 'enemy', spr: 'p_tray', x: this.x + this.face * 12, y: this.y, z: 40, vx: this.face * 185, vz: 20, grav: 60, owner: this, dmg: 7, spin: 10, life: 2.2 });
+          sfx('fling', { vol: 0.6 }); if (W.rnd() < 0.4) floatText('MEATLOAF AGAIN?!', this.x, this.y, 62, '#ffffff');
+        }
+      } else if (K === 'o2') {
+        if (this.tank) strike(this, { box: [0, 54], z: [8, 50], depth: 12, dmg: 11, kb: 150, down: true, sfxName: 'clang', wordName: 'w_bonk', props: false });
+        else strike(this, { box: [4, 24], z: [20, 48], dmg: 5, kb: 40, stun: 0.3, sfxName: 'punch1', props: false });
+      } else if (K === 'spammer') {
         const pud = W.rnd() < 0.35;
         addShot({ kind: 'enemy', spr: pud ? 'pudding' : 'remote', x: this.x + this.face * 10, y: this.y, z: 36, vx: this.face * 165, vz: 40, grav: 120, owner: this, dmg: 6, spin: pud ? 0 : 12, life: 2.2 });
         sfx('whoosh', { vol: 0.4 }); if (W.rnd() < 0.4) floatText(pud ? 'PUDDING!' : 'NURSE!', this.x, this.y, 60, '#ffffff');
@@ -166,14 +223,15 @@ export class Enemy extends Actor {
       else if (K === 'ivswing') strike(this, { box: [0, 56], z: [10, 50], depth: 12, dmg: 10, kb: 140, down: true, sfxName: 'clang', props: false });
       else if (K === 'visitor') strike(this, { box: [4, 36], z: [18, 56], dmg: 14, kb: 160, down: true, sfxName: 'heavy', wordName: 'w_wham', props: false });
     }
-    const rec = { spammer: 0.45, escape: 0.3, ivswing: 0.55, visitor: 0.6, crutch: 0.5, bell: 0.5, elite: 0.45 }[K] || 0.4;
+    const rec = { spammer: 0.45, escape: 0.3, ivswing: 0.55, visitor: 0.6, crutch: 0.5, bell: 0.5, elite: 0.45, tray: 0.45, o2: this.tank ? 0.62 : 0.35 }[K] || 0.4;
     if (this.t > rec) {
       this.cd = d.cd[0] + W.rnd() * (d.cd[1] - d.cd[0]);
       if (K === 'escape') { this.set('flee'); this.fleeDir = -this.face; } else this.set('idle');
     }
   }
-  s_flee(dt) {  // escape artist runs off after a slap, then circles back
+  s_flee(dt) {  // escape artist runs off after a slap, then circles back (the runner jukes along the far lane)
     this.x += this.fleeDir * this.d.speed * 1.2 * dt; this.face = this.fleeDir;
+    if (this.jukeY != null) { this.y += Math.sign(this.jukeY - this.y) * Math.min(Math.abs(this.jukeY - this.y), 80 * dt); if (this.t > 0.9) this.jukeY = null; }
     const edgeL = W.camX + 14, edgeR = W.camX + G.VW - 14;
     if (this.x < edgeL || this.x > edgeR || this.t > 1.1) { this.x = Math.max(edgeL, Math.min(edgeR, this.x)); this.set('idle'); if (W.rnd() < 0.4) floatText('Nyah nyah!', this.x, this.y, 60, '#ffffff'); }
   }
@@ -219,10 +277,17 @@ export class Enemy extends Actor {
   }
   // ------------------------------------------------------------------ drawing
   pose() {
+    const [n, i] = this.pose0();
+    if (this.kind === 'o2' && !this.tank && (n === 'idle' || n === 'walk' || n === 'atk')) return [n + '2', i];
+    return [n, i];
+  }
+  pose0() {
     const st = this.st, t = this.t, K = this.kind;
+    if (K === 'tray' && (st === 'windup' || st === 'atk')) return [this.throwKind === 'jello' ? 'lob' : 'atk', st === 'windup' ? 0 : 1];
+    if (K === 'o2' && this.tank && st === 'atk') return ['atk', t < 0.22 ? 1 : 2];
     switch (st) {
       case 'idle': return ['idle', Math.floor(W.t * 2 + this.wob)];
-      case 'walk': case 'enter': case 'flee': return ['walk', Math.floor(W.t * (K === 'escape' || st === 'flee' ? 12 : 7) + this.wob)];
+      case 'walk': case 'enter': case 'flee': case 'escape_off': case 'getaway': return ['walk', Math.floor(W.t * (K === 'escape' || K === 'runner' || K === 'thief' || st === 'flee' ? 12 : 7) + this.wob)];
       case 'enter_door': return ['idle', 0];
       case 'windup': return K === 'sundowner' ? ['idle', 0] : [K === 'elite' && this.throwKind ? this.throwKind : 'atk', 0];
       case 'atk': return K === 'elite' && this.throwKind ? [this.throwKind, 1] : ['atk', K === 'ivswing' ? (t < 0.2 ? 1 : 2) : 1];
@@ -246,5 +311,6 @@ export class Enemy extends Actor {
     const X = this.x - W.camX, Y = this.y + offY() - this.z;
     if (this.st === 'dizzy') spr('dizzy' + (Math.floor(W.t * 8) % 3), X, Y - this.h - 2, { ax: 11 });
     if (this.st === 'windup' && Math.floor(this.t * 12) % 2) text('!', X + this.face * 6, Y - this.h - 12, { col: '#ff5a3a', align: 'center' });
+    if (this.d.runner && this.st !== 'dead' && this.st !== 'down' && Math.floor(W.t * 5) % 2) { rect(X - 2, Y - this.h - 5, 5, 4, '#1a1020'); rect(X - 1, Y - this.h - 4, 3, 2, '#ff3a3a'); }
   }
 }
