@@ -84,6 +84,7 @@ export function pollControls(dt) {
 }
 
 function finish(d, tapped, dt, active) {
+  if (!d.init) { d.init = true; for (const b of BTN) d.prev[b] = d.held[b]; tapped = {}; }  // a new device (mode switch / hot-plug) never fires on its first frame
   for (const b of BTN) { d.prs[b] = (d.held[b] && !d.prev[b]) || !!tapped[b]; d.prev[b] = d.held[b]; }
   // double-tap left/right -> run (keyboard, d-pad, stick and touch joystick)
   const dir = d.mx > 0.6 ? 1 : d.mx < -0.6 ? -1 : 0;

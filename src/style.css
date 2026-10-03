@@ -34,3 +34,8 @@ html[data-tv="1"] #clock{font-size:4cqh}
 #loading .bar{width:220px;height:10px;border-radius:6px;background:#0d1430;overflow:hidden;border:2px solid #3a4c92}
 #loading .bar i{display:block;height:100%;width:0;background:#ff8a1e}
 html[data-res=retro] #stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.22) 3px);mix-blend-mode:multiply}
+/* hospital palette for the shared rotate prompt / tip cards from kit/display.js */
+#n64-rotate{background:rgba(8,12,32,.96)!important;color:#e8f0ff!important}
+#n64-tip{background:rgba(8,12,32,.88)!important}
+#n64-tip .card{background:#e8f0ff!important;color:#1a2450!important;border-color:#3a4c92!important}
+#n64-rotate button,#n64-tip button{border-color:#1a2450!important;background:#3a6ad8!important;color:#fff!important}
