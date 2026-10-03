@@ -8,13 +8,13 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-03, v0.2)
+## Current state (2026-10-03, v0.2.1)
 - **Level 1 "Floor 3: Med-Surg" is fully playable** from the title screen through to the tally and the "Floor 4: Radiology" teaser.
   The level is 3560 px wide with 6 camera-lock zones: 5 wave zones, then the boss dayroom.
 - **4 heroes:**
   - Nick: balanced, Crash Cart special.
   - Kim: fast, Whirlwind Kick.
-  - Will: power, Body Slam, big throws.
+  - Will: power, Body Slam, big throws. He is bald (skin-tone head with a shine) in a plain bright blue shirt, and his stat color is blue; there's no orange or Halloween look anywhere.
   - Jackie: reach, Clipboard Spin, strong jump and dash.
 - **Moves:** combos with a finisher, jump and jump kick, run (double-tap or Shift/RB) and dash attack, back attack (Attack+Jump),
   auto-grab, then knee or throw (throws hit other patients), a special that costs 8 HP, and the Code Blue super when the meter is full.
@@ -63,6 +63,7 @@ python3 tests/moves.py      # every hero: jump, kick, special cost, super, run/d
 python3 tests/pad.py        # mocked gamepad: menus, select, move, attack, pause; 2P keyboard + pad
 python3 tests/touch.py      # emulated Pixel phone landscape: taps, floating joystick, buttons, pause, rotate prompt
 python3 tests/flow.py       # boss defeat -> tally -> teaser -> title; continue; game over -> high scores
+python3 tests/will.py       # Will's look on title, select, in-game HUD, tally
 python3 tests/patients.py   # all patient types + random looks, elite syringe/urinal throws, splash + puddle, KO drops, new pickups
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
 python3 tests/shots.py "autostart=1&bot=1&god=1" 240 full 1280 720 6   # whole level with the bot

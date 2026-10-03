@@ -42,22 +42,6 @@ def gown_check(img, base=GOWN, check=GOWN_CHECK, period=3):
     return img
 
 
-def halloween(S, T, hip, neck, lean, b):
-    """Flashy Halloween shirt: purple pumpkins and black bats on orange, on a grid that moves with the body."""
-    ox, oy = T(hip)
-    ox, oy = int(ox), int(oy)
-    cols = (b["shirt"], b["shirt_s"])
-    for gy in range(-int(b["torso"]) - 4, 4, 5):
-        for gx in range(-12, 13, 5):
-            x, y = ox + gx + (2 if (gy // 5) % 2 else 0), oy + gy
-            if not (0 < y < S.h - 2 and 0 < x < S.w - 2) or S.p[y][x] not in cols or S.p[y + 1][x] not in cols:
-                continue
-            if ((gx // 5) + (gy // 5)) % 2 == 0:  # purple pumpkin with a green stem
-                S.set(x, y, "#6a1ea8"); S.set(x + 1, y, "#6a1ea8"); S.set(x, y + 1, "#6a1ea8"); S.set(x + 1, y + 1, "#4a1078"); S.set(x, y - 1, "#3ac048")
-            else:  # black bat
-                S.set(x, y, INK); S.set(x - 1, y - 1, INK); S.set(x + 1, y - 1, INK); S.set(x, y + 1, INK)
-
-
 def gown_dots(S, T, hip, neck, lean, b):
     for k in range(5):
         p = add(hip, vec(180 - lean, b["torso"] * (0.1 + k * 0.2)))
@@ -80,6 +64,15 @@ def stripes(S, T, hip, neck, lean, b):
         x, y = T((p[0] + b["torso_w"] / 2 - 1.5, p[1]))
         if S.p[int(y)][int(x)] in (b["shirt"], b["shirt_s"]):
             S.set(int(x), int(y), "#f0f0f4")
+
+
+WILL_BLUE = ("#2f86f6", "#1c5ec4")   # Will: plain bright blue shirt (Bill, 2026-10-03)
+
+
+def bald_shine(S, hc, r, b, pose):
+    """Clean bald head (skin tone only) with a small shine highlight on the crown."""
+    x, y = int(hc[0] + r * 0.05), int(hc[1] - r * 0.72)
+    S.set(x, y, "#fff4e6"); S.set(x + 1, y, "#fff4e6"); S.set(x - 1, y + 1, "#ffe2c8")
 
 
 def ponytail(S, hc, r, b, pose):
@@ -210,8 +203,8 @@ def bodies():
                          hair_c="#d8462a", hair_s="#9c2c1a", hair=hair_cap(top=-0.1, back=0.4), hair_back=ponytail,
                          freckles="#d08a6a", shoe="#ffffff", shoe_s="#b8c2d0", mouth="#c0505e")
     B["will"] = hero_body(thigh=9, shin=8.5, torso=16, head=7, uarm=7, farm=7, arm_w=4.2, leg_w=5.8, torso_w=15.5, belly=3, fist=2.3,
-                          skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#6b4a2a", hair_s="#4a3018", hair=hair_cap(top=-0.3, back=0.3, grow=0.7, spikes=2), shirt="#ff7a18", shirt_s="#d05a0c", sleeve="#ff7a18", sleeve_s="#d05a0c", vneck=False, steth=True,
-                          pattern=halloween, shoe="#2a2a30", shoe_s="#14141a", badge="#f4f4f4", sleeve_len=0.7)
+                          skin=sk["light"][0], skin_s=sk["light"][1], hair=bald_shine, shirt=WILL_BLUE[0], shirt_s=WILL_BLUE[1], sleeve=WILL_BLUE[0], sleeve_s=WILL_BLUE[1], vneck=False, steth=True,
+                          shoe="#2a2a30", shoe_s="#14141a", badge="#f4f4f4", sleeve_len=0.7)
     B["jackie"] = hero_body(thigh=12, shin=11.5, torso=17.5, head=6.4, uarm=8.5, farm=8.5, torso_w=11, arm_w=3.3, leg_w=4.7, skin=sk["tan"][0], skin_s=sk["tan"][1],
                             hair_c="#4a2a18", hair_s="#2e180c", hair=hair_cap(top=0.05, back=0.2, grow=2.2, bumps=1.3, fringe=0, seed=2),
                             shoe="#9a5ae0", shoe_s="#6a34a8", mouth="#b04a5a")
