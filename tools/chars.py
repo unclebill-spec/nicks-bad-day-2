@@ -8,6 +8,38 @@ from rig import INK, P, hair_cap, vec, add
 SKIN = {"light": ("#f2c8a2", "#d29a76"), "fair": ("#f6d2b6", "#dba88a"), "tan": ("#dca274", "#b27a52"),
         "brown": ("#b07448", "#875432"), "old": ("#efc6aa", "#c99a82")}
 NAVY, NAVY_S = "#283a7a", "#1b2756"
+# Traditional checked hospital gown: pale green base, darker check lines. The runtime swaps these for the faded-olive set.
+GOWN = ("#bcd6a6", "#92ae7e")              # base, shade (the rig fills with these)
+GOWN_CHECK = ("#9cba88", "#78946a", "#86a274", "#647e58")   # line on base, line on shade, crossing on base, crossing on shade
+GOWN_OLIVE = ("#c6c89c", "#9ea074", "#a8aa80", "#82845e", "#949670", "#70724e")
+SOCK = ("#f6d63a", "#c09e1a")              # yellow grip socks
+SOCK_ELITE = ("#e84848", "#a82828")        # elites: red (runtime also makes blue)
+GRIP = "#ffffff"
+HAIRS = [("#2a1a12", "#140c08"), ("#6b4a2a", "#4a3018"), ("#f0d070", "#c0a040"), ("#d0582a", "#983a1a"), ("#9a9aa6", "#6a6a78"),
+         ("#eef0f4", "#b8bcc8"), ("#8a3a2a", "#5a2418"), ("#3a2a4a", "#22162e"), ("#c8a882", "#9a7a58")]
+
+
+def gown_check(img, base=GOWN, check=GOWN_CHECK, period=3):
+    """Post-process a rendered frame (PIL RGBA): every gown pixel gets a gingham check on a fixed grid."""
+    hx = lambda c: tuple(int(c[i:i + 2], 16) for i in (1, 3, 5))
+    b0, b1 = hx(base[0]), hx(base[1])
+    l0, l1, c0, c1 = (hx(c) for c in check)
+    px = img.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            q = px[x, y]
+            if q[3] == 0:
+                continue
+            rgb = q[:3]
+            if rgb not in (b0, b1):
+                continue
+            on_x, on_y = x % period == 0, y % period == 0
+            if not (on_x or on_y):
+                continue
+            sh = rgb == b1
+            col = (c1 if sh else c0) if (on_x and on_y) else (l1 if sh else l0)
+            px[x, y] = col + (255,)
+    return img
 
 
 def halloween(S, T, hip, neck, lean, b):
@@ -83,6 +115,16 @@ def bald_ring(S, hc, r, b, pose):
     S.set(int(hc[0] + r * 0.2), int(hc[1] - r - 0.8), c); S.set(int(hc[0] + r * 0.5), int(hc[1] - r - 1.5), c)
 
 
+def beehive(S, hc, r, b, pose):
+    """Tall beehive with pink curlers (elite patients)."""
+    c, sh = b["hair_c"], b["hair_s"]
+    S.ellipse((hc[0] - 1.5, hc[1] - r * 1.25), r * 0.95, r * 1.05, c, sh)
+    S.ellipse((hc[0] - 0.5, hc[1] - r * 2.05), r * 0.6, r * 0.55, c, sh)
+    for dx, dy in ((-r * 0.7, -r * 1.2), (r * 0.3, -r * 1.6), (-r * 0.2, -r * 2.2)):
+        x, y = int(hc[0] + dx), int(hc[1] + dy)
+        S.set(x, y, "#ff8ac0"); S.set(x + 1, y, "#ff8ac0"); S.set(x, y + 1, "#c8508a"); S.set(x + 1, y + 1, "#c8508a")
+
+
 def holder(kind):
     def h(S, T, hand, ang, b):
         hx, hy = T(hand)
@@ -103,6 +145,43 @@ def holder(kind):
             S.line((hx + 8, hy + 14), (hx - 16, hy - 20), "#c8ccd6")
             S.line((hx + 9, hy + 14), (hx - 15, hy - 20), "#8a90a0")
             S.ellipse((hx - 17, hy - 22), 3, 4, "#cfe8ff", "#9ac4f0")
+        elif kind == "crutch":  # underarm crutch planted on the floor beside the patient
+            S.line((hx + 1, hy - 14), (hx + 1, hy + 24), "#b8bcc8"); S.line((hx + 2, hy - 14), (hx + 2, hy + 24), "#7a8090")
+            S.capsule((hx - 2, hy - 15), (hx + 5, hy - 15), 2.2, "#3a3e4a"); S.rect(int(hx), int(hy), 4, 2, "#3a3e4a")
+            S.capsule((hx + 1, hy + 24), (hx + 2, hy + 25), 2.2, "#2a2a30")
+        elif kind == "crutch_h":  # thrust forward like a lance
+            S.line((hx - 12, hy), (hx + 30, hy), "#b8bcc8"); S.line((hx - 12, hy + 1), (hx + 30, hy + 1), "#7a8090")
+            S.capsule((hx - 13, hy - 3), (hx - 13, hy + 4), 2.2, "#3a3e4a"); S.capsule((hx + 30, hy), (hx + 32, hy), 2.6, "#2a2a30")
+        elif kind == "crutch_up":
+            S.line((hx + 10, hy + 12), (hx - 14, hy - 22), "#b8bcc8"); S.line((hx + 11, hy + 12), (hx - 13, hy - 22), "#7a8090")
+            S.capsule((hx + 8, hy + 14), (hx + 13, hy + 10), 2.2, "#3a3e4a"); S.capsule((hx - 14, hy - 22), (hx - 15, hy - 23), 2.6, "#2a2a30")
+        elif kind in ("bell", "bell_up", "bell_out"):  # silver call bell on a coiled cord
+            if kind == "bell":
+                bx, by = hx + 2, hy + 12
+                for k in range(6):
+                    S.set(int(hx + (k % 2)), int(hy + 2 + k * 1.6), "#e8e8f0")
+            elif kind == "bell_up":
+                bx, by = hx - 12, hy - 14
+                S.line((hx, hy), (bx, by), "#e8e8f0")
+            else:
+                bx, by = hx + 34, hy - 2
+                for k in range(0, 34, 2):
+                    S.set(int(hx + k), int(hy + math.sin(k * 0.7) * 1.5 - k * 0.06), "#e8e8f0")
+            S.ellipse((bx, by), 4.2, 3.4, "#e0e4ec", "#9aa0ae")
+            S.rect(int(bx - 4), int(by + 2), 9, 2, "#6a6e7a"); S.set(int(bx), int(by - 4), "#3a3e4a"); S.set(int(bx - 1), int(by - 1), "#ffffff")
+        elif kind == "cane":
+            S.line((hx + 1, hy), (hx + 1, hy + 26), "#8a5a2a"); S.line((hx + 2, hy), (hx + 2, hy + 26), "#5a3a18")
+            S.capsule((hx - 3, hy - 1), (hx + 1, hy - 2), 2.4, "#8a5a2a", "#5a3a18")
+        elif kind == "cane_h":
+            S.line((hx - 4, hy), (hx + 26, hy - 4), "#8a5a2a"); S.line((hx - 4, hy + 1), (hx + 26, hy - 3), "#5a3a18")
+            S.capsule((hx + 26, hy - 4), (hx + 29, hy), 2.4, "#8a5a2a", "#5a3a18")
+        elif kind == "cane_up":
+            S.line((hx + 4, hy + 6), (hx - 12, hy - 20), "#8a5a2a"); S.line((hx + 5, hy + 6), (hx - 11, hy - 20), "#5a3a18")
+            S.capsule((hx - 12, hy - 20), (hx - 15, hy - 18), 2.4, "#8a5a2a", "#5a3a18")
+        elif kind == "syringe":
+            S.capsule((hx - 3, hy), (hx + 5, hy), 2.4, "#e8f4ff", "#9ac4e8"); S.line((hx + 6, hy), (hx + 9, hy), "#c8ccd6")
+        elif kind == "urinal":
+            S.capsule((hx - 3, hy - 2), (hx + 4, hy + 2), 4.2, "#e8eef4", "#a8b2c0"); S.rect(int(hx - 2), int(hy - 1), 4, 2, "#f2e070")
         elif kind == "paddles":
             S.capsule((hx - 1, hy), (hx + 3, hy), 4, "#e0e4ec", "#9aa0ae")
             S.set(int(hx + 1), int(hy - 2), "#f2d24a")
@@ -136,26 +215,33 @@ def bodies():
     B["jackie"] = hero_body(thigh=12, shin=11.5, torso=17.5, head=6.4, uarm=8.5, farm=8.5, torso_w=11, arm_w=3.3, leg_w=4.7, skin=sk["tan"][0], skin_s=sk["tan"][1],
                             hair_c="#4a2a18", hair_s="#2e180c", hair=hair_cap(top=0.05, back=0.2, grow=2.2, bumps=1.3, fringe=0, seed=2),
                             shoe="#9a5ae0", shoe_s="#6a34a8", mouth="#b04a5a")
-    gown = dict(shirt="#a6d8ea", shirt_s="#74aac8", sleeve="#a6d8ea", sleeve_s="#74aac8", dots="#3a78a8", pattern=gown_dots,
+    gown = dict(shirt=GOWN[0], shirt_s=GOWN[1], sleeve=GOWN[0], sleeve_s=GOWN[1], check=True,
                 vneck=False, steth=False, badge=None, eye_white=True, gown_len=9, sleeve_len=0.45)
-    sock = dict(pants=sk["old"][0], pants_s=sk["old"][1], shoe="#f2d24a", shoe_s="#b89a2a")
+    socks = dict(shoe=SOCK[0], shoe_s=SOCK[1], sock=SOCK[0], foot_len=3.6)
+    sock = dict(pants=sk["old"][0], pants_s=sk["old"][1], **socks)
     B["wanderer"] = hero_body(thigh=10, shin=10, torso=16, skin=sk["old"][0], skin_s=sk["old"][1], hair_c="#eef0f4", hair_s="#b8bcc8",
                               hair=hair_cap(top=0.0, back=0.4, grow=1.6, bumps=1.6, seed=3, fringe=0), **gown, **sock)
     B["spammer"] = hero_body(thigh=10, shin=10, torso=15, torso_w=10, belly=1.5, skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#9a9aa6",
                              hair_s="#6a6a78", hair=bald_ring, glasses="#5a4a3a",
-                             **{**gown, "shirt": "#f2b0cc", "shirt_s": "#c87aa0", "sleeve": "#f2b0cc", "sleeve_s": "#c87aa0", "dots": "#a04878"},
-                             pants=sk["light"][0], pants_s=sk["light"][1], shoe="#e04848", shoe_s="#a02a2a")
+                             **gown, pants=sk["light"][0], pants_s=sk["light"][1], **socks)
     B["escape"] = hero_body(thigh=10.5, shin=10.5, torso=15, torso_w=8, skin=sk["brown"][0], skin_s=sk["brown"][1], hair_c="#2a1a12",
                             hair_s="#140c08", hair=hair_cap(top=-0.25, back=0.3, spikes=4),
-                            **{**gown, "shirt": "#b8e6c4", "shirt_s": "#86b896", "sleeve": "#b8e6c4", "sleeve_s": "#86b896", "dots": "#3a8a58", "gown_len": 6},
-                            pants=sk["brown"][0], pants_s=sk["brown"][1], shoe="#f4f4f4", shoe_s="#b0b8c4")
+                            **{**gown, "gown_len": 6}, pants=sk["brown"][0], pants_s=sk["brown"][1], **socks)
     B["ivswing"] = hero_body(thigh=10.5, shin=10.5, torso=17, torso_w=10, skin=sk["tan"][0], skin_s=sk["tan"][1], hair_c="#5a5a64",
                              hair_s="#3a3a44", hair=hair_cap(top=-0.3, back=0.3, grow=0.5), beard="#7a7a84", **gown,
-                             pants=sk["tan"][0], pants_s=sk["tan"][1], shoe="#f2d24a", shoe_s="#b89a2a")
+                             pants=sk["tan"][0], pants_s=sk["tan"][1], **socks)
     B["sundowner"] = hero_body(thigh=10, shin=10, torso=15, skin=sk["old"][0], skin_s=sk["old"][1], hair_c="#eef0f4", hair_s="#b8bcc8",
-                               hair=nightcap, shirt="#8a2a3a", shirt_s="#5e1a28", sleeve="#8a2a3a", sleeve_s="#5e1a28", sleeve_len=1.6,
-                               gown_len=12, vneck=False, steth=False, badge=None, belt="#f0c050",
-                               pants=sk["old"][0], pants_s=sk["old"][1], shoe="#6a4a8a", shoe_s="#48306a", foot_len=4)
+                               hair=nightcap, **{**gown, "gown_len": 11}, **sock)
+    # weapon-carrying patients: crutch and call bell on a cord
+    B["crutch"] = hero_body(thigh=10.5, shin=10.5, torso=16, torso_w=11, skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#6b4a2a", hair_s="#4a3018",
+                            hair=hair_cap(top=-0.2, back=0.35, grow=1.0, seed=5), **gown, pants=sk["light"][0], pants_s=sk["light"][1], **socks,
+                            cast="#f4f4f4")
+    B["bell"] = hero_body(thigh=10, shin=10, torso=15, torso_w=10.5, belly=1, skin=sk["tan"][0], skin_s=sk["tan"][1], hair_c="#2a1a12", hair_s="#140c08",
+                          hair=hair_cap(top=-0.05, back=0.45, grow=1.4, bumps=1.0, seed=7, fringe=0), **gown, pants=sk["tan"][0], pants_s=sk["tan"][1], **socks)
+    # elite "Frequent Flyer": beehive with curlers, red (or blue) grip socks, a cane, and a stash of things to throw
+    B["elite"] = hero_body(thigh=11, shin=11, torso=17, torso_w=12, head=6.8, skin=sk["fair"][0], skin_s=sk["fair"][1], hair_c="#d0582a", hair_s="#983a1a",
+                           hair=hair_cap(top=-0.1, back=0.4, grow=1.0, seed=9), hair_back=beehive, glasses="#8a2a6a",
+                           **{**gown, "gown_len": 10}, pants=sk["fair"][0], pants_s=sk["fair"][1], shoe=SOCK_ELITE[0], shoe_s=SOCK_ELITE[1], sock=SOCK_ELITE[0], foot_len=3.6)
     B["visitor"] = hero_body(thigh=12, shin=12, torso=20, head=7.6, uarm=9.5, farm=9, arm_w=5.2, leg_w=6.4, torso_w=19, belly=2,
                              skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#5a3a20", hair_s="#3a2410", hair=cap_back,
                              shirt="#6a3aa8", shirt_s="#48247a", sleeve="#6a3aa8", sleeve_s="#48247a", sleeve_len=1.7, pattern=stripes,
@@ -279,6 +365,34 @@ def enemy_anims(kind):
         A["atk"] = walk_cycle(swing=40, arm=0, lean=44, bob=2)  # head-down charge
         for f in A["atk"]:
             f.update(ua_f=-60, fa_f=-40, ua_b=-70, fa_b=-50, head=-20, face="yell")
+    elif kind == "crutch":
+        cr = holder("crutch")
+        A["idle"] = [P(ua_f=20, fa_f=60, ua_b=-6, fa_b=20, hold=cr, lean=4), P(ua_f=20, fa_f=60, ua_b=-6, fa_b=20, hold=cr, lean=4, hy=1)]
+        A["walk"] = walk_cycle(n=4, swing=10, arm=4, lean=6)
+        for i, f in enumerate(A["walk"]):  # hop-along gait
+            f.update(ua_f=20, fa_f=60, hold=cr, th_b=-30, sh_b=-80, hy=1 if i % 2 else 0)
+        A["atk"] = [P(lean=-10, ua_f=-140, fa_f=-150, ua_b=-20, fa_b=40, th_b=-30, sh_b=-80, hold=holder("crutch_up")),
+                    P(lean=16, ua_f=86, fa_f=90, ua_b=-20, fa_b=40, th_f=26, th_b=-24, hold=holder("crutch_h"), face="yell")]
+    elif kind == "bell":
+        bl = holder("bell")
+        A["idle"] = [P(ua_f=20, fa_f=70, ua_b=-6, fa_b=20, hold=bl), P(ua_f=20, fa_f=76, ua_b=-6, fa_b=20, hold=bl, hy=1)]
+        A["walk"] = walk_cycle(swing=16, arm=8)
+        for f in A["walk"]:
+            f.update(ua_f=20, fa_f=70, hold=bl)
+        A["atk"] = [P(lean=-12, ua_f=-150, fa_f=-160, ua_b=30, fa_b=60, th_f=20, th_b=-24, hold=holder("bell_up"), face="grin"),
+                    P(lean=14, ua_f=90, fa_f=92, ua_b=-20, fa_b=30, th_f=30, sh_f=10, th_b=-26, hold=holder("bell_out"), face="yell")]
+    elif kind == "elite":
+        cn = holder("cane")
+        A["idle"] = [P(ua_f=16, fa_f=40, ua_b=-6, fa_b=60, hold=cn, lean=6), P(ua_f=16, fa_f=40, ua_b=-6, fa_b=60, hold=cn, lean=6, hy=1)]
+        A["walk"] = walk_cycle(swing=16, arm=6, lean=6)
+        for f in A["walk"]:
+            f.update(ua_f=16, fa_f=40, hold=cn)
+        A["atk"] = [P(lean=-10, ua_f=-130, fa_f=-150, ua_b=-10, fa_b=60, th_f=16, th_b=-20, hold=holder("cane_up"), face="yell"),
+                    P(lean=18, ua_f=84, fa_f=86, ua_b=-20, fa_b=40, th_f=30, sh_f=10, th_b=-26, hold=holder("cane_h"), face="yell")]
+        A["toss"] = [P(lean=-12, ua_f=16, fa_f=40, hold=cn, ua_b=-150, fa_b=-170, hold_b=holder("syringe"), th_f=20, th_b=-24),
+                     P(lean=14, ua_f=16, fa_f=40, hold=cn, ua_b=110, fa_b=100, th_f=30, sh_f=10, th_b=-26, face="grin")]
+        A["lob"] = [P(lean=-14, ua_f=16, fa_f=40, hold=cn, ua_b=-160, fa_b=-175, hold_b=holder("urinal"), th_f=20, th_b=-24, face="grin"),
+                    P(lean=8, ua_f=16, fa_f=40, hold=cn, ua_b=150, fa_b=140, th_f=24, th_b=-20, face="grin")]
     elif kind == "visitor":
         A["idle"] = [P(ua_f=30, fa_f=130, ua_b=-6, fa_b=120, lean=6), P(ua_f=30, fa_f=126, ua_b=-6, fa_b=116, lean=6, hy=1)]
         A["walk"] = walk_cycle(swing=18, arm=16, lean=8)

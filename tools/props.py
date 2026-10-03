@@ -554,3 +554,99 @@ def heart():
     S.ellipse((2.5, 2.5), 2, 2, "#ff4a7a", rim=False); S.ellipse((6.5, 2.5), 2, 2, "#ff4a7a", rim=False)
     S.poly([(0.5, 3), (8.5, 3), (4.5, 7.5)], "#ff4a7a", rim=False)
     return S
+
+
+# ------------------------------------------------------------------ v0.2: Bill's new drops, patient weapons and projectiles
+def energy_drink():
+    """Small heal: a tall can of 'VOLT' energy drink (made-up brand)."""
+    S = Raster(10, 18)
+    box(S, 1, 2, 8, 15, "#2a2a3a", "#16161e", "#4a4a5e")
+    S.rect(2, 1, 6, 1, STEEL); S.rect(3, 0, 4, 1, STEEL_S)
+    for y, c in ((5, "#7af04a"), (6, "#c8ff3a"), (7, "#7af04a")):
+        S.rect(2, y, 6, 1, c)
+    S.poly([(5, 8), (3, 12), (5, 12), (4, 15), (7, 10), (5, 10), (6, 8)], "#c8ff3a", rim=False)
+    return S
+
+
+def fruit_snacks():
+    """Bigger heal: a pouch of fruit snacks with gummies spilling out."""
+    S = Raster(20, 16)
+    S.poly([(2, 3), (15, 1), (17, 13), (4, 15)], "#e83a8a")
+    S.poly([(4, 5), (14, 3.5), (15.5, 11), (5.5, 13)], "#ff6ab0", rim=False)
+    S.rect(7, 6, 5, 2, "#ffffff")
+    for i, (x, y, c) in enumerate(((6, 10, "#ffd84a"), (9, 11, "#7ad8ff"), (12, 9, "#8ae87a"), (16, 14, "#ffd84a"), (18, 12, "#ff4a4a"))):
+        S.ellipse((x, y), 1.6, 1.4, c, None)
+    return S
+
+
+def zynn_tin():
+    """Extra life: a round tin of 'ZYNN' pouches. Parody label only (no real logo or brand art)."""
+    S = Raster(18, 14)
+    S.ellipse((9, 9), 8, 4.2, "#8a90a0", "#5a606e")          # tin side
+    S.rect(1, 6, 17, 3, "#8a90a0")
+    S.ellipse((9, 6), 8, 4.2, "#2ab0a0", "#1a8478")           # lid
+    S.ellipse((9, 6), 6.2, 3, "#3ad0be", None)
+    tinyfont.text(S, 3, 4, "ZYNN", "#ffffff")
+    S.set(3, 3, "#ffffff")
+    return S
+
+
+def w_crutch():
+    S = Raster(46, 10)
+    S.rect(4, 4, 38, 2, "#b8bcc8"); S.rect(4, 4, 38, 1, "#e4e8f0")
+    S.capsule((2, 1), (2, 8), 2.2, "#3a3e4a"); S.rect(18, 3, 4, 4, "#3a3e4a"); S.capsule((42, 5), (44, 5), 2.6, "#2a2a30")
+    return S
+
+
+def w_callbell():
+    S = Raster(30, 12)
+    for k in range(0, 20, 2):
+        S.set(2 + k, int(6 + math.sin(k * 0.7) * 1.5), "#e8e8f0")
+    S.ellipse((25, 6), 4.2, 3.4, "#e0e4ec", "#9aa0ae"); S.rect(21, 8, 9, 2, "#6a6e7a"); S.set(25, 2, "#3a3e4a"); S.set(24, 5, "#ffffff")
+    S.capsule((1, 5), (1, 7), 1.6, "#3a3e4a")
+    return S
+
+
+def w_cane():
+    S = Raster(36, 10)
+    S.rect(2, 6, 28, 2, "#8a5a2a"); S.rect(2, 6, 28, 1, "#b07a3e")
+    S.capsule((30, 6), (33, 2), 2.4, "#8a5a2a", "#5a3a18"); S.capsule((33, 2), (35, 4), 2.4, "#8a5a2a", "#5a3a18")
+    return S
+
+
+def syringe():
+    """Cartoon syringe dart (big, comedic, no gore)."""
+    S = Raster(18, 6)
+    box(S, 4, 1, 9, 4, "#e8f4ff", "#9ac4e8")
+    S.rect(5, 2, 5, 2, "#8ad8ff")
+    S.rect(1, 2, 3, 2, "#c8ccd6"); S.rect(0, 1, 1, 4, "#c8ccd6")
+    S.line((13, 3), (17, 3), "#e4e8f0")
+    return S
+
+
+def urinal():
+    """Full plastic urinal bottle, lobbed (it splashes)."""
+    S = Raster(14, 12)
+    S.poly([(2, 3), (10, 2), (12, 9), (3, 11)], "#e8eef4")
+    S.rect(4, 6, 6, 4, "#f2e070")
+    S.capsule((10, 3), (13, 1), 2.4, "#e8eef4", "#a8b2c0")
+    S.capsule((2, 4), (1, 8), 1.8, "#c8d0dc", None)
+    return S
+
+
+def puddle_y():
+    S = Raster(28, 8)
+    S.ellipse((14, 4), 13, 3, "#f2e47a", "#c8b84a", rim=False)
+    S.rect(8, 3, 4, 1, "#fff8c0")
+    return S
+
+
+def splash(i):
+    S = Raster(26, 20)
+    rnd = random.Random(40 + i)
+    for k in range(9):
+        a = math.pi * (0.1 + 0.8 * k / 8)
+        r = 3 + i * 4 + rnd.random() * 2
+        x, y = 13 + math.cos(a) * r * 1.2, 16 - math.sin(a) * r
+        S.ellipse((x, y), 1.6 - i * 0.3, 1.6 - i * 0.3, "#f2e47a" if k % 3 else "#fff8c0", None)
+    return S

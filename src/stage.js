@@ -2,7 +2,7 @@
 // elevators, projectiles, the boss, and the end-of-floor sequence.
 import { G } from './gfx.js';
 import { Y_MIN, Y_MAX, VARIANTS } from './data.js';
-import { W, openDoor, openElev, addFx, floatText, word, shake, spark, dropItem, breakProp, propBox, addScore } from './world.js';
+import { W, openDoor, openElev, addFx, addShot, floatText, word, shake, spark, dropItem, breakProp, propBox, addScore } from './world.js';
 import { Enemy } from './enemy.js';
 import { Tilly } from './boss.js';
 import { sfx, playMusic } from './sound.js';
@@ -34,6 +34,13 @@ export function spawn(kind, where) {
   return e;
 }
 
+// a lobbed urinal lands (or hits a nurse): splash FX, a SPLOOSH! word and a slippery yellow puddle
+function splashAt(s, h) {
+  addFx({ type: 'splash', x: s.x, y: s.y, z: h ? Math.max(10, s.z) : 0, dur: 0.45 });
+  word('w_sploosh', s.x, s.y, h ? 20 : 4); sfx('splash', { vol: 0.6 });
+  if (h) floatText(['EWWW!', 'GROSS!', 'NOT MY SCRUBS!'][Math.floor(W.rnd() * 3)], h.x, h.y, 66, '#fff27a');
+  addShot({ kind: 'puddle', spr: 'puddle_y', x: s.x + (h ? -Math.sign(s.vx) * 6 : 0), y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
+}
 export const Director = {
   reset() { W.zone = -1; W.zoneOn = false; W.wave = 0; W.queue = []; W.go = 0; W.lockX = null; W.camMin = 0; W.camMax = W.lv.zones[0].lock; W.bossOn = false; W.cleared = false; W.endT = 0; },
   alive() { return W.enemies.filter((e) => e.alive && e.st !== 'dead').length; },
@@ -71,7 +78,7 @@ export const Director = {
     floatText('DAYROOM', W.lockX + G.VW / 2, 150, 70, '#d8b4f4');
   },
   backup() {  // Tilly's call button: two patients answer
-    const kinds = ['wanderer', 'escape', 'spammer', 'sundowner'];
+    const kinds = ['wanderer', 'escape', 'crutch', 'bell'];
     spawn(kinds[Math.floor(W.rnd() * 4)], 'D314'); spawn(kinds[Math.floor(W.rnd() * 4)], W.rnd() < 0.5 ? 'L' : 'R');
   },
   // ------------------------------------------------------------ projectiles
@@ -113,14 +120,14 @@ export const Director = {
         if (s.z <= 0) {
           s.z = 0;
           if (s.roll) { s.vx *= Math.exp(-dt * 0.5); s.vz = 0; if (Math.abs(s.vx) < 6) s.vx = 0; }
-          else if (s.kind === 'enemy') { s.life = 0; addFx({ type: 'dust', x: s.x, y: s.y, dur: 0.3 }); }
+          else if (s.kind === 'enemy') { s.life = 0; if (s.splash) splashAt(s); else addFx({ type: 'dust', x: s.x, y: s.y, dur: 0.3 }); }
         }
       }
       if (s.kind === 'enemy') {
         for (const h of W.heroes) {
           if (!h.hittable() || Math.abs(h.y - s.y) > 8 || Math.abs(h.x - s.x) > 11 || s.z > h.z + h.h || s.z + 6 < h.z) continue;
           h.takeHit({ dmg: s.dmg, dir: Math.sign(s.vx) || 1, kb: s.roll ? 80 : 40, stun: 0.35, down: !!s.roll, from: s.owner });
-          s.life = 0; spark(s.x, s.y, s.z, 'spark'); sfx(s.roll ? 'bounce' : 'punch0', { vol: 0.5 }); break;
+          s.life = 0; if (s.splash) splashAt(s, h); else { spark(s.x, s.y, s.z, 'spark'); sfx(s.roll ? 'bounce' : 'punch0', { vol: 0.5 }); } break;
         }
       } else if (s.kind === 'weapon' || s.kind === 'boomerang') {
         for (const t of [...W.enemies, ...(W.boss ? [W.boss] : [])]) {

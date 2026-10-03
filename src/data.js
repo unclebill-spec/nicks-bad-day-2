@@ -30,16 +30,19 @@ export const WEAPONS = {
   bedpan: { name: 'BEDPAN', spr: 'w_bedpan', dmg: 14, reach: 30, uses: 8, rate: 0.38, sfx: 'clang', grip: [17, 6], dizzy: true, word: 'w_clang' },
   mop: { name: 'MOP', spr: 'w_mop', dmg: 11, reach: 54, uses: 10, rate: 0.42, sfx: 'whoosh', grip: [3, 5], down: true, word: 'w_wham' },
   ivpole: { name: 'IV POLE', spr: 'w_ivpole', dmg: 13, reach: 58, uses: 10, rate: 0.46, sfx: 'clang', grip: [3, 6], down: true, word: 'w_bonk' },
+  crutch: { name: 'CRUTCH', spr: 'w_crutch', dmg: 12, reach: 50, uses: 10, rate: 0.4, sfx: 'clang', grip: [20, 5], down: true, word: 'w_poke' },
+  callbell: { name: 'CALL BELL', spr: 'w_callbell', dmg: 8, reach: 62, uses: 12, rate: 0.36, sfx: 'ding', grip: [1, 6], dizzy: true, word: 'w_ding' },
+  cane: { name: 'CANE', spr: 'w_cane', dmg: 11, reach: 40, uses: 10, rate: 0.34, sfx: 'punch1', grip: [3, 7], word: 'w_smack' },
   extinguisher: { name: 'EXTINGUISHER', spr: 'w_extinguisher', spray: true, ammo: 3.2, reach: 74, sfx: 'spray', grip: [6, 18] },
 };
 
 export const ITEMS = {
-  coffee: { spr: 'coffee', heal: 25, score: 100, msg: 'COFFEE!' },
-  pizza: { spr: 'pizza', heal: 70, score: 300, msg: 'PIZZA PARTY!' },
+  energy: { spr: 'energy', heal: 25, score: 100, msg: 'ENERGY DRINK!' },
+  snacks: { spr: 'snacks', heal: 70, score: 300, msg: 'FRUIT SNACKS!' },
   candy: { spr: 'candy', speed: 8, score: 200, msg: 'SUGAR RUSH!' },
   donut: { spr: 'donut', heal: 12, score: 500, msg: 'DONUT!' },
   star: { spr: 'star', score: 1000, msg: 'GOLD STAR!' },
-  token: { spr: 'token', life: 1, score: 500, msg: 'DOUBLE SHIFT! +1' },
+  zynn: { spr: 'zynn', life: 1, score: 500, msg: 'ZYNN! +1 LIFE' },
 };
 
 // Patients. Every one is a person having a rough day; their defeat is a nap, never a mean joke.
@@ -49,9 +52,13 @@ export const ENEMIES = {
   escape: { name: 'ESCAPE ARTIST', sheet: 'escape', hp: 30, speed: 112, depth: 60, reach: 22, score: 350, atk: 'slap', cd: [1.2, 2.0], ko: ['Okay, back to bed!', 'Fine, fine...'], voice: 'voice5' },
   ivswing: { name: 'IV-POLE SWINGER', sheet: 'ivswing', hp: 50, speed: 36, depth: 24, reach: 52, score: 400, atk: 'sweep', cd: [1.6, 2.4], ko: ['My drip!', 'Zzz...'], voice: 'voice2' },
   sundowner: { name: 'SUNDOWNER', sheet: 'sundowner', hp: 44, speed: 34, depth: 26, reach: 24, score: 400, atk: 'charge', cd: [2.0, 3.0], ko: ['Is it morning?', 'Goodnight, nurse.'], voice: 'voice4' },
+  crutch: { name: 'CRUTCH CRUSADER', sheet: 'crutch', hp: 42, speed: 30, depth: 22, reach: 44, score: 400, atk: 'poke', cd: [1.5, 2.4], drop: ['w:crutch', 0.5], ko: ['My good leg!', 'Physical therapy... zzz'], voice: 'voice2' },
+  bell: { name: 'BELL RINGER', sheet: 'bell', hp: 40, speed: 36, depth: 24, reach: 60, score: 400, atk: 'whip', cd: [1.5, 2.3], drop: ['w:callbell', 0.5], ko: ['*ding* ...zzz', 'Ring me later...'], voice: 'voice1' },
+  elite: { name: 'FREQUENT FLYER', sheet: 'elite', hp: 74, speed: 38, depth: 26, reach: 36, score: 900, atk: 'cane', cd: [1.3, 2.1], keep: 100, armor: 1, elite: true, drop: ['w:cane', 0.35],
+    ko: ['I know the way out... zzz', 'See you next week!', 'Put it on my tab.'], voice: 'voice3' },
   visitor: { name: 'BELLIGERENT VISITOR', sheet: 'visitor', hp: 110, speed: 44, depth: 26, reach: 34, score: 800, atk: 'punch', cd: [1.4, 2.2], armor: 3, ko: ['I want the manager... zzz', 'Visiting hours are over.'], voice: 'voice3', big: true },
 };
-export const VARIANTS = { wanderer: ['wanderer', 'wanderer2'], escape: ['escape', 'escape2'] };
+export const VARIANTS = {};  // v0.2: looks are randomized at runtime instead (src/enemy.js lookFor)
 
 export const BREAKABLES = {
   medcart: { spr: 'medcart', hp: 3, w: 24 }, linen: { spr: 'linen', hp: 3, w: 20 }, vending: { spr: 'vending', hp: 6, w: 30, big: true }, ivstand: { spr: 'ivstand', hp: 2, w: 12, states: 2 },
@@ -73,9 +80,9 @@ export const LEVEL1 = {
     [3150, 'poster_tv'], [3190, 'plant0'], [3230, 'door', 314], [3290, 'window2'], [3370, 'poster_duck'], [3410, 'sign_exit'], [3460, 'plant1'],
   ],
   props: [ // breakables on the floor: [x, y, kind, drops[]]
-    [470, 150, 'medcart', ['coffee']], [880, 146, 'ivstand', ['w:ivpole']], [1012, 196, 'linen', ['w:bedpan', 'star']],
-    [1500, 148, 'medcart', ['coffee', 'donut']], [1730, 200, 'linen', ['w:mop']], [2110, 142, 'vending', ['candy', 'pizza', 'coffee']],
-    [2330, 196, 'medcart', ['w:clipboard']], [2600, 148, 'ivstand', ['w:extinguisher']], [2680, 200, 'linen', ['token']],
+    [470, 150, 'medcart', ['energy']], [880, 146, 'ivstand', ['w:ivpole']], [1012, 196, 'linen', ['w:bedpan', 'star']],
+    [1500, 148, 'medcart', ['energy', 'donut']], [1730, 200, 'linen', ['w:mop']], [2110, 142, 'vending', ['candy', 'snacks', 'energy']],
+    [2330, 196, 'medcart', ['w:clipboard']], [2600, 148, 'ivstand', ['w:extinguisher']], [2680, 200, 'linen', ['zynn']],
   ],
   floorItems: [[700, 200, 'w:clipboard']],
   // zones: when the lead player passes `at`, the camera locks at [lock, lock + view width] until every wave is cleared
@@ -86,19 +93,21 @@ export const LEVEL1 = {
     ] },
     { at: 560, lock: 480, waves: [
       [['escape', 'D302', 0.2], ['wanderer', 'R', 1.0], ['ivswing', 'L', 2.2]],
-      [['spammer', 'D303', 0.3], ['sundowner', 'R', 1.0], ['wanderer', 'L', 1.6]],
+      [['spammer', 'D303', 0.3], ['crutch', 'R', 1.0], ['wanderer', 'L', 1.6], ['bell', 'D304', 2.4]],
     ] },
     { at: 1150, lock: 1060, title: 'ELEVATOR BANK', waves: [
       [['wanderer', 'EB', 0.8], ['sundowner', 'EB', 1.1], ['escape', 'EB', 1.4]],
-      [['visitor', 'EC', 0.8], ['spammer', 'EC', 1.2], ['wanderer', 'R', 2.4]],
+      [['elite', 'EC', 0.8], ['spammer', 'EC', 1.2], ['crutch', 'R', 2.4]],
+      [['visitor', 'EB', 0.6], ['bell', 'EB', 1.0], ['sundowner', 'L', 2.0]],
     ] },
     { at: 1700, lock: 1600, waves: [
       [['ivswing', 'D306', 0.3], ['escape', 'L', 0.9], ['sundowner', 'R', 1.6]],
-      [['wanderer', 'D307', 0.2], ['spammer', 'D308', 1.0], ['ivswing', 'R', 1.8], ['escape', 'L', 2.4]],
+      [['wanderer', 'D307', 0.2], ['bell', 'D308', 1.0], ['ivswing', 'R', 1.8], ['escape', 'L', 2.4]],
+      [['elite', 'R', 0.4], ['crutch', 'L', 1.0]],
     ] },
     { at: 2300, lock: 2200, waves: [
       [['visitor', 'R', 0.4], ['wanderer', 'D310', 1.0], ['escape', 'L', 1.6]],
-      [['sundowner', 'D311', 0.3], ['spammer', 'R', 0.9], ['ivswing', 'L', 1.5], ['visitor', 'D309', 2.6]],
+      [['sundowner', 'D311', 0.3], ['elite', 'R', 0.9], ['ivswing', 'L', 1.5], ['visitor', 'D309', 2.6], ['bell', 'L', 3.2]],
     ] },
     { at: 3080, lock: 3060, boss: 'tilly', waves: [] },
   ],

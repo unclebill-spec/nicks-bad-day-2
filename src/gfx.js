@@ -59,6 +59,26 @@ export function frame(sheet, idx, x, y, { flip = false, white = false, alpha = 1
   c.save(); c.globalAlpha = alpha; c.translate(Math.round(x), Math.round(y)); if (flip) c.scale(-1, 1); if (scale !== 1) c.scale(scale, scale);
   c.drawImage(im, sx, sy, cw, ch, -ax, -ay, cw, ch); c.restore();
 }
+// Runtime recolour: a copy of a character sheet with exact colours swapped (hair, skin, gown, socks). Cached by name.
+const hex = (c) => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+export function tintSheet(base, key, pairs) {
+  const name = `${base}~${key}`;
+  if (G.img[name]) return name;
+  const src = G.img[base]; if (!src) return base;
+  const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+  const x = c.getContext('2d'); x.drawImage(src, 0, 0);
+  const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
+  const map = new Map();
+  for (const [a, b] of pairs) { if (a && b && a !== b) { const A = hex(a); map.set((A[0] << 16) | (A[1] << 8) | A[2], hex(b)); } }
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3]) continue;
+    const t = map.get((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]);
+    if (t) { d[i] = t[0]; d[i + 1] = t[1]; d[i + 2] = t[2]; }
+  }
+  x.putImageData(id, 0, 0);
+  G.img[name] = c; G.white[name] = G.white[base]; G.atlas.chars[name] = G.atlas.chars[base];
+  return name;
+}
 export function anim(sheet, name) { const A = G.atlas.chars[sheet]; return A && A.anims[name]; }
 
 // ---- bitmap text (Press Start 2P 8x8)

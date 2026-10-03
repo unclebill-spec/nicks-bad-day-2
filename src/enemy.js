@@ -1,15 +1,36 @@
 // Patients. Each type has one signature move: the Wanderer hugs, the Call-light Spammer throws remotes and pudding cups,
 // the Escape Artist slaps and runs, the IV-pole Swinger sweeps, the Sundowner charges, the Visitor is a tough brute.
-import { G, text, spr } from './gfx.js';
+// v0.2: every patient wears the checked gown + yellow grip socks with randomized hair / skin; the Crutch Crusader pokes,
+// the Bell Ringer whips a call bell on its cord (dizzies), and the elite Frequent Flyer canes you up close and throws
+// syringe darts and (comedic) full urinals that splash and leave a slippery puddle.
+import { G, text, spr, tintSheet } from './gfx.js';
 import { ENEMIES, VARIANTS, Y_MIN, Y_MAX } from './data.js';
-import { W, offY, addShot, addFx, floatText, shake, spark, addScore, word, breakProp, propBox } from './world.js';
+import { W, offY, addShot, addFx, floatText, shake, spark, addScore, word, breakProp, propBox, dropItem } from './world.js';
 import { Actor, strike, clampY } from './actor.js';
 import { sfx } from './sound.js';
+
+// A small pool of random looks per patient type (hair colour, skin tone, green or olive gown; elites: red or blue socks).
+const POOL = {}, POOL_N = 6;
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+export function lookFor(kind, n) {
+  const d = ENEMIES[kind], A = G.atlas.chars[d.sheet], P = G.atlas.palettes;
+  if (!A || !A.pal || !P) return d.sheet;
+  const pool = POOL[kind] || (POOL[kind] = []);
+  const i = n % POOL_N;
+  if (!pool[i]) {
+    const hair = pick(P.hair), skin = pick(P.skin), gown = pick(P.gown), sock = d.elite ? P.sock_elite[i % P.sock_elite.length] : P.sock[0];
+    const pal = A.pal, pairs = [];
+    pal.hair.forEach((c, j) => pairs.push([c, hair[j]])); pal.skin.forEach((c, j) => pairs.push([c, skin[j]]));
+    pal.gown.forEach((c, j) => pairs.push([c, gown[j]])); pal.sock.forEach((c, j) => pairs.push([c, sock[j]]));
+    pool[i] = tintSheet(d.sheet, `${i}`, pairs);
+  }
+  return pool[i];
+}
 
 export class Enemy extends Actor {
   constructor(kind, x, y, variant = 0) {
     const d = ENEMIES[kind];
-    super(VARIANTS[kind] ? VARIANTS[kind][variant % VARIANTS[kind].length] : d.sheet, x, y);
+    super(VARIANTS[kind] ? VARIANTS[kind][variant % VARIANTS[kind].length] : lookFor(kind, variant), x, y);
     this.kind = kind; this.d = d; this.maxHp = this.hp = Math.round(d.hp * W.diff.hp * (W.heroes.length > 1 ? 1.25 : 1));
     this.cd = 0.8 + W.rnd() * 1.2; this.armor = d.armor || 0; this.armorT = 0; this.big = !!d.big; this.h = d.big ? 62 : 50; this.w = d.big ? 20 : 14;
     this.side = W.rnd() < 0.5 ? -1 : 1; this.wob = W.rnd() * 6; this.target = null; this.tx = x; this.ty = y; this.speechT = 2 + W.rnd() * 6;
@@ -65,6 +86,7 @@ export class Enemy extends Actor {
     floatText(this.d.ko[Math.floor(W.rnd() * this.d.ko.length)], this.x, this.y, 50, '#ffffff');
     addFx({ type: 'zzz', x: this.x + 4, y: this.y, z: 20, dur: 1.5 });
     sfx(this.d.voice, { vol: 0.35, rate: 0.8 });
+    if (this.d.drop && W.rnd() < this.d.drop[1]) dropItem(this.d.drop[0], this.x, this.y);
   }
   // ------------------------------------------------------------------ states
   s_enter(dt) {  // walk in from a screen edge, a door or an elevator to (tx, ty)
@@ -84,10 +106,11 @@ export class Enemy extends Actor {
     const K = this.kind, d = this.d;
     // speech bubbles now and then
     if (this.speechT <= 0 && W.rnd() < 0.003) { this.speechT = 6; const L = { wanderer: ['Are you my nurse?', 'Where am I?'], spammer: ['NURSE! NURSE!', 'My TV is broken!'], escape: ['Catch me!', "I'm going home!"],
-      ivswing: ['I need ice chips!', 'Fore!'], sundowner: ['Who are you?!', 'Get off my lawn!'], visitor: ['Who is in charge?!', 'I know my rights!'] }[K]; floatText(L[Math.floor(W.rnd() * L.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 }); }
+      ivswing: ['I need ice chips!', 'Fore!'], sundowner: ['Who are you?!', 'Get off my lawn!'], visitor: ['Who is in charge?!', 'I know my rights!'],
+      crutch: ['Outta my way!', 'I can walk fine!'], bell: ['*DING DING DING*', 'Room service!'], elite: ["I've been here 40 times!", 'I want my usual room!'] }[K]; floatText(L[Math.floor(W.rnd() * L.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 }); }
     let gx, gy = h.y, want = d.reach * 0.85;
     const busy = this.tokens(h) >= (W.diff.cap >= 5 ? 3 : 2) && !this.attacking();
-    if (K === 'spammer') { want = d.keep; this.side = Math.sign(this.x - h.x) || this.side; }
+    if (K === 'spammer' || (K === 'elite' && this.cd > 0.3)) { want = d.keep; this.side = Math.sign(this.x - h.x) || this.side; }
     else if (busy || this.cd > 0.6) { want = 62 + (this.wob % 3) * 14; gy = h.y + Math.sin(W.t * 0.8 + this.wob) * 22; }
     else this.side = Math.sign(this.x - h.x) || this.side;
     gx = h.x + this.side * want;
@@ -97,6 +120,11 @@ export class Enemy extends Actor {
     const sp = d.speed * (K === 'escape' ? 0.9 : 1);
     if (ml > 4) { this.x += mx / ml * sp * dt; this.y += my / ml * sp * 0.8 * dt; this.st = 'walk'; } else this.st = 'idle';
     if (K === 'sundowner' && this.cd <= 0 && Math.abs(dy) < 6 && adx > 40 && adx < 220) return this.begin('windup');
+    if (K === 'elite' && this.cd <= 0 && !busy && Math.abs(dy) < 10) {  // cane up close, otherwise throw something
+      if (adx < d.reach + 6) { this.throwKind = null; return this.begin('windup'); }
+      if (adx > 60 && adx < 260) { this.throwKind = W.rnd() < 0.55 ? 'toss' : 'lob'; return this.begin('windup'); }
+    }
+    if (K === 'elite') return;
     if (this.cd <= 0 && !busy && Math.abs(dy) < (K === 'spammer' ? 10 : 6)) {
       if (K === 'spammer' && adx > 50) return this.begin('windup');
       if (K !== 'spammer' && K !== 'sundowner' && adx < d.reach + 6 && adx > 6) return this.begin('windup');
@@ -106,7 +134,7 @@ export class Enemy extends Actor {
   begin(st) { this.set(st); this.face = this.target ? Math.sign(this.target.x - this.x) || this.face : this.face; this.hitDone = false; }
   s_windup(dt) {
     const K = this.kind;
-    const wt = { wanderer: 0.42, spammer: 0.4, escape: 0.22, ivswing: 0.5, sundowner: 0.55, visitor: 0.48 }[K];
+    const wt = { wanderer: 0.42, spammer: 0.4, escape: 0.22, ivswing: 0.5, sundowner: 0.55, visitor: 0.48, crutch: 0.42, bell: 0.4, elite: this.throwKind ? 0.42 : 0.36 }[K];
     if (K === 'sundowner' && Math.floor(this.t * 20) % 2) this.x += (W.rnd() - 0.5) * 2;
     if (this.t >= wt) {
       if (K === 'wanderer') { this.set('hug'); this.vx = this.face * 90; this.hugT = 0; this.victim = null; }
@@ -122,11 +150,22 @@ export class Enemy extends Actor {
         const pud = W.rnd() < 0.35;
         addShot({ kind: 'enemy', spr: pud ? 'pudding' : 'remote', x: this.x + this.face * 10, y: this.y, z: 36, vx: this.face * 165, vz: 40, grav: 120, owner: this, dmg: 6, spin: pud ? 0 : 12, life: 2.2 });
         sfx('whoosh', { vol: 0.4 }); if (W.rnd() < 0.4) floatText(pud ? 'PUDDING!' : 'NURSE!', this.x, this.y, 60, '#ffffff');
-      } else if (K === 'escape') strike(this, { box: [4, 24], z: [20, 48], dmg: 5, kb: 40, stun: 0.3, sfxName: 'punch1', props: false });
+      } else if (K === 'elite' && this.throwKind) {
+        if (this.throwKind === 'toss') {
+          addShot({ kind: 'enemy', spr: 'syringe', x: this.x + this.face * 12, y: this.y, z: 36, vx: this.face * 235, vz: 0, grav: 0, owner: this, dmg: 6, life: 1.6 });
+          sfx('whoosh', { vol: 0.45, rate: 1.4 }); if (W.rnd() < 0.4) floatText('FLU SHOT!', this.x, this.y, 62, '#ffffff');
+        } else {
+          addShot({ kind: 'enemy', spr: 'urinal', x: this.x + this.face * 10, y: this.y, z: 42, vx: this.face * 120, vz: 150, grav: 330, owner: this, dmg: 8, spin: 7, splash: true, life: 2.4 });
+          sfx('whoosh', { vol: 0.45, rate: 0.8 }); if (W.rnd() < 0.5) floatText('INCOMING!', this.x, this.y, 62, '#ffffff');
+        }
+      } else if (K === 'elite') strike(this, { box: [2, 38], z: [16, 50], dmg: 9, kb: 120, stun: 0.45, sfxName: 'punch1', wordName: 'w_smack', props: false });
+      else if (K === 'crutch') strike(this, { box: [0, 46], z: [16, 46], depth: 10, dmg: 9, kb: 140, down: true, sfxName: 'clang', wordName: 'w_poke', props: false });
+      else if (K === 'bell') { strike(this, { box: [4, 64], z: [20, 50], depth: 12, dmg: 6, kb: 30, dizzy: 0.9, sfxName: 'ding', wordName: 'w_ding', props: false }); sfx('ding', { vol: 0.5, rate: 1.3 }); }
+      else if (K === 'escape') strike(this, { box: [4, 24], z: [20, 48], dmg: 5, kb: 40, stun: 0.3, sfxName: 'punch1', props: false });
       else if (K === 'ivswing') strike(this, { box: [0, 56], z: [10, 50], depth: 12, dmg: 10, kb: 140, down: true, sfxName: 'clang', props: false });
       else if (K === 'visitor') strike(this, { box: [4, 36], z: [18, 56], dmg: 14, kb: 160, down: true, sfxName: 'heavy', wordName: 'w_wham', props: false });
     }
-    const rec = { spammer: 0.45, escape: 0.3, ivswing: 0.55, visitor: 0.6 }[K] || 0.4;
+    const rec = { spammer: 0.45, escape: 0.3, ivswing: 0.55, visitor: 0.6, crutch: 0.5, bell: 0.5, elite: 0.45 }[K] || 0.4;
     if (this.t > rec) {
       this.cd = d.cd[0] + W.rnd() * (d.cd[1] - d.cd[0]);
       if (K === 'escape') { this.set('flee'); this.fleeDir = -this.face; } else this.set('idle');
@@ -184,8 +223,8 @@ export class Enemy extends Actor {
       case 'idle': return ['idle', Math.floor(W.t * 2 + this.wob)];
       case 'walk': case 'enter': case 'flee': return ['walk', Math.floor(W.t * (K === 'escape' || st === 'flee' ? 12 : 7) + this.wob)];
       case 'enter_door': return ['idle', 0];
-      case 'windup': return K === 'sundowner' ? ['idle', 0] : ['atk', 0];
-      case 'atk': return ['atk', K === 'ivswing' ? (t < 0.2 ? 1 : 2) : 1];
+      case 'windup': return K === 'sundowner' ? ['idle', 0] : [K === 'elite' && this.throwKind ? this.throwKind : 'atk', 0];
+      case 'atk': return K === 'elite' && this.throwKind ? [this.throwKind, 1] : ['atk', K === 'ivswing' ? (t < 0.2 ? 1 : 2) : 1];
       case 'hug': return this.victim ? ['hug', Math.floor(W.t * 4)] : ['atk', t < 0.12 ? 0 : 1];
       case 'charge': return ['atk', Math.floor(W.t * 14)];
       case 'hurt': return ['hurt', this.flash > 0 ? 0 : 1];

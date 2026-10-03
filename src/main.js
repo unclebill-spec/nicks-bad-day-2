@@ -8,7 +8,7 @@ import { initSound, sfx, playMusic, stopMusic, setVolumes, preloadMusic, S as SN
 import { HEROES, HERO_ORDER, LEVEL1, DIFF } from './data.js';
 import { dropItem } from './world.js';
 import { W, buildLevel, drawBackground, updateWorld, updateCamera, drawProp, drawItem, drawShot, drawFx, offY, floatText } from './world.js';
-import { Director } from './stage.js';
+import { Director, spawn } from './stage.js';
 import { Hero } from './hero.js';
 import { drawHUD } from './hud.js';
 
@@ -508,7 +508,7 @@ async function boot() {
   loaded();
   requestAnimationFrame(frameLoop);
   // test hooks
-  window.__nbd = { drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, Director, display };
+  window.__nbd = { spawn, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, Director, display };
   if (Q.get('autostart') || Q.get('zone')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); }
 }
 boot().catch((e) => { const t = document.getElementById('loadtxt'); if (t) t.textContent = 'Could not load: ' + e.message; console.error(e); });

@@ -32,12 +32,13 @@ COLS = 10
 
 def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
     frames, meta = [], {}
+    post = chars.gown_check if body.get("check") else None
     for an, poses in anims.items():
         start = len(frames)
         hands = []
         for p in poses:
             img, m = figure(body, p, W=cell[0], H=cell[1], ax=anchor[0], ay=anchor[1])
-            frames.append(img.image())
+            frames.append(post(img.image()) if post else img.image())
             hands.append(m["hand"] + m["hand_b"][:2] + m["head"][:2])
         meta[an] = {"s": start, "n": len(poses), "h": hands}
     rows = (len(frames) + COLS - 1) // COLS
@@ -51,14 +52,19 @@ def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
 B = chars.bodies()
 for h in ("nick", "kim", "will", "jackie"):
     char_sheet(h, chars.hero_anims(h), B[h])
-for e in ("wanderer", "spammer", "escape", "ivswing", "sundowner", "visitor"):
+PATIENTS = ("wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite")
+for e in PATIENTS + ("visitor",):
     big = e == "visitor"
     char_sheet(e, chars.enemy_anims(e), B[e], cell=(96, 88) if big else (88, 80), anchor=(48, 84) if big else (44, 76))
-# palette-swap variants (classic arcade trick): same poses, different gown colours
-VAR = {"wanderer2": ("wanderer", dict(shirt="#f6d27a", shirt_s="#c8a24a", sleeve="#f6d27a", sleeve_s="#c8a24a", dots="#a87a2a", hair_c="#c8c8d4")),
-       "escape2": ("escape", dict(shirt="#d8b4f4", shirt_s="#a884c8", sleeve="#d8b4f4", sleeve_s="#a884c8", dots="#7a4aa8", skin=chars.SKIN["fair"][0], skin_s=chars.SKIN["fair"][1], pants=chars.SKIN["fair"][0], pants_s=chars.SKIN["fair"][1], hair_c="#e8b040", hair_s="#b88020"))}
-for v, (base, ch) in VAR.items():
-    char_sheet(v, chars.enemy_anims(base), {**B[base], **ch})
+# runtime recolour palettes (src/gfx.js tintSheet): every patient gets random hair + skin, a green or olive gown,
+# and elites get red or blue socks. Lists are [from colours..] -> the game picks matching [to colours..].
+for e in PATIENTS:
+    b = B[e]
+    atlas["chars"][e]["pal"] = {"hair": [b["hair_c"], b["hair_s"]], "skin": [b["skin"], b["skin_s"]],
+                                "gown": [chars.GOWN[0], chars.GOWN[1], *chars.GOWN_CHECK], "sock": [b["shoe"], b["shoe_s"]]}
+atlas["palettes"] = {"hair": chars.HAIRS, "skin": [list(v) for v in chars.SKIN.values()],
+                     "gown": [[chars.GOWN[0], chars.GOWN[1], *chars.GOWN_CHECK], list(chars.GOWN_OLIVE)],
+                     "sock": [list(chars.SOCK)], "sock_elite": [list(chars.SOCK_ELITE), ["#4a7ae8", "#2a4aa8"]]}
 
 # ---- boss
 fr, meta = [], {}
@@ -137,7 +143,8 @@ for st in range(3):
     add(f"medcart{st}", PR.med_cart(st)); add(f"linen{st}", PR.linen_bin(st)); add(f"vending{st}", PR.vending(st))
 for st in range(2):
     add(f"ivstand{st}", PR.iv_stand(st))
-for k, f in (("coffee", PR.coffee), ("pizza", PR.pizza), ("candy", PR.candy), ("token", PR.token), ("star", PR.star), ("donut", PR.donut),
+for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
+             ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
              ("w_clipboard", PR.w_clipboard), ("w_bedpan", PR.w_bedpan), ("w_mop", PR.w_mop), ("w_extinguisher", PR.w_extinguisher),
              ("w_ivpole", PR.w_ivpole), ("remote", PR.remote), ("pudding", PR.pudding), ("wetsign", PR.wet_sign), ("puddle", PR.puddle),
              ("shadow", PR.shadow), ("zzz", PR.zzz), ("heart", PR.heart)):
@@ -148,6 +155,8 @@ for i in range(3):
     add(f"smoke{i}", PR.smoke(i)); add(f"dizzy{i}", PR.dizzy(i))
 for i in range(4):
     add(f"dust{i}", PR.dust(i))
+for i in range(3):
+    add(f"splash{i}", PR.splash(i))
 
 # ---- comic words + logo (Luckiest Guy, Apache-2.0) quantised to hard pixels
 LG = ROOT / "fonts" / "LuckiestGuy-Regular.ttf"
@@ -192,7 +201,8 @@ def word(text, size, fill, fill2, ink="#1a1020", stroke=2, shadow=True):
 for k, t, c1, c2 in (("w_pow", "POW!", "#ffe84a", "#ff9a1e"), ("w_wham", "WHAM!", "#ff8ac0", "#e83a6a"), ("w_bonk", "BONK!", "#8ae8ff", "#3aa0e8"),
                      ("w_clang", "CLANG!", "#e4e8f0", "#9aa4b4"), ("w_smack", "SMACK!", "#ffe84a", "#ff5a3a"), ("w_clear", "CLEAR!", "#8ad8ff", "#3a7aff"),
                      ("w_honk", "HONK!", "#ffe84a", "#ff8a1e"), ("w_go", "GO!", "#ffe84a", "#ff9a1e"), ("w_ko", "K.O.!", "#ffffff", "#ffd84a"),
-                     ("w_turbo", "TURBO!", "#8ad8ff", "#a24dff"), ("w_slam", "SLAM!", "#ffe84a", "#ff5a3a")):
+                     ("w_turbo", "TURBO!", "#8ad8ff", "#a24dff"), ("w_slam", "SLAM!", "#ffe84a", "#ff5a3a"),
+                     ("w_sploosh", "SPLOOSH!", "#fff27a", "#e8c82a"), ("w_ding", "DING!", "#ffffff", "#c8d0dc"), ("w_poke", "POKE!", "#8ae8ff", "#3aa0e8")):
     SPR[k] = word(t, 16, c1, c2)
 SPR["w_codeblue"] = word("CODE BLUE!", 26, "#9ae0ff", "#3a6aff", stroke=3)
 SPR["w_ready"] = word("CLOCK IN!", 30, "#ffe84a", "#ff8a1e", stroke=3)

@@ -159,7 +159,7 @@ export function drawItem(it) {
 export function drawShot(s) {
   const X = s.x - W.camX, Y = s.y + OFF();
   if (s.kind !== 'puddle') ellipse(X, Y, 5, 2, '#000', 0.3);
-  if (s.kind === 'puddle') { spr('puddle', X - 14, Y - 4, { alpha: Math.min(1, s.life) }); return; }
+  if (s.kind === 'puddle') { spr(s.spr || 'puddle', X - 14, Y - 4, { alpha: Math.min(1, s.life) }); return; }
   if (s.kind === 'shock') {  // Nick's crash-cart ring / Will's slam ring
     const r = s.r;
     ring(X, Y, r, r * 0.32, s.col || '#8ad8ff', 3, 0.85); ring(X, Y, r * 0.8, r * 0.26, '#ffffff', 1, 0.7);
@@ -180,6 +180,7 @@ export function drawFx(f) {
   else if (f.type === 'txt') text(f.s, Math.max(textW(f.s) / 2 + 2, Math.min(G.VW - textW(f.s) / 2 - 2, X)), Y - k * 16, { col: f.col, align: 'center', alpha: k > 0.75 ? (1 - k) * 4 : 1 });
   else if (f.type === 'zzz') spr('zzz', X, Y - k * 8, { alpha: 1 - k * 0.5 });
   else if (f.type === 'heart') spr('heart', X, Y - k * 14, { alpha: 1 - k });
+  else if (f.type === 'splash') spr('splash' + Math.min(2, Math.floor(k * 3)), X, Y, { ax: 13, ay: 18 });
   else if (f.type === 'speed') rect(X, Y, 10, 1, '#fff', 1 - k);
 }
 
