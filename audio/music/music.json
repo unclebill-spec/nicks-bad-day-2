@@ -1,0 +1,32 @@
+{
+ "title": {
+  "loop": true,
+  "start": 3.81,
+  "end": 34.286,
+  "tempo": 126
+ },
+ "select": {
+  "loop": true,
+  "start": 2.424,
+  "end": 41.212,
+  "tempo": 99
+ },
+ "stage": {
+  "loop": true,
+  "start": 2.924,
+  "end": 26.316,
+  "tempo": 164
+ },
+ "boss": {
+  "loop": true,
+  "start": 1.379,
+  "end": 23.448,
+  "tempo": 174
+ },
+ "clear": {
+  "loop": false,
+  "start": 0.0,
+  "end": 6.621,
+  "tempo": 145
+ }
+}

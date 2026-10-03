@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Nick's Very Bad, Terrible Bad Day Part II</title>
+<meta name="theme-color" content="#1a2450">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nick's Bad Day II">
+<link rel="manifest" href="app.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__bip = e; });
+if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<div id="loading"><div class="lt">NICK'S VERY BAD, TERRIBLE BAD DAY<br><b>PART II</b></div><div class="bar"><i id="loadbar"></i></div><small id="loadtxt">Clocking in…</small></div>
+<div id="wrap"><div id="stage">
+  <canvas id="view"></canvas>
+  <div id="hud">
+    <button id="fsbtn" class="hb" aria-label="Fullscreen" title="Fullscreen (` key)"><svg viewBox="0 0 24 24"><path d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6" fill="none" stroke="currentColor" stroke-width="2.6"/></svg></button>
+    <div id="joyzone"></div>
+    <div id="joy"><div id="knob"></div></div>
+    <div id="row">
+      <button id="pausebtn" class="hb" aria-label="Pause" data-k="Pause"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1" fill="currentColor"/></svg></button>
+      <div id="clock">7:00 AM</div>
+    </div>
+    <div id="pad">
+      <button class="ab" id="b_grab" data-b="grab">GRAB</button>
+      <button class="ab" id="b_sp" data-b="sp">SP</button>
+      <button class="ab big" id="b_atk" data-b="atk">HIT</button>
+      <button class="ab" id="b_jmp" data-b="jmp">JUMP</button>
+    </div>
+  </div>
+</div></div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
