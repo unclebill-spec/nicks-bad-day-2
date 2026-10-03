@@ -145,6 +145,16 @@ for st in range(3):
     add(f"medcart{st}", PR.med_cart(st)); add(f"linen{st}", PR.linen_bin(st)); add(f"vending{st}", PR.vending(st))
 for st in range(2):
     add(f"ivstand{st}", PR.iv_stand(st))
+# v0.3 kickable / breakable floor props + debris bits
+import breakables as BR  # noqa: E402
+for st in range(3):
+    add(f"crashcart{st}", BR.crash_cart(st)); add(f"supplycart{st}", BR.supply_cart(st)); add(f"chair{st}", BR.chair(st))
+    add(f"trash{st}", BR.trash_can(st)); add(f"wheelchair{st}", BR.wheelchair(st))
+for st in range(2):
+    add(f"wetfloor{st}", BR.wet_floor(st))
+add("potplant0", plants[1]); add("potplant1", BR.crack_pot(SPR["plant1"])); add("potplant2", BR.plant_wreck())
+for k, S in BR.bits().items():
+    add(k, S)
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
              ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
              ("w_clipboard", PR.w_clipboard), ("w_bedpan", PR.w_bedpan), ("w_mop", PR.w_mop), ("w_extinguisher", PR.w_extinguisher),

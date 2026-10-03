@@ -17,7 +17,8 @@ with sync_playwright() as p:
         pg.evaluate('__nbd.W.heroes[0].meter = 100'); key(pg, 'KeyL'); time.sleep(0.15); r['super'] = st(pg); time.sleep(2.5)
         pg.keyboard.down('ShiftLeft'); pg.keyboard.down('KeyD'); time.sleep(0.4); r['run'] = st(pg); key(pg, 'KeyJ'); time.sleep(0.05); r['dash'] = st(pg)
         pg.keyboard.up('KeyD'); pg.keyboard.up('ShiftLeft'); time.sleep(1)
-        # drop a weapon at her feet and pick it up, then swing
+        # drop a weapon at her feet and pick it up, then swing (patients cleared first so a hug can't steal the grab button)
+        pg.evaluate("(()=>{const W=__nbd.W; W.enemies.forEach(e=>{e.alive=false}); W.enemies.length=0; const h=W.heroes[0]; if (h.held) h.release && h.release(); if (h.st==='grabbed' || h.st==='hold') { h.grabber=null; h.set('idle'); } })()"); time.sleep(0.3)
         pg.evaluate("__nbd.drop('w:extinguisher' if False else 'w:mop')".replace("'w:extinguisher' if False else ", ''))
         time.sleep(0.1); key(pg, 'KeyH'); time.sleep(0.5); r['weapon'] = pg.evaluate('__nbd.W.heroes[0].weapon && __nbd.W.heroes[0].weapon.k'); key(pg, 'KeyJ'); time.sleep(0.05); r['swing'] = st(pg)
         print(r)

@@ -2,7 +2,7 @@
 // elevators, projectiles, the boss, and the end-of-floor sequence.
 import { G } from './gfx.js';
 import { Y_MIN, Y_MAX, VARIANTS } from './data.js';
-import { W, openDoor, openElev, addFx, addShot, floatText, word, shake, spark, dropItem, breakProp, propBox, addScore } from './world.js';
+import { W, openDoor, openElev, addFx, addShot, floatText, word, shake, spark, dropItem, breakProp, hitProp, propBox, addScore } from './world.js';
 import { Enemy } from './enemy.js';
 import { Tilly } from './boss.js';
 import { sfx, playMusic } from './sound.js';
@@ -97,7 +97,7 @@ export const Director = {
             if (!s.hostile) { spark(t.x, t.y, 30, s.col === '#ffe84a' ? 'bigspark' : 'bluespark'); addScore(s.owner, 100); }
           }
         }
-        if (!s.hostile) for (const p of W.props) { if (s.hit.has(p) || p.st >= 2) continue; const dx = (p.x - s.x) / s.r, dy = (p.y - s.y) / (s.r * 0.36); if (dx * dx + dy * dy <= 1) { s.hit.add(p); breakProp(p, 20, s.owner); } }
+        if (!s.hostile) for (const p of W.props) { if (s.hit.has(p) || p.st >= 2) continue; const dx = (p.x - s.x) / s.r, dy = (p.y - s.y) / (s.r * 0.36); if (dx * dx + dy * dy <= 1) { s.hit.add(p); hitProp(p, 20, { dir: Math.sign(p.x - s.x) || 1, kb: 220, from: s.owner }); } }
         if (s.r >= (s.rmax || 200)) s.life = Math.min(s.life, 0.08);
         continue;
       }
@@ -136,7 +136,7 @@ export const Director = {
           spark(t.x, t.y, s.z, 'bigspark'); sfx('clang', { vol: 0.6 }); addScore(s.owner, 150);
           if (s.kind === 'weapon') { s.life = 0; s.dropAt = true; }
         }
-        for (const p of W.props) { if (s.hit.has(p) || p.st >= 2) continue; const b = propBox(p); if (Math.abs(p.y - s.y) < 12 && s.x > b.x0 && s.x < b.x1) { s.hit.add(p); breakProp(p, 12, s.owner); } }
+        for (const p of W.props) { if (s.hit.has(p) || p.st >= 2) continue; const b = propBox(p); if (Math.abs(p.y - s.y) < 12 && s.x > b.x0 && s.x < b.x1 && s.z < b.z1 + 10) { s.hit.add(p); hitProp(p, 12, { dir: Math.sign(s.vx) || 1, kb: 160, from: s.owner }); } }
         if (s.kind === 'weapon' && (s.life <= 0 || s.x < W.camX - 20 || s.x > W.camX + G.VW + 20)) s.life = 0;
       }
       if (s.x < W.camX - 60 || s.x > W.camX + G.VW + 60) s.life = 0;

@@ -18,6 +18,7 @@ sys.path.insert(0, str(SUITE))
 from n64 import music as M  # noqa: E402
 from n64 import sfx as X  # noqa: E402
 from n64.audio_util import write_wav  # noqa: E402
+sys.path.insert(0, str(Path(__file__).parent))
 
 ROOT = Path(__file__).parent.parent
 MUS, SFX = ROOT / "audio" / "music", ROOT / "audio" / "sfx"
@@ -124,5 +125,7 @@ for i, (txt, p) in enumerate((("Hey! Is it morning?", 0.8), ("Nurse! Nurse!", 1.
     save(f"voice{i}", s, 0.6)
 s = X.babble("Out of my way, sweetie!", __import__("random").Random(42), pitch=1.5, speed=1.2)
 save("tilly", s, 0.7)
+import prop_sfx  # noqa: E402  (v0.3 crash / rattle / thunk / shatter)
+prop_sfx.build()
 print("music:", sorted(p.name for p in MUS.iterdir()))
 print("sfx:", sorted(p.name for p in SFX.iterdir()))

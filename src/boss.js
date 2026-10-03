@@ -3,7 +3,7 @@
 // water dropped behind her, and she rings her call button for backup. Defeated, she simply nods off.
 import { G, text, spr, ellipse, rect } from './gfx.js';
 import { Y_MIN, Y_MAX } from './data.js';
-import { W, offY, addShot, addFx, floatText, shake, spark, word, addScore } from './world.js';
+import { W, offY, addShot, addFx, floatText, shake, spark, word, addScore, bumpProps } from './world.js';
 import { Actor, strike, clampY } from './actor.js';
 import { sfx } from './sound.js';
 
@@ -85,6 +85,7 @@ export class Tilly extends Actor {
   s_charge(dt) {
     this.x += this.vx * dt;
     strike(this, { box: [-30, 34], z: [0, 60], depth: 14, dmg: 14, kb: 190, down: true, sfxName: 'heavy', once: this.hitSet, wordName: 'w_wham', props: false });
+    bumpProps(this, 20, Math.sign(this.vx) || this.face, null, this.hitSet, 26);  // she plows through chairs and carts
     if (Math.floor(this.t * 14) % 2 === 0) addFx({ type: 'dust', x: this.x - this.face * 26, y: this.y, dur: 0.3 });
     if (this.phase === 2 && (this.dropT += dt) > 0.32) {
       this.dropT = 0;

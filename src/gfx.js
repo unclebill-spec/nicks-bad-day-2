@@ -40,11 +40,11 @@ export function present() {
 }
 
 // ---- atlas sprites
-export function spr(name, x, y, { flip = false, alpha = 1, ax = 0, ay = 0, rot = 0, scale = 1 } = {}) {
+export function spr(name, x, y, { flip = false, alpha = 1, ax = 0, ay = 0, rot = 0, scale = 1, light = false } = {}) {
   const r = G.atlas.sprites.rects[name]; if (!r) return;
   const c = G.ctx;
-  if (!flip && !rot && alpha === 1 && scale === 1) { c.drawImage(G.img.sprites, r[0], r[1], r[2], r[3], Math.round(x - ax), Math.round(y - ay), r[2], r[3]); return; }
-  c.save(); c.globalAlpha = alpha; c.translate(Math.round(x), Math.round(y)); if (rot) c.rotate(rot); if (flip) c.scale(-1, 1); if (scale !== 1) c.scale(scale, scale);
+  if (!flip && !rot && alpha === 1 && scale === 1 && !light) { c.drawImage(G.img.sprites, r[0], r[1], r[2], r[3], Math.round(x - ax), Math.round(y - ay), r[2], r[3]); return; }
+  c.save(); c.globalAlpha = alpha; if (light) c.globalCompositeOperation = 'lighter'; c.translate(Math.round(x), Math.round(y)); if (rot) c.rotate(rot); if (flip) c.scale(-1, 1); if (scale !== 1) c.scale(scale, scale);
   c.drawImage(G.img.sprites, r[0], r[1], r[2], r[3], -ax, -ay, r[2], r[3]); c.restore();
 }
 export const sprSize = (name) => { const r = G.atlas.sprites.rects[name]; return r ? [r[2], r[3]] : [0, 0]; };

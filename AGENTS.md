@@ -8,7 +8,7 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-03, v0.2.2)
+## Current state (2026-10-03, v0.3)
 - **Level 1 "Floor 3: Med-Surg" is fully playable** from the title screen through to the tally and the "Floor 4: Radiology" teaser.
   The level is 3560 px wide with 6 camera-lock zones: 5 wave zones, then the boss dayroom.
 - **4 heroes:**
@@ -27,7 +27,13 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
 - **Spawns** come in waves with an on-screen cap, from hallway room doors (301–314), from the elevators (B, C), and from both screen edges.
 - **Pickups:** energy drink (small heal), fruit snacks (big heal), candy (speed), the ZYNN tin (+1 life; parody label, never the real logo), and score items (donut, gold star).
 - **Weapons:** clipboard, bedpan, mop, IV pole, crutch, call bell (dizzies), cane, and an extinguisher that sprays and stuns.
-- **Breakables:** med cart, linen bin, vending machine and IV stand.
+- **Breakables (v0.3, kickable):** there are 36 floor props in Level 1, defined by `BREAKABLES` + `LOOT` in `src/data.js`, with physics in `src/world.js` (`makeProp`, `hitProp`, `smashProp`, `updateProp`, `bumpProps`).
+  - **Kinds:** crash cart, supply cart, med cart, wheelchair, linen hamper, IV stand (all `roll`); chair, trash can, plant, wet-floor sign (all `slide`); vending machine (doesn't move).
+  - **Hits:** jabs nudge a prop. Hard hits (kb >= 110: finishers, kicks, dashes, throws, specials) launch it.
+  - **Rolling props:** a fast-moving prop plows patients down (it uses the kicker's score, combo and meter), shoves other props, and bounces off the screen edges and floor walls.
+  - **Breaking:** a break makes debris (`chunk` fx), a drop roll (ZYNN capped at one per level), points, hit-stop and shake.
+  - **Patients:** a knocked or thrown patient that hits a prop launches it, and Tilly's charge smashes props.
+  - **Rules:** props are never solid, never hurt heroes, and never touch the camera or zone logic, so don't add any of that or progress could softlock.
 - **Boss: Turbo Tilly** in an electric wheelchair.
   - Phase 1: horn honk shock ring (dizzies), rev and charge. After a charge her battery panel opens as the weak point; she takes only 30% damage otherwise.
   - Phase 2 (turbo): faster charges, drops puddles and yarn, and calls patients for backup.
@@ -65,20 +71,23 @@ python3 tests/touch.py      # emulated Pixel phone landscape: taps, floating joy
 python3 tests/flow.py       # boss defeat -> tally -> teaser -> title; continue; game over -> high scores
 python3 tests/will.py       # Will's look on title, select, in-game HUD, tally
 python3 tests/patients.py   # all patient types + random looks, elite syringe/urinal throws, splash + puddle, KO drops, new pickups
+python3 tests/props.py      # v0.3 breakables: roll/plow/bounce/break, every kind, patients into props, loot odds, 2P pad, touch, bot to boss
+python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
 python3 tests/shots.py "autostart=1&bot=1&god=1" 240 full 1280 720 6   # whole level with the bot
 python3 tests/video.py      # webm clips for the GIF (ffmpeg converts)
 ```
-Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png` and `docs/gameplay.gif` are committed copies.
+Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `docs/gameplay.gif` and `docs/props.gif` are committed copies.
 
 ## Rebuilding art and audio
 - Patient looks: `tools/chars.py` has `GOWN`, `GOWN_OLIVE`, `SOCK`, `SOCK_ELITE` and `HAIRS`. `make_art.py` writes them to `atlas.json`
   (`chars.<patient>.pal` and `palettes`), and the game swaps those exact colors per spawn (a pool of 6 looks per type).
   If you add a patient, give it `**gown` and `**socks`, and add it to `PATIENTS` in `make_art.py`.
 - `python3 tools/make_art.py` rewrites `art/*.png`, `art/atlas.json`, the font and the icons.
-  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients, `tools/boss.py` Tilly, and `tools/props.py` the hospital art.
+  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients, `tools/boss.py` Tilly, `tools/props.py` the hospital art, and `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits.
   - It uses vendored copies of Master Builder's Gravewake `sprite_writer`/`pixel_writer` and brileta-sprites (plants, via node).
   - Never edit `/workspace/gravewake` itself. It belongs to another bot.
+- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter); `make_audio.py` calls it too.
 - `python3 tools/make_audio.py` rewrites `audio/music/*.mp3` (with loop points in `music.json`) and `audio/sfx/*.wav`, using the N64 suite in `/workspace/n64-suite` (music.compose with the chiptune fallback, sfx.make, babble).
 - All art is original. There are no copyrighted characters or sprites.
 

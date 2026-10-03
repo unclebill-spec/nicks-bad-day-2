@@ -5,7 +5,7 @@
 // syringe darts and (comedic) full urinals that splash and leave a slippery puddle.
 import { G, text, spr, tintSheet } from './gfx.js';
 import { ENEMIES, VARIANTS, Y_MIN, Y_MAX } from './data.js';
-import { W, offY, addShot, addFx, floatText, shake, spark, addScore, word, breakProp, propBox, dropItem } from './world.js';
+import { W, offY, addShot, addFx, floatText, shake, spark, addScore, word, breakProp, propBox, dropItem, bumpProps } from './world.js';
 import { Actor, strike, clampY } from './actor.js';
 import { sfx } from './sound.js';
 
@@ -43,6 +43,7 @@ export class Enemy extends Actor {
     if (!force && !this.hittable()) return;
     if (this.st === 'hug' && from && from.isHero) this.breakHug();
     this.hp -= dmg; this.flash = 0.12;
+    if (from && from.isHero) this.lastHitBy = from;
     if (from) addScore(from, dmg * 8);
     if (this.hp <= 0) {
       this.hp = 0; if (this.holder) { this.holder.held = null; this.holder = null; }
@@ -208,7 +209,7 @@ export class Enemy extends Actor {
       this.hitSet.add(e); e.takeHit({ dmg: 12 * k, dir: Math.sign(this.vx), kb: 150, down: true, from: this.thrower }); spark(e.x, e.y, 24, 'bigspark'); sfx('heavy'); shake(3); addScore(this.thrower, 200);
     }
     if (W.boss && W.boss.alive && !this.hitSet.has(W.boss) && Math.abs(W.boss.y - this.y) < 14 && Math.abs(W.boss.x - this.x) < 26) { this.hitSet.add(W.boss); W.boss.takeHit({ dmg: 10 * k, dir: Math.sign(this.vx), from: this.thrower }); }
-    for (const p of W.props) { if (p.st >= 2 || this.hitSet.has(p)) continue; const b = propBox(p); if (Math.abs(p.y - this.y) < 12 && this.x > b.x0 - 6 && this.x < b.x1 + 6) { this.hitSet.add(p); breakProp(p, 12, this.thrower); } }
+    if (this.z < 40) bumpProps(this, 12, Math.sign(this.vx) || 1, this.thrower, this.hitSet);
     if (this.airborne(dt)) {
       this.hp -= 18 * k; this.flash = 0.12; shake(4); sfx('heavy'); word('w_slam', this.x, this.y, 0); addFx({ type: 'dust', x: this.x, y: this.y, dur: 0.4 });
       if (this.hp <= 0) { this.hp = 0; this.koBy = this.thrower; }

@@ -1,7 +1,7 @@
 // The level: pre-rendered hospital hallway, wall features (doors and elevators that open), breakables, floor items,
 // projectiles, effects, the camera and the zone / wave spawner.
 import { G, spr, sprSize, rect, text, ellipse, ring, bolt, frame, textW } from './gfx.js';
-import { Y_MIN, Y_MAX, LEVEL1, BREAKABLES, ITEMS, WEAPONS, DIFF, GRAV } from './data.js';
+import { Y_MIN, Y_MAX, LEVEL1, BREAKABLES, LOOT, ITEMS, WEAPONS, DIFF, GRAV } from './data.js';
 import { sfx } from './sound.js';
 
 export const W = {
@@ -61,7 +61,7 @@ export function buildLevel(lv) {
   }
   W.bg = c;
   // breakables + floor items
-  W.props = lv.props.map(([px, py, kind, drops]) => ({ x: px, y: py, kind, def: BREAKABLES[kind], hp: BREAKABLES[kind].hp, st: 0, drops: [...drops], shake: 0, flash: 0 }));
+  W.props = lv.props.map(([px, py, kind, drops]) => makeProp(kind, px, py, drops)); W.zynnProps = 0;
   W.items = []; for (const [ix, iy, k] of lv.floorItems || []) dropItem(k, ix, iy, false);
 }
 
@@ -96,19 +96,138 @@ export function dropItem(k, x, y, pop = true) {
   if (weapon) it.uses = it.w.uses ?? null, it.ammo = it.w.ammo ?? null;
   W.items.push(it); return it;
 }
-export function breakProp(p, dmg, from) {
+// ---- v0.3 kickable / breakable props. Hits knock carts rolling (they plow patients over and bounce off the screen
+// edges), light things scoot, everything breaks after a few hits into chunky debris and maybe a drop.
+export function makeProp(kind, x, y, drops = []) {
+  const def = BREAKABLES[kind];
+  return { x, y, z: 0, vx: 0, vy: 0, vz: 0, kind, def, hp: def.hp, st: 0, drops: [...drops], shake: 0, flash: 0, hitSet: new Set(), kicker: null, rattle: 0 };
+}
+const SPEED = { roll: [180, 340], slide: [120, 240] };
+const moving = (p) => Math.abs(p.vx) > 4 || Math.abs(p.vy) > 4;
+// hit a prop: dmg decides how many "hp pips" it loses, dir/kb decide the shove. Returns true if something happened.
+export function hitProp(p, dmg, { dir = 1, kb = 60, from = null, quiet = false } = {}) {
   if (p.st >= 2) return false;
-  p.hp -= dmg >= 10 ? 2 : 1; p.shake = 0.2; p.flash = 0.1;
-  sfx(p.kind === 'vending' ? 'smash' : 'clang', { vol: 0.6 });
-  spark(p.x, p.y, 30, 'spark');
-  if (p.hp <= 0) {
-    p.st = 2; sfx('smash'); addFx({ type: 'dust', x: p.x, y: p.y + 1, z: 0, dur: 0.4 });
-    for (const d of p.drops) dropItem(d, p.x + (W.rnd() - 0.5) * 20, p.y + 6);
-    addScore(from, 100);
-  } else if (p.hp <= Math.ceil(p.def.hp / 2)) p.st = Math.min(1, (p.def.states || 3) - 2);
+  const d = p.def;
+  p.hp -= dmg >= 18 ? 3 : dmg >= 10 ? 2 : 1; p.shake = 0.22; p.flash = 0.1;
+  if (from && from.isHero) p.kicker = from; else if (from && from.kicker) p.kicker = from.kicker;
+  burst(p, 2 + Math.floor(W.rnd() * 3), 0.5);
+  if (p.hp <= 0) { smashProp(p); return true; }
+  if (p.hp <= Math.ceil(d.hp / 2)) p.st = Math.min(1, (d.states || 3) - 2);
+  if (!quiet) { sfx(d.hit || 'clang', { vol: 0.65 }); spark(p.x, p.y, 22, 'spark'); W.stop = Math.max(W.stop, 0.035); shake(2); }
+  if (d.zap && W.rnd() < 0.5) addFx({ type: 'spark', kind: 'bluespark', x: p.x - 4, y: p.y, z: 34, dur: 0.2 });
+  if (d.move && !quiet) {  // launch it
+    // jabs just nudge it (so a combo can finish it off); kicks, finishers, dashes and throws send it flying
+    const [lo, hi] = SPEED[d.move], hard = (kb || 0) >= 110;
+    p.nudge = !hard;
+    if (!hard) { p.vx = dir * 38 * (d.push || 1); p.vy = 0; }
+    else {
+      p.vx = dir * Math.max(lo, Math.min(hi, 90 + kb * 1.25)) * (d.push || 1); p.vy = (W.rnd() - 0.5) * 30; p.hitSet = new Set(); p.rattle = 0;
+      if (d.move === 'slide') { p.vz = 50; p.z = Math.max(p.z, 0.5); }
+      if (d.move === 'roll') sfx('rattle', { vol: 0.5, gap: 0.2 });
+    }
+  }
   return true;
 }
-export function propBox(p) { return { x0: p.x - p.def.w / 2, x1: p.x + p.def.w / 2, y: p.y, z1: p.def.big ? 60 : 30 }; }
+export function smashProp(p) {
+  const d = p.def;
+  p.st = 2; p.hp = 0; p.vx *= 0.35; p.vy = 0; p.flash = 0.15;
+  sfx(d.brk || 'smash', { vol: 0.9 }); if (d.zap) sfx('zap', { vol: 0.45, rate: 1.6 });
+  W.stop = Math.max(W.stop, 0.07); shake(d.big ? 6 : 4);
+  addFx({ type: 'dust', x: p.x, y: p.y + 1, z: 0, dur: 0.45 }); addFx({ type: 'spark', kind: 'bigspark', x: p.x, y: p.y, z: 20, dur: 0.22 });
+  if (d.zap) for (let i = 0; i < 3; i++) addFx({ type: 'spark', kind: 'bluespark', x: p.x + (W.rnd() - 0.5) * 20, y: p.y, z: 16 + W.rnd() * 20, dur: 0.25 });
+  burst(p, d.big ? 18 : 12, 1);
+  word(d.big ? 'w_wham' : 'w_pow', p.x, p.y, 10);
+  for (const k of p.drops) dropItem(k, p.x + (W.rnd() - 0.5) * 20, p.y + 6);
+  const loot = rollLoot(d.loot);
+  if (loot) dropItem(loot, p.x + (W.rnd() - 0.5) * 16, p.y + 4);
+  const pts = d.big ? 500 : d.move === 'roll' ? 300 : 150;
+  addScore(p.kicker, pts); floatText(String(pts), p.x, p.y, 40, '#ffe84a');
+  W.stats.props = (W.stats.props || 0) + 1;
+}
+export function rollLoot(table) {
+  const T = LOOT[table]; if (!T) return null;
+  let r = W.rnd();
+  for (const [k, pr] of T) {
+    if (r < pr) { if (k === 'zynn' && (W.zynnProps || 0) >= 1) return 'energy'; if (k === 'zynn') W.zynnProps = (W.zynnProps || 0) + 1; return k; }
+    r -= pr;
+  }
+  return null;
+}
+function burst(p, n, power) {  // chunky debris: a mix of the prop's own bits (drawers, gauze, shards) and colour chunks
+  const d = p.def, bits = d.bits || [], cols = d.deb || ['#b8c0cc'];
+  for (let i = 0; i < n; i++) {
+    const useBit = bits.length && (i % 2 === 0);
+    const dir = p.vx ? -Math.sign(p.vx) * (W.rnd() < 0.3 ? -1 : 1) : (W.rnd() < 0.5 ? -1 : 1);
+    addFx({ type: 'chunk', spr: useBit ? bits[Math.floor(W.rnd() * bits.length)] : null, col: cols[Math.floor(W.rnd() * cols.length)],
+      sz: 2 + Math.floor(W.rnd() * 3), x: p.x + (W.rnd() - 0.5) * d.w, y: p.y + (W.rnd() - 0.5) * 6, z: 8 + W.rnd() * (d.big ? 40 : 22),
+      vx: dir * (30 + W.rnd() * 110) * power, vy: (W.rnd() - 0.5) * 50 * power, vz: (90 + W.rnd() * 150) * (0.5 + power * 0.5),
+      spin: (W.rnd() - 0.5) * 18, dur: 1.4 + W.rnd() * 0.8 });
+  }
+}
+export const breakProp = (p, dmg, from) => hitProp(p, dmg, { dir: from ? (Math.sign(p.x - from.x) || from.face || 1) : 1, kb: dmg * 8, from });
+export function propBox(p) { return { x0: p.x - p.def.w / 2, x1: p.x + p.def.w / 2, y: p.y, z1: (p.def.h || (p.def.big ? 60 : 30)) + 10 }; }  // +10: jump kicks still connect
+function updateProp(p, dt) {
+  p.shake = Math.max(0, p.shake - dt); p.flash = Math.max(0, p.flash - dt);
+  if (p.z > 0 || p.vz > 0) { p.vz -= GRAV * dt; p.z += p.vz * dt; if (p.z <= 0) { p.z = 0; p.vz = 0; } }
+  if (!moving(p)) { p.vx = p.vy = 0; return; }
+  const d = p.def, fr = p.st >= 2 ? 5 : (d.fr || 2) + (p.nudge ? 6 : 0);
+  p.x += p.vx * dt; p.y += p.vy * dt;
+  p.vx *= Math.exp(-fr * dt); p.vy *= Math.exp(-(fr + 3) * dt);
+  if (Math.abs(p.vx) < 6) p.vx = 0; if (Math.abs(p.vy) < 4) p.vy = 0;
+  // the floor's edges + the screen edges are walls: bounce back into play
+  if (p.y < Y_MIN) { p.y = Y_MIN; p.vy = Math.abs(p.vy) * 0.5; } else if (p.y > Y_MAX) { p.y = Y_MAX; p.vy = -Math.abs(p.vy) * 0.5; }
+  const L = W.camX + d.w / 2 + 2, R = W.camX + G.VW - d.w / 2 - 2;
+  if (p.x > W.camX - 40 && p.x < W.camX + G.VW + 40) {
+    if ((p.x < L && p.vx < 0) || (p.x > R && p.vx > 0)) {
+      p.x = p.x < L ? L : R; p.vx = -p.vx * 0.55; p.hitSet = new Set(); shake(2);
+      sfx(d.hit || 'clang', { vol: 0.5 }); addFx({ type: 'dust', x: p.x, y: p.y, z: 0, dur: 0.3 });
+      if (Math.abs(p.vx) > 80) burst(p, 2, 0.4);
+    }
+  }
+  if (p.st >= 2) return;
+  const sp = Math.abs(p.vx);
+  if (d.move === 'roll' && (p.rattle += dt) > 0.12 && sp > 60) { p.rattle = 0; addFx({ type: 'dust', x: p.x - Math.sign(p.vx) * d.w / 2, y: p.y, z: 0, dur: 0.25 }); }
+  if (sp < 70) return;
+  const dir = Math.sign(p.vx), k = Math.max(0.6, Math.min(1.3, 0.55 + sp / 400));
+  // plow into patients (and Tilly): knock them down
+  for (const e of [...W.enemies, ...(W.boss ? [W.boss] : [])]) {
+    if (!e.alive || p.hitSet.has(e) || !e.hittable || !e.hittable() || e.z > 30) continue;
+    if (Math.abs(e.y - p.y) > 12 + (e.big ? 6 : 0) || Math.abs(e.x - p.x) > d.w / 2 + e.w / 2) continue;
+    p.hitSet.add(e);
+    e.takeHit({ dmg: Math.round(d.dmg * k * (e.isBoss ? 0.6 : 1)), dir, kb: 170, stun: 0.5, down: true, from: p.kicker });
+    e.propSet = new Set([p]);  // the patient it just bowled over can't bump it straight back
+    spark(e.x, e.y, 26, 'bigspark'); sfx('heavy', { vol: 0.8 }); shake(3); W.stop = Math.max(W.stop, 0.05);
+    if (!p.wordT || W.t > p.wordT) { word('w_wham', e.x, e.y, 14); p.wordT = W.t + 0.5; }
+    addScore(p.kicker, 150);
+    const h = p.kicker; if (h && h.isHero) { h.combo = (h.combo || 0) + 1; h.comboT = 1.6; h.maxCombo = Math.max(h.maxCombo || 0, h.combo); h.meter = Math.min(100, (h.meter || 0) + 5); h.lastFoe = e; h.lastFoeT = W.t + 2.2; }
+    p.vx *= d.mass >= 2 ? 0.82 : 0.55;
+    if (d.mass < 1 && hitProp(p, 4, { dir, kb: 0, quiet: true }) && p.st >= 2) return;
+  }
+  // and into other props: shove (or bounce off the heavy ones) and damage both a little
+  for (const q of W.props) {
+    if (q === p || q.st >= 2 || p.hitSet.has(q)) continue;
+    if (Math.abs(q.y - p.y) > 12 || Math.abs(q.x - p.x) > (d.w + q.def.w) / 2) continue;
+    p.hitSet.add(q); q.hitSet.add(p);
+    const v = p.vx, ratio = Math.min(1.2, (d.mass || 1) / (q.def.mass || 1));
+    q.kicker = p.kicker;
+    hitProp(q, 6, { dir, kb: 0, from: p.kicker });
+    if (q.def.move && q.st < 2) { q.vx = v * 0.85 * ratio; q.vy = p.vy * 0.5; q.hitSet = new Set([p]); q.nudge = false; }
+    const qm = q.def.mass || 1, pm = d.mass || 1;
+    p.vx = q.def.move && qm < pm * 4 ? v * Math.max(0.3, 1 - 0.6 * qm / pm) : -v * 0.45;  // heavy carts plow through light stuff
+    if (qm >= pm * 0.5) { const keep = p.vx; hitProp(p, 4, { dir: Math.sign(keep) || dir, kb: 0, quiet: true }); p.vx = keep; p.vz = 0; p.z = 0; }
+    if (p.st >= 2) return;
+  }
+}
+// something heavy (a falling / thrown patient, Tilly) slams into props in its path
+export function bumpProps(a, dmg, dir, from, set, reach = 6) {
+  for (const p of W.props) {
+    if (p.st >= 2 || (set && set.has(p))) continue;
+    const b = propBox(p);
+    if (Math.abs(p.y - a.y) > 12 || a.x < b.x0 - reach || a.x > b.x1 + reach || (a.z || 0) > b.z1) continue;
+    if (set) set.add(p);
+    hitProp(p, dmg, { dir, kb: 160, from }); p.hitSet.add(a);
+  }
+}
 
 export function addShot(s) { W.shots.push(Object.assign({ t: 0, z: 30, vz: 0, hit: new Set(), life: 3 }, s)); }
 export function addFx(f) { W.fx.push(Object.assign({ t: 0, z: 0 }, f)); return f; }
@@ -121,13 +240,20 @@ export function addScore(h, n) { if (h && h.isHero) h.score += Math.round(n); }
 export function updateWorld(dt) {
   for (const d of Object.values(W.doors)) { d.open += Math.sign(d.target - d.open) * Math.min(Math.abs(d.target - d.open), dt * 3.2); if (d.target > 0 && (d.t += dt) > 2.4) d.target = 0; }
   for (const e of Object.values(W.elevs)) { e.open += Math.sign(e.target - e.open) * Math.min(Math.abs(e.target - e.open), dt * 1.8); e.light = Math.max(0, e.light - dt); if (e.target > 0 && (e.t += dt) > 3.4) e.target = 0; }
-  for (const p of W.props) { p.shake = Math.max(0, p.shake - dt); p.flash = Math.max(0, p.flash - dt); }
+  for (const p of W.props) updateProp(p, dt);
   for (const it of W.items) {
     it.t += dt;
     if (it.z > 0 || it.vz > 0) { it.vz -= GRAV * dt; it.z += it.vz * dt; it.x += it.vx * dt; if (it.z <= 0) { it.z = 0; if (it.vz < -60) { it.vz = -it.vz * 0.35; } else { it.vz = 0; it.vx = 0; } } }
   }
   W.items = W.items.filter((it) => !it.gone && it.t < 40);
-  for (const f of W.fx) f.t += dt;
+  for (const f of W.fx) {
+    f.t += dt;
+    if (f.type === 'chunk') {  // debris: ballistic, bounces twice, skids, then blinks out
+      f.vz -= GRAV * dt; f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt; f.rot = (f.rot || 0) + f.spin * dt;
+      if (f.y < Y_MIN - 6) { f.y = Y_MIN - 6; f.vy = Math.abs(f.vy) * 0.4; } else if (f.y > Y_MAX + 6) { f.y = Y_MAX + 6; f.vy = -Math.abs(f.vy) * 0.4; }
+      if (f.z <= 0) { f.z = 0; if (f.vz < -40) { f.vz = -f.vz * 0.38; f.vx *= 0.6; f.vy *= 0.6; f.spin *= 0.5; } else { f.vz = 0; f.vx *= Math.exp(-dt * 8); f.vy *= Math.exp(-dt * 8); f.spin = 0; } }
+    }
+  }
   W.fx = W.fx.filter((f) => f.t < f.dur);
   W.shakeAmt = Math.max(0, W.shakeAmt - dt * 18);
   W.flash = Math.max(0, W.flash - dt * 3);
@@ -139,11 +265,13 @@ export function openElev(id) { const e = W.elevs[id]; if (e) { if (e.target < 1)
 
 // ---------------------------------------------------------------- drawing helpers for world-space things
 export function drawProp(p) {
-  const X = p.x - W.camX + (p.shake > 0 ? Math.round(Math.sin(p.shake * 90) * 2) : 0), Y = p.y + OFF();
+  const fast = moving(p) && p.st < 2 && p.def.move === 'roll';
+  const X = Math.round(p.x - W.camX + (p.shake > 0 ? Math.sin(p.shake * 90) * 2 : 0)), Y = Math.round(p.y + OFF() - p.z - (fast && Math.floor(W.t * 30) % 2 ? 1 : 0));
   const name = p.def.spr + Math.min(p.st, (p.def.states || 3) - 1);
   const [w, h] = sprSize(name);
-  ellipse(X, Y, p.def.w / 2 + 3, 3, '#000', 0.25);
+  ellipse(p.x - W.camX, p.y + OFF(), p.def.w / 2 + 3, 3, '#000', 0.25);
   spr(name, X - w / 2, Y - h + 2);
+  if (p.flash > 0) spr(name, X - w / 2, Y - h + 2, { light: true, alpha: Math.min(0.8, p.flash * 8) });
 }
 export function drawItem(it) {
   const X = it.x - W.camX, Y = it.y + OFF();
@@ -173,6 +301,14 @@ export function drawShot(s) {
 export function drawFx(f) {
   const X = f.x - W.camX, Y = f.y + OFF() - f.z;
   const k = f.t / f.dur;
+  if (f.type === 'chunk') {
+    const left = f.dur - f.t; if (left < 0.35 && Math.floor(f.t * 20) % 2) return;
+    const Yg = f.y + OFF();
+    if (f.z > 1) ellipse(X, Yg, 2, 1, '#000', 0.25);
+    if (f.spr) { const [w, h] = sprSize(f.spr); spr(f.spr, Math.round(X), Math.round(Y), { ax: w / 2, ay: h / 2, rot: Math.round((f.rot || 0) / (Math.PI / 2)) * (Math.PI / 2) }); }
+    else { const s = f.sz, x0 = Math.round(X - s / 2), y0 = Math.round(Y - s / 2); rect(x0 - 1, y0 - 1, s + 2, s + 2, '#1a1020'); rect(x0, y0, s, s, f.col); }
+    return;
+  }
   if (f.type === 'spark') { const i = Math.min(2, Math.floor(k * 3)); spr((f.kind || 'spark') + i, X, Y, { ax: f.kind === 'bigspark' ? 14 : f.kind === 'bluespark' ? 10 : 8, ay: f.kind === 'bigspark' ? 14 : f.kind === 'bluespark' ? 10 : 8 }); }
   else if (f.type === 'dust') { const i = Math.min(3, Math.floor(k * 4)); spr('dust' + i, X, Y, { ax: 10, ay: 10 }); }
   else if (f.type === 'smoke') { const i = Math.min(2, Math.floor(k * 3)); spr('smoke' + i, X, Y - k * 10, { ax: 8, ay: 8 }); }

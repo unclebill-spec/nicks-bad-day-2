@@ -1,7 +1,7 @@
 // Shared actor physics + drawing, and the combat helpers every fighter uses.
 import { G, frame, anim, ellipse, spr, sprSize } from './gfx.js';
 import { Y_MIN, Y_MAX, GRAV } from './data.js';
-import { W, offY, spark, word, shake, floatText, addFx, breakProp, propBox, addScore } from './world.js';
+import { W, offY, spark, word, shake, floatText, addFx, hitProp, propBox, addScore, bumpProps } from './world.js';
 import { sfx } from './sound.js';
 
 export class Actor {
@@ -21,6 +21,12 @@ export class Actor {
   // knockdown arc / bounce / lie / get up (shared by heroes and patients)
   fallStep(dt, downDur = 0.75) {
     if (this.st === 'fall') {
+      if (!this.isHero && Math.abs(this.vx) > 80 && this.z < 36) {  // knocked into a cart / chair / plant: it goes flying too
+        this.propSet = this.propSet || new Set();
+        const before = this.propSet.size;
+        bumpProps(this, 10, Math.sign(this.vx), this.koBy || this.lastHitBy || null, this.propSet);
+        if (this.propSet.size > before) { this.vx *= 0.6; if (this.hp > 4) { this.hp -= 4; this.flash = 0.12; } }
+      }
       if (this.airborne(dt)) {
         if (this.vz < -110 && !this.bounced) { this.bounced = true; this.vz = 120; this.z = 0.1; this.vx *= 0.5; sfx('bounce', { vol: 0.35 }); addFx({ type: 'dust', x: this.x, y: this.y, z: 0, dur: 0.35 }); shake(2); }
         else { this.vz = 0; this.vx = 0; this.bounced = false; this.set(this.hp <= 0 ? 'dead' : 'down'); addFx({ type: 'dust', x: this.x, y: this.y, z: 0, dur: 0.35 }); }
@@ -31,7 +37,7 @@ export class Actor {
     if (this.st === 'getup') { if (this.t > 0.32) { this.set('idle'); this.inv = Math.max(this.inv, this.isHero ? 0.9 : 0.25); } return true; }
     return false;
   }
-  knock(dir, kb = 150, vz = 190) { this.set('fall'); this.vx = dir * kb; this.vz = vz; this.z = Math.max(this.z, 1); this.bounced = false; }
+  knock(dir, kb = 150, vz = 190) { this.propSet = null; this.set('fall'); this.vx = dir * kb; this.vz = vz; this.z = Math.max(this.z, 1); this.bounced = false; }
   drawShadow() {
     const X = this.x - W.camX, Y = this.y + offY(), s = Math.max(0.45, 1 - this.z / 140);
     ellipse(X, Y, (this.big ? 15 : 11) * s, 3 * s, '#000', 0.32);
@@ -70,8 +76,8 @@ export function strike(a, { box, z = [10, 50], depth = 10, dmg, kb = 40, stun = 
   if (props && a.isHero) for (const p of W.props) {
     if (p.st >= 2 || (once && once.has(p))) continue;
     const b = propBox(p);
-    if (Math.abs(p.y - a.y) > depth + 6 || b.x1 < lo || b.x0 > hi) continue;
-    if (breakProp(p, dmg, a)) { if (once) once.add(p); hits.push(p); }
+    if (Math.abs(p.y - a.y) > depth + 6 || b.x1 < lo || b.x0 > hi || b.z1 < za) continue;
+    if (hitProp(p, dmg, { dir: back ? -f : f, kb: down ? Math.max(kb, 120) : kb, from: a })) { if (once) once.add(p); hits.push(p); }
   }
   if (hits.length) {
     sfx(sfxName, { vol: 0.8 });

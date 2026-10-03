@@ -2,6 +2,32 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-03: v0.3 "Smash the Furniture" (Bill's request: kick and break things)
+- **Every floor prop in Level 1 can now be kicked and smashed, arcade style.** There are 36 props across the 6 zones, and the dayroom gets a few for Tilly to plow through.
+- **Crash carts:**
+  - A kick, finisher, dash, throw or special sends one rolling across the floor. It knocks down and hurts every patient in its path (a WHAM! per hit), and the hits count toward your combo and meter.
+  - It bounces off the screen edges and the floor's front and back walls, and shoves other props along with it.
+  - Jabs only nudge it, so one full ground combo smashes it. Each hit pops the drawers open and scatters gauze, pills and syringes, with defib sparks and zaps.
+  - When it breaks it flies apart into chunky debris and leaves a wreck on the floor.
+- **New breakables:** supply cart, wheelchair, waiting-room chair, trash can, potted plant, and a CAUTION wet-floor sign. The med cart, linen hamper and IV stand now roll too, and the vending machine stays put but still smashes.
+  - Carts, wheelchairs, hampers and IV stands roll far.
+  - Chairs, trash cans, plants and signs scoot a short way.
+  - Everything breaks after 1–6 hits.
+- **Feel:** chunky pixel debris made from each prop's own parts (drawers, wheels, pot shards, leaves, paper, linen) plus color chunks that bounce and skid. You also get hit-stop, screen shake, sparks, and new sounds: crash, caster rattle, plastic thunk and ceramic shatter (`tools/prop_sfx.py`). Each smash is worth 150 points, 300 for a rolling prop and 500 for the vending machine.
+- **Drops:** one random roll per break (`LOOT` in `src/data.js`), on top of any guaranteed drops placed in the level.
+  - Carts drop something about 82% of the time.
+  - Hampers about 50%, trash cans about 44%, and small props about 42%.
+  - Drops can be an energy drink, fruit snacks, a donut or gold star (points), or sometimes a weapon (mop, bedpan, clipboard, rarely the extinguisher).
+  - The ZYNN tin is rare (1–2.5%), and props can give only one per level.
+- **Patients and props interact:**
+  - A patient knocked down or thrown into a prop sends it flying and takes a little extra damage.
+  - Tilly's charge smashes anything in her lane.
+  - Props never block anyone, never hurt the nurses, and never affect the camera or zone locks.
+- Works the same on keyboard, gamepad, touch and in 2-player, since props respond to every nurse's attacks.
+- **New art** in `tools/breakables.py`, registered in `tools/make_art.py`. Character sheets are unchanged.
+- **New test** `tests/props.py`: rolling, plowing, bouncing, breaking, debris, every prop kind, knocking and throwing patients into props, no blocking, loot odds, 2P keyboard + pad, touch, and the bot reaching the boss.
+- `tests/props_video.py` records the clip for `docs/props.gif`. `tests/moves.py` now clears patients before the weapon-pickup check, so a hug can no longer make it flaky. Service worker cache bumped to `nbd2-app-v5`.
+
 ## 2026-10-03: v0.2.2 "Normal Clothes" (Bill's feedback)
 - **Will and the Belligerent Visitor now wear normal clothes** instead of looking like they're in padded red-man suits or armor. Bulk, outlines and sizes were trimmed to match Nick, Kim, Jackie and the patients.
 - **Will:** still bald and in bright blue, but now in a fitted short-sleeve blue top. You can see his skin-tone forearms and hands, plus a brown belt, regular dark pants and brown shoes. The puffy torso and long arm "plates" are gone.
