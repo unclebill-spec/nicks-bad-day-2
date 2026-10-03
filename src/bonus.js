@@ -116,10 +116,10 @@ export function drawBonusHUD() {
     text('STOP THE SNACK THIEVES!', VW / 2, y + 26, { col: '#ffffff', align: 'center' });
     return;
   }
-  const s = Math.ceil(B.left), w = 196, x = Math.round((VW - w) / 2), y = 62;  // up on the wall, clear of the floor and the touch clock
+  const s = Math.ceil(B.left), w = 240, x = Math.round((VW - w) / 2), y = 62;  // up on the wall, clear of the floor and the touch clock
   panel(x, y, w, 16, '#1a2450', '#ffe84a', 0.9);
   text(`TIME ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`, x + 6, y + 4, { col: s <= 10 && Math.floor(W.t * 4) % 2 ? '#ff5a3a' : '#ffe84a' });
-  text(`STOPPED ${B.stopped}`, x + 86, y + 4, { col: '#8ae87a' });
+  text(`STOPPED ${B.stopped}`, x + 90, y + 4, { col: '#8ae87a' });
   text(`LOST ${B.escaped}`, x + w - 6, y + 4, { col: '#ff8ac0', align: 'right' });
 }
 

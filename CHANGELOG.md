@@ -31,6 +31,7 @@ All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are Amer
   - Art: 3 patient sheets, ride and team poses on every hero sheet, gurney, O2 tank, tray and jello, green puddle, breakroom pieces, and the CHARGE NURSE! / BONUS / STOPPED / CRASH / BEEP / TIME UP / SPLAT / CAUGHT words.
   - Sounds (`tools/v04_sfx.py`): beep, hiss, splat, fling, the charge shout, fanfare and raid.
 - **New test `tests/v04.py`** covers every feature on keys, pad and touch, plus 2P, skips and the full flow. `smoke`, `pad`, `touch` and `will` now skip the start cutscene. `flow` now runs through the bonus round. Debug: `?nocut=1`, `?cuts=1`, `?scene=bonus`. Service worker cache bumped to `nbd2-app-v6`.
+- **Follow-up fix (same day):** the bonus-round timer panel is wider, so "STOPPED n" no longer runs into "LOST n" (checked at 16:9 and Retro 4:3). Service worker cache bumped to `nbd2-app-v7`.
 
 ## 2026-10-03: v0.3 "Smash the Furniture" (Bill's request: kick and break things)
 - **Every floor prop in Level 1 can now be kicked and smashed, arcade style.** There are 36 props across the 6 zones, and the dayroom gets a few for Tilly to plow through.

@@ -130,7 +130,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/hud.js` | portraits, HP/meter (half-meter team tick), lives, score, combo, last-hit foe bar, boss bar, toasts, continue prompts |
 | `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
 | `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
-| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`: **bump N on every release**) |
+| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v7: **bump N on every release**) |
 
 ## Bill's standing preferences
 - Brief, plain replies, with times in ET. He often uses voice-to-text, so read his messages generously.
