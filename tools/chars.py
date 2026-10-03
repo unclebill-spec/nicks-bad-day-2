@@ -66,7 +66,9 @@ def stripes(S, T, hip, neck, lean, b):
             S.set(int(x), int(y), "#f0f0f4")
 
 
-WILL_BLUE = ("#2f86f6", "#1c5ec4")   # Will: plain bright blue shirt (Bill, 2026-10-03)
+WILL_BLUE = ("#2f86f6", "#1c5ec4")
+FLANNEL = ("#4a7a6a", "#33584c")                                   # visitor's flannel shirt: muted green/teal
+FLANNEL_CHECK = ("#2e4a6a", "#22384e", "#c8d4c0", "#8a9a88")       # dark blue lines, light crossings   # Will: plain bright blue shirt (Bill, 2026-10-03)
 
 
 def bald_shine(S, hc, r, b, pose):
@@ -202,9 +204,11 @@ def bodies():
     B["kim"] = hero_body(thigh=9, shin=9, torso=15, head=6.6, uarm=7, farm=7, torso_w=11, arm_w=3.3, leg_w=4.6, skin=sk["fair"][0], skin_s=sk["fair"][1],
                          hair_c="#d8462a", hair_s="#9c2c1a", hair=hair_cap(top=-0.1, back=0.4), hair_back=ponytail,
                          freckles="#d08a6a", shoe="#ffffff", shoe_s="#b8c2d0", mouth="#c0505e")
-    B["will"] = hero_body(thigh=9, shin=8.5, torso=16, head=7, uarm=7, farm=7, arm_w=4.2, leg_w=5.8, torso_w=15.5, belly=3, fist=2.3,
-                          skin=sk["light"][0], skin_s=sk["light"][1], hair=bald_shine, shirt=WILL_BLUE[0], shirt_s=WILL_BLUE[1], sleeve=WILL_BLUE[0], sleeve_s=WILL_BLUE[1], vneck=False, steth=True,
-                          shoe="#2a2a30", shoe_s="#14141a", badge="#f4f4f4", sleeve_len=0.7)
+    # Will (v0.2.2): regular guy proportions, a fitted bright blue t-shirt with short sleeves (skin-tone forearms), belt, navy pants
+    B["will"] = hero_body(thigh=9, shin=8.5, torso=16, head=7, uarm=7, farm=7, arm_w=3.8, leg_w=5.2, torso_w=13, belly=1, fist=2.1,
+                          skin=sk["light"][0], skin_s=sk["light"][1], hair=bald_shine, shirt=WILL_BLUE[0], shirt_s=WILL_BLUE[1], sleeve=WILL_BLUE[0], sleeve_s=WILL_BLUE[1],
+                          vneck=False, crew="#1c5ec4", steth=True, belt="#4a3220", pants="#2a3658", pants_s="#1c2440",
+                          shoe="#3a2a22", shoe_s="#22160e", badge="#f4f4f4", sleeve_len=0.42)
     B["jackie"] = hero_body(thigh=12, shin=11.5, torso=17.5, head=6.4, uarm=8.5, farm=8.5, torso_w=11, arm_w=3.3, leg_w=4.7, skin=sk["tan"][0], skin_s=sk["tan"][1],
                             hair_c="#4a2a18", hair_s="#2e180c", hair=hair_cap(top=0.05, back=0.2, grow=2.2, bumps=1.3, fringe=0, seed=2),
                             shoe="#9a5ae0", shoe_s="#6a34a8", mouth="#b04a5a")
@@ -235,11 +239,13 @@ def bodies():
     B["elite"] = hero_body(thigh=11, shin=11, torso=17, torso_w=12, head=6.8, skin=sk["fair"][0], skin_s=sk["fair"][1], hair_c="#d0582a", hair_s="#983a1a",
                            hair=hair_cap(top=-0.1, back=0.4, grow=1.0, seed=9), hair_back=beehive, glasses="#8a2a6a",
                            **{**gown, "gown_len": 10}, pants=sk["fair"][0], pants_s=sk["fair"][1], shoe=SOCK_ELITE[0], shoe_s=SOCK_ELITE[1], sock=SOCK_ELITE[0], foot_len=3.6)
-    B["visitor"] = hero_body(thigh=12, shin=12, torso=20, head=7.6, uarm=9.5, farm=9, arm_w=5.2, leg_w=6.4, torso_w=19, belly=2,
-                             skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#5a3a20", hair_s="#3a2410", hair=cap_back,
-                             shirt="#6a3aa8", shirt_s="#48247a", sleeve="#6a3aa8", sleeve_s="#48247a", sleeve_len=1.7, pattern=stripes,
-                             pants="#6a3aa8", pants_s="#48247a", vneck=False, steth=False, badge="#f2d24a", shoe="#f4f4f4", shoe_s="#b0b8c4",
-                             beard="#5a3a20", fist=2.2, foot_len=4.4, foot_w=3.2)
+    # Belligerent Visitor (v0.2.2): a regular big guy in street clothes: blue/green flannel with rolled sleeves (skin forearms),
+    # open collar, belt, blue jeans, white sneakers, short brown hair + beard. No cap, no tracksuit.
+    B["visitor"] = hero_body(thigh=12, shin=12, torso=20, head=7.6, uarm=9.5, farm=9, arm_w=4.6, leg_w=5.8, torso_w=16, belly=1.5,
+                             skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#5a3a20", hair_s="#3a2410", hair=hair_cap(top=-0.4, back=0.25, grow=0.4, spikes=2, seed=4),
+                             shirt=FLANNEL[0], shirt_s=FLANNEL[1], sleeve=FLANNEL[0], sleeve_s=FLANNEL[1], sleeve_len=0.62, plaid=(FLANNEL, FLANNEL_CHECK),
+                             pants="#4a6a9a", pants_s="#344e78", belt="#3a2a1a", vneck=True, steth=False, badge="#f2d24a", shoe="#f4f4f4", shoe_s="#b0b8c4",
+                             beard="#5a3a20", fist=2.2, foot_len=4.4, foot_w=3.0)
     return B
 
 

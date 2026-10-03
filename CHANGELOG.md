@@ -2,6 +2,13 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-03: v0.2.2 "Normal Clothes" (Bill's feedback)
+- **Will and the Belligerent Visitor now wear normal clothes** instead of looking like they're in padded red-man suits or armor. Bulk, outlines and sizes were trimmed to match Nick, Kim, Jackie and the patients.
+- **Will:** still bald and in bright blue, but now in a fitted short-sleeve blue top. You can see his skin-tone forearms and hands, plus a brown belt, regular dark pants and brown shoes. The puffy torso and long arm "plates" are gone.
+- **Belligerent Visitor:** the purple tracksuit and red cap are gone. He now wears a green/navy plaid flannel shirt open at the neck, blue jeans, a belt and white sneakers, with short brown hair and a beard. He keeps the yellow visitor badge. The plaid comes from a new `plaid` body option in `tools/make_art.py`.
+- Same pixel style, sheet size, animation frames and hitboxes. Updated everywhere they appear: all frames (`art/will.png`, `art/visitor.png`), the select card, the HUD/tally portraits and the title.
+- **Before/after:** `docs/will_visitor_before_after.png`. Service worker cache bumped to `nbd2-app-v4`.
+
 ## 2026-10-03: v0.2.1 "Will's new look" (Bill's feedback)
 - **Will is now bald.** He has a clean skin-tone head with a small shine highlight on the crown, and his plain bright blue shirt (`WILL_BLUE` in `tools/chars.py`) replaces the orange Halloween shirt.
 - **The whole orange/pumpkin look is gone:** the `halloween` pattern is deleted from `tools/chars.py`, and Will's hero-select stat-bar and role color is now blue (`#3a92ff`).

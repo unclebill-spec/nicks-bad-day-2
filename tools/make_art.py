@@ -33,6 +33,8 @@ COLS = 10
 def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
     frames, meta = [], {}
     post = chars.gown_check if body.get("check") else None
+    if body.get("plaid"):  # flannel: same fixed-grid check, its own colours and a wider period
+        pl = body["plaid"]; post = lambda im: chars.gown_check(im, base=pl[0], check=pl[1], period=4)
     for an, poses in anims.items():
         start = len(frames)
         hands = []

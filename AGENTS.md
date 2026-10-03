@@ -8,13 +8,13 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-03, v0.2.1)
+## Current state (2026-10-03, v0.2.2)
 - **Level 1 "Floor 3: Med-Surg" is fully playable** from the title screen through to the tally and the "Floor 4: Radiology" teaser.
   The level is 3560 px wide with 6 camera-lock zones: 5 wave zones, then the boss dayroom.
 - **4 heroes:**
   - Nick: balanced, Crash Cart special.
   - Kim: fast, Whirlwind Kick.
-  - Will: power, Body Slam, big throws. He is bald (skin-tone head with a shine) in a plain bright blue shirt, and his stat color is blue; there's no orange or Halloween look anywhere.
+  - Will: power, Body Slam, big throws. He is bald (skin-tone head with a shine) in a normal fitted short-sleeve bright blue top, with skin forearms, a belt, dark pants and shoes. His stat color is blue. There's no orange/Halloween look and no padded suit/armor look.
   - Jackie: reach, Clipboard Spin, strong jump and dash.
 - **Moves:** combos with a finisher, jump and jump kick, run (double-tap or Shift/RB) and dash attack, back attack (Attack+Jump),
   auto-grab, then knee or throw (throws hit other patients), a special that costs 8 HP, and the Code Blue super when the meter is full.
@@ -22,7 +22,7 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
   - Types: Wanderer (hugs), Call-light Spammer (throws remotes and pudding), Escape Artist (slaps and runs), IV-pole Swinger (sweeps),
     Sundowner (charges), Crutch Crusader (crutch poke), and Bell Ringer (call bell on a cord, whip that dizzies).
   - **Elite "Frequent Flyer":** beehive with curlers, red or blue socks, a cane up close, and from range syringe darts or lobbed urinals that splash and leave a slippery puddle.
-  - The Belligerent Visitor is an armored brute in a tracksuit; he's a visitor, so no gown.
+  - The Belligerent Visitor is a tough guy in normal street clothes: plaid flannel (`plaid` body option), jeans, belt and white sneakers, with short brown hair, a beard and a yellow visitor badge. He's a visitor, so no gown, and he must not look like a tracksuit, cap, armor or red suit.
   - Each has its own KO line and falls asleep or gets tucked in. Crutch, bell and elite patients may drop their weapon.
 - **Spawns** come in waves with an on-screen cap, from hallway room doors (301–314), from the elevators (B, C), and from both screen edges.
 - **Pickups:** energy drink (small heal), fruit snacks (big heal), candy (speed), the ZYNN tin (+1 life; parody label, never the real logo), and score items (donut, gold star).
