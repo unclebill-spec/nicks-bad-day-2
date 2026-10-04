@@ -74,7 +74,7 @@ with sync_playwright() as p:
         pg.wait_for_function("__nbd.W.boss && __nbd.W.boss.mini && __nbd.W.boss.st==='idle'", timeout=15000)
         lou = pg.evaluate(BOUNDS + "('lou','idle')"); nurse = pg.evaluate(BOUNDS + "('jackie','idle')")
         ratio = lou[1] / nurse[1]
-        check('Lou is a mini-boss at 2-3x a nurse (height)', 1.9 <= ratio <= 3.0 and pg.evaluate("__nbd.W.boss.name") == 'LEAD-APRON LOU', f'{lou[1]}px vs {nurse[1]}px = {ratio:.2f}x')
+        check('Lou is only modestly bigger: 1.2-1.5x a nurse (height; Bill\'s v0.7 override)', 1.2 <= ratio <= 1.5 and pg.evaluate("__nbd.W.boss.name") == 'LEAD-APRON LOU', f'{lou[1]}px vs {nurse[1]}px = {ratio:.2f}x')
         pg.screenshot(path='tests/out/v05_lou.png')
         pg.evaluate("(()=>{const W=__nbd.W,b=W.boss,h=W.heroes[0]; h.x=b.x-120; h.y=b.y; b.face=-1; b.cd=99;})()")
         # charge: telegraph stance, then a charge across the screen, then winded (his weak point)
@@ -112,7 +112,7 @@ with sync_playwright() as p:
         pg.wait_for_function("__nbd.W.boss.st!=='enter'", timeout=6000)
         mri = pg.evaluate(BOUNDS + "('mri','idle')"); nurse = pg.evaluate(BOUNDS + "('nick','idle')")
         hr, wr, ar = mri[1] / nurse[1], mri[0] / nurse[0], mri[2] / nurse[2]
-        check('MRI boss is at least 5x a nurse (area; as tall as the screen allows)', ar >= 5 and wr >= 4 and hr >= 2.3, f'h {hr:.1f}x  w {wr:.1f}x  area {ar:.1f}x')
+        check('MRI boss is only modestly bigger: 1.2-1.5x a nurse\'s height (v0.7 override), still a wide machine', 1.2 <= hr <= 1.5 and wr >= 3, f'h {hr:.1f}x  w {wr:.1f}x  area {ar:.1f}x')
         SET = "(()=>{const W=__nbd.W,b=W.boss; b.cd=99; b.set('idle'); W.shots.length=0; W.heroes.forEach((h,i)=>{h.x=b.front-130; h.y=160+i*20; h.set('idle'); h.z=0;});})()"
         pg.evaluate(SET)
         # MAGNET ON: pulls nurses in, yanks the IV pole out of her hands, metal on the floor and metal carts slide in

@@ -1,6 +1,6 @@
 # v0.6: nurses pick up small / medium props and throw them (golden-axe style), with keyboard / gamepad / touch / 2P,
 # priorities vs grab-a-patient / weapons / gurney rides, jump-throws, depth + back throws, hits drop it, loose meal
-# trays; and Turbo Tilly scaled to boss size (>= 5x a nurse) with a fair, readable charge-lane fight.
+# trays; and Turbo Tilly with a fair, readable charge-lane fight (v0.7: Bill's override, only ~1.2-1.5x a nurse's height).
 # v0.6 (part 2): Code Blue meter tiers (Ativan jab at 1/3, defib paddles at full), three-day-old pizza + BEEF JERKY,
 # and the Fire Alarm Yeller event (any floor, capped, never in boss fights, REDUCED FLASHING setting).
 # Screenshots -> tests/out/v06_*.png
@@ -221,16 +221,16 @@ with sync_playwright() as p:
         check('2P: each nurse lifts their own prop (H / M) and P2 throws with Comma', both == ['chair', 'trash'] and hs(pg, 1)['carry'] is None and hs(pg, 0)['carry'] == 'chair', [both, hs(pg, 1)])
         pg.screenshot(path='tests/out/v06_2p_carry.png')
         pg.close()
-    # ================================================================ E: boss-sized Turbo Tilly
+    # ================================================================ E: Turbo Tilly (v0.7 size)
     if 'E' in ONLY:
         pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
         pg.goto(U + '?level=1&zone=5&hero=nick&god=1&nocut=1'); pg.wait_for_function(f"window.__loaded===true && {SC}==='play'", timeout=30000)
         pg.wait_for_function("__nbd.W.boss && __nbd.W.boss.st!=='enter'", timeout=30000); time.sleep(0.3)
         t = pg.evaluate(f"({BOUNDS})('tilly','idle')"); n = pg.evaluate(f"({BOUNDS})('nick','idle')")
-        wr, ar = t[0] / n[0], t[2] / n[2]
-        check("Tilly is boss-sized: >= 5x a nurse by width and by area (Bill's rule)", wr >= 5 and ar >= 5, {'tilly': t, 'nurse': n, 'width_x': round(wr, 1), 'area_x': round(ar, 1), 'height_x': round(t[1] / n[1], 1)})
+        wr, ar, hr = t[0] / n[0], t[2] / n[2], t[1] / n[1]
+        check("Tilly is only modestly bigger than a nurse: 1.2-1.5x her height (Bill's v0.7 override)", 1.2 <= hr <= 1.5 and wr >= 2.5, {'tilly': t, 'nurse': n, 'width_x': round(wr, 1), 'area_x': round(ar, 1), 'height_x': round(t[1] / n[1], 1)})
         B = pg.evaluate("(()=>{const B=__nbd.W.boss; return {w:B.w, h:B.h, x:B.x, cam:__nbd.W.camX};})()")
-        check('her hitbox grew with her (w >= 90, h >= 120)', B['w'] >= 90 and B['h'] >= 120, B)
+        check('her hitbox matches the smaller art (w 40-60, h 60-85)', 40 <= B['w'] <= 60 and 60 <= B['h'] <= 85, B)
         pg.screenshot(path='tests/out/v06_tilly.png')
         # lane telegraph + honest lane lock: a nurse 30px off her lane is safe; one in her lane gets hit
         r = pg.evaluate("""(()=>{const W=__nbd.W, B=W.boss, [a]=W.heroes; W.enemies.forEach(e=>e.alive=false); W.enemies.length=0;
@@ -246,7 +246,7 @@ with sync_playwright() as p:
         r2 = pg.evaluate("(()=>{const W=__nbd.W, B=W.boss, a=W.heroes[0]; return [a.st, B.st, B.x - W.camX];})()")
         check('a nurse standing in the lane gets run over', r2[0] in ('fall', 'down', 'getup'), r2)
         bx = pg.evaluate("(()=>{const W=__nbd.W, B=W.boss; return [B.x - W.camX, __nbd.G.VW];})()")
-        check('she stays fully on screen after the charge (wall stop accounts for her size)', 50 <= bx[0] <= bx[1] - 50, bx)
+        check('she stays fully on screen after the charge (wall stop accounts for her size)', 30 <= bx[0] <= bx[1] - 30, bx)
         # weak point: battery open -> full damage; closed -> armour
         d = pg.evaluate("""(()=>{const W=__nbd.W, B=W.boss, a=W.heroes[0]; B.set('idle'); B.cd=99; const h0=B.hp; B.takeHit({dmg:10, dir:1, from:a}); const h1=B.hp; B.set('open'); B.takeHit({dmg:10, dir:1, from:a}); return [h0-h1, h1-B.hp];})()""")
         check('battery panel is still the weak point (armoured otherwise)', d[1] > d[0] * 2, d)
@@ -257,12 +257,12 @@ with sync_playwright() as p:
         check('a thrown prop hits the big boss and breaks on her', hit > 5, hit)
         pg.evaluate("(()=>{const W=__nbd.W, B=W.boss, a=W.heroes[0]; B.set('idle'); B.cd=99; a.set('idle'); a.x=B.x-10; a.y=B.y;})()"); time.sleep(0.1)
         dx = pg.evaluate("Math.abs(__nbd.W.heroes[0].x-__nbd.W.boss.x)")
-        check('her chair is solid at the new size (a nurse is pushed out of it)', dx >= 50, dx)
+        check('her chair is solid at the new size (a nurse is pushed out of it)', dx >= 26, dx)
         # finish the fight: she still goes down and the floor completes
         pg.evaluate("(()=>{const B=__nbd.W.boss; B.set('open'); B.takeHit({dmg:9999, dir:1, from:__nbd.W.heroes[0]});})()"); time.sleep(1.0)
         pg.screenshot(path='tests/out/v06_tilly_defeat.png')
         pg.wait_for_function(f"{SC}==='tally'", timeout=20000)
-        check('defeating big Tilly still ends the floor (tally)', True)
+        check('defeating Tilly still ends the floor (tally)', True)
         pg.close()
     # ================================================================ F: Code Blue meter tiers (Ativan jab at 1/3, defib paddles at full)
     if 'F' in ONLY:

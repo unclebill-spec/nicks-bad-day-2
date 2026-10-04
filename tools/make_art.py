@@ -57,7 +57,7 @@ for h in ("nick", "kim", "will", "jackie"):
 PATIENTS = ("wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite", "runner", "tray", "o2", "barium", "apron", "lou", "yeller")
 for e in PATIENTS + ("visitor",):
     big = e == "visitor"
-    cell, anchor = ((96, 88), (48, 84)) if big else ((176, 164), (88, 158)) if e == "lou" else ((88, 80), (44, 76))
+    cell, anchor = ((96, 88), (48, 84)) if big else ((120, 104), (60, 100)) if e == "lou" else ((88, 80), (44, 76))
     char_sheet(e, chars.enemy_anims(e), B[e], cell=cell, anchor=anchor)
 # runtime recolour palettes (src/gfx.js tintSheet): every patient gets random hair + skin, a green or olive gown,
 # and elites get red or blue socks. Lists are [from colours..] -> the game picks matching [to colours..].

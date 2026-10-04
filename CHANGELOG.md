@@ -15,9 +15,21 @@ All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are Amer
   build (`NURSE_BUILD` in tools/chars.py): bodies stand ~57 px like the nurses (56 px average). Only hair, hats, props and a little belly
   differ; the elite's beehive was lowered. The Belligerent Visitor matches Nick's height with slightly broader shoulders. Hitboxes match
   too (patients h 52, visitor 56, nurses 48-54).
+- **Smaller bosses (Bill overrides the old 5x boss rule for this game):** bosses are now only modestly bigger than the nurses,
+  ~1.4-1.5x a nurse's height (see `docs/v07_sizes.png`).
+  - **Turbo Tilly** redrawn at 0.86x her v0.5 layout (82 px with the flag, 1.46x; was 168 px). Hitbox 48x70, chair solidity, charge box,
+    honk ring (80), wall stop, telegraph lane, FX and text heights all scaled to match; the lane lock and battery weak point are unchanged.
+  - **MAGNA-SCAN 3000** drawn at 0.56x (83 px, 1.48x; was 149 px) with a crisp-rim scaled raster; the name plate moved to the plinth and
+    the live LCD face was redrawn for the smaller screen. Hitbox 82x80, front face 41 px from centre, and the machine now sits nearer the
+    right edge so the arena is roomier. Pull, waves, tables and the hot-coil weak point keep their timings.
+  - **Lead-Apron Lou** rebuilt at 80 px (1.43x; was 133 px), still twice as broad as a nurse. Hitbox 30x78, charge box/speed trimmed
+    (240 / 290), stomp ring 80 (104 in phase 2), solidity and FX scaled.
+  - Cutscenes, the title-screen Tilly and the MRI's HUD icon use the new sizes. The test bot now walks round a boss pinned at the screen edge.
 - **How to play** is now two pages (CONTROLS and MOVES) that fit on a phone screen above the pause button; flip with PAGE or left/right.
 - **SNAP STIX is now BEEF JERKY** everywhere: a made-up kraft-bag wrapper with a red BEEF JERKY label (no real brand), "BEEF JERKY!"
   pickup text, its own crunchy-chew sound, docs and tests.
+- Tests: new `tests/v07.py` (grab/toss/slam on keyboard, pad, touch and 2P; touch layout; jerky; sizes; bot wins all three boss fights);
+  v05/v06 boss-size checks now follow the 1.2-1.5x rule. Service worker cache `nbd2-app-v11`.
 
 ## 2026-10-03: v0.6 "Hands Full" (Bill's v0.6 list: throwable props, a bigger Tilly, meter tiers, new food, the Fire Alarm Yeller)
 - **Pick up and throw props (Golden Axe / TMNT style).**

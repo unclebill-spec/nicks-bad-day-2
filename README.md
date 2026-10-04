@@ -22,6 +22,14 @@ and `CHANGELOG.md` for history.
 
 ![screenshots](docs/screenshots.png)
 
+v0.7: GRAB, toss forward, body slam behind:
+
+![grab, toss and body slam](docs/v07_grab_slam.gif)
+
+Sizes (v0.7): patients match the nurses; bosses are only ~1.4-1.5x a nurse:
+
+![size lineup](docs/v07_sizes.png)
+
 v0.6: carry and throw props, a full-size Turbo Tilly, Ativan / defib meter tiers, and the Fire Alarm Yeller:
 
 ![fire alarm](docs/v06_fire_alarm.gif)

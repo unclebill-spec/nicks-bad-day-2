@@ -27,7 +27,7 @@ const SCRIPTS = {
         bubbles: [{ x: w * 0.3, y: 4, s: 'Morning! 30 patients, 12 call lights, and one RUNNER.', tail: [w * 0.7, h - 52], at: 0.35, mw: Math.min(220, w * 0.62) }] }),
       (w, h) => ({ bg: ['hall', 620, 58], dark: true, faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
         bubbles: [{ x: 6, y: 6, s: `Did you say... RUNNER?`, tail: [w / 2 - 6, h - 70], at: 0.3, mw: w - 20 }] }),
-      (w, h) => ({ bg: ['hall', 1340, 58], speed: true, acts: [{ s: 'tilly', a: 'drive', x: w * 0.85, y: h - 4, flip: true, mv: -70, rate: 10, scale: 0.6 }],
+      (w, h) => ({ bg: ['hall', 1340, 58], speed: true, acts: [{ s: 'tilly', a: 'drive', x: w * 0.85, y: h - 4, flip: true, mv: -70, rate: 10 }],
         bubbles: [{ x: 4, y: 4, s: 'OUT OF MY WAY, SWEETIE! HONK HONK!', tail: [w * 0.7, h - 70], at: 0.2, mw: w - 16, shout: true },
           { x: 4, y: h - 26, s: "One of THOSE days.", tail: [8, h - 2], at: 1.4, mw: w - 16 }] }),
     ];
@@ -35,7 +35,7 @@ const SCRIPTS = {
   boss() {
     const [a, b] = heroIds();
     return [
-      (w, h) => ({ bg: ['hall', 3080, 58], cap: 'THE DAYROOM. 11:00 AM.', acts: [{ s: a, a: 'idle', x: w * 0.16, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.16 + 26, y: h - 1 }] : []), { s: 'tilly', a: 'drive', x: w * 0.74, y: h - 2, flip: true, rate: 6, scale: 0.6 }],
+      (w, h) => ({ bg: ['hall', 3080, 58], cap: 'THE DAYROOM. 11:00 AM.', acts: [{ s: a, a: 'idle', x: w * 0.16, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.16 + 26, y: h - 1 }] : []), { s: 'tilly', a: 'drive', x: w * 0.74, y: h - 2, flip: true, rate: 6 }],
         bubbles: [{ x: w * 0.3, y: 6, s: 'This is MY dayroom, sweeties! My STORIES are on!', tail: [w * 0.7, h - 62], at: 0.35, mw: Math.min(220, w * 0.6), shout: true }] }),
       (w, h) => ({ bg: null, burst: '#e83a6a', faces: [{ id: 'tilly', x: w / 2 - 36, y: h - 72, scale: 2 }],
         bubbles: [{ x: 6, y: 6, s: 'NOBODY touches the remote!', tail: [w / 2, h - 72], at: 0.25, mw: w - 20, shout: true }] }),
@@ -68,9 +68,9 @@ const SCRIPTS = {
   mri() {
     const [a, b] = heroIds();
     return [
-      (w, h) => ({ bg: ['rad', 2900, 58], dark: true, cap: 'THE MRI SUITE. 5:00 PM.', acts: [{ s: a, a: 'idle', x: w * 0.14, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.14 + 26, y: h - 1 }] : []), { s: 'mri', a: 'idle', x: w * 0.7, y: h + 2, scale: 0.62, rate: 4 }],
+      (w, h) => ({ bg: ['rad', 2900, 58], dark: true, cap: 'THE MRI SUITE. 5:00 PM.', acts: [{ s: a, a: 'idle', x: w * 0.14, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.14 + 26, y: h - 1 }] : []), { s: 'mri', a: 'idle', x: w * 0.7, y: h + 2, rate: 4 }],
         bubbles: [{ x: w * 0.36, y: 18, s: 'PLEASE HOLD STILL. SCANNING... EVERYTHING!', tail: [w * 0.7, h - 70], at: 0.35, mw: Math.min(230, w * 0.6), shout: true }] }),
-      (w, h) => ({ bg: null, burst: '#3aa8ff', acts: [{ s: 'mri', a: 'pull', x: w / 2, y: h + 30, scale: 0.9, rate: 10 }],
+      (w, h) => ({ bg: null, burst: '#3aa8ff', acts: [{ s: 'mri', a: 'pull', x: w / 2, y: h + 24, scale: 1.6, rate: 10 }],
         bubbles: [{ x: 6, y: 4, s: 'MAGNET... ON!', tail: [w / 2, h - 60], at: 0.25, mw: w - 20, shout: true }] }),
       (w, h) => ({ bg: ['rad', 2700, 58], dark: true, floaty: true, faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
         bubbles: [{ x: 4, y: 4, s: 'Why is my badge clip FLOATING?', tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }, { x: 4, y: 36, s: 'Drop the IV pole! DROP IT!', tail: [w / 2, h - 70], at: 1.4, mw: w - 16 }] }),

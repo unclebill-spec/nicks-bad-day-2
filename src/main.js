@@ -345,7 +345,11 @@ function botInput(h) {
   const foes = [...W.enemies.filter((e) => e.alive && e.st !== 'down' && e.x > W.camX - 10 && e.x < W.camX + G.VW + 10), ...(W.boss && W.boss.st !== 'defeat' ? [W.boss] : [])];
   if (!foes.length) { o.mx = 1; o.run = W.go > 0; return o; }
   foes.sort((a, b) => Math.abs(a.x - h.x) + Math.abs(a.y - h.y) - Math.abs(b.x - h.x) - Math.abs(b.y - h.y));
-  const f = foes[0], side = f.isMRI ? -1 : h.x < f.x ? -1 : 1, gx = f.x + side * (f.isMRI ? f.w / 2 + 6 : f.isBoss ? 44 : 24), dx = gx - h.x, dy = f.isMRI ? 0 : f.y - h.y;
+  const f = foes[0], off = f.isMRI ? f.w / 2 + 6 : f.isBoss ? f.w / 2 + 18 : 24;
+  let side = f.isMRI ? -1 : h.x < f.x ? -1 : 1;
+  if (!f.isMRI && (f.x + side * off < W.camX + 14 || f.x + side * off > W.camX + G.VW - 14)) side = -side;  // pinned at the screen edge: go round
+  const crossing = !f.isMRI && Math.sign(h.x - f.x) !== side && Math.abs(h.x - f.x) < off;  // step out of his lane to get past
+  const gx = f.x + side * off, dx = gx - h.x, dy = f.isMRI ? 0 : (crossing ? f.y + (f.y > 176 ? -24 : 24) : f.y) - h.y;
   o.mx = Math.abs(dx) > 5 ? Math.sign(dx) : 0; o.my = Math.abs(dy) > 3 ? Math.sign(dy) : 0;
   if (Math.abs(dx) < 14 && Math.abs(dy) < 8) { o.mx = 0; if (h.face !== -side) o.mx = -side * 0.3; o.prs.atk = (W.t * 60 | 0) % 7 === 0; if ((W.t * 60 | 0) % 400 === 0) o.prs.sp = true; }
   if (h.meter >= 100) o.prs.sp = o.held.jmp = true;
@@ -488,7 +492,7 @@ function drawTitle() {
   HERO_ORDER.forEach((id, i) => { const A = anim(id, 'idle'); frame(id, A.s + (Math.floor(game.t * 2 + i) % A.n), xs[i], 212, { flip: i > 1 }); });
   // Tilly cruises back and forth along the bottom, behind the menu
   const per = 14, ph = (game.t % per) / per, dir = ph < 0.5 ? 1 : -1, u = ph < 0.5 ? ph * 2 : (1 - ph) * 2;
-  const T = anim('tilly', 'drive'); frame('tilly', T.s + (Math.floor(game.t * 8) % T.n), -90 + u * (VW + 180), 226, { flip: dir < 0, scale: 0.62 });
+  const T = anim('tilly', 'drive'); frame('tilly', T.s + (Math.floor(game.t * 8) % T.n), -90 + u * (VW + 180), 226, { flip: dir < 0, scale: 1.2 });
   if (!game.overlay) panel(VW / 2 - 76, 124, 152, 74, '#0a1030', '#3a4c92', 0.82);
   text(`HI ${String(save.hi[0] ? save.hi[0].s : 0).padStart(7, '0')}`, VW - 6, 4, { col: '#ffe84a', align: 'right' });
   if (!game.overlay) drawMenu(game.menu);

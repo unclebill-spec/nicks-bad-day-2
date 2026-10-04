@@ -6,9 +6,10 @@ import math
 from rig import INK, P, Raster, figure, hair_cap
 from chars import SKIN
 
-# v0.6: Bill's rule is bosses >= 5x a nurse, so Tilly is drawn at SC x her old size (same layout, every
-# coordinate below is in "base units" and SR scales it to real pixels).
-SC = 1.8
+# Every coordinate below is in "base units" and SR scales it to real pixels. v0.6 drew her at 1.8x for the old
+# ">= 5x a nurse" rule; v0.7 (Bill's override for this game) makes bosses only modestly bigger than the nurses:
+# at 0.86 the whole rig, flag included, is ~1.43x a nurse's height (Tilly herself sits about head-high to a nurse).
+SC = 0.86
 BW, BH, BAX, BAY = 120, 100, 60, 96
 W, H, AX, AY = int(BW * SC), int(BH * SC), int(BAX * SC), int(BAY * SC)
 

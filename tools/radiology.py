@@ -1,6 +1,6 @@
 """v0.5 art: Floor 4 Radiology (dark slate walls, neon-blue X-ray lightboxes, warning lamps), its kickable props
-(lead-apron rack, contrast injector cart, rolling film viewer), the MRI magnet boss (front view, ~2.6x a nurse's
-height and ~15x her area), projectiles (barium cup + puddle, X-ray film, MRI knock wave, patient table) and the
+(lead-apron rack, contrast injector cart, rolling film viewer), the MRI magnet boss (front view; v0.7: ~1.45x a nurse's
+height), projectiles (barium cup + puddle, X-ray film, MRI knock wave, patient table) and the
 night-shift extras (night windows, call-light lamps, vitals monitors). All original, drawn in code.
 """
 from __future__ import annotations
@@ -292,15 +292,58 @@ def mri_table():
 
 
 # ------------------------------------------------------------------ MRI boss: MAGNA-SCAN 3000 (front view)
-MW, MH, MAX, MAY = 184, 158, 92, 154
+# The layout below is in base units (the v0.5/v0.6 184x158 machine). v0.7 (Bill's boss-size override for this game:
+# bosses only ~1.2-1.5x a nurse) draws it at MS = 0.56, so the whole machine stands ~1.45x a nurse's height.
+# src/mri.js mirrors MS for the live LCD face.
+MS = 0.56
+BMW, BMH, BMAX, BMAY = 184, 158, 92, 154
+MW, MH, MAX, MAY = int(BMW * MS) + 1, int(BMH * MS) + 1, round(BMAX * MS), round(BMAY * MS)
+
+
+class MSR:
+    """Scaled raster for the MRI: Raster calls in base units, rims stay a crisp 1px."""
+
+    def __init__(self, R):
+        self.R = R
+
+    @staticmethod
+    def _p(p):
+        return (p[0] * MS, p[1] * MS)
+
+    def _r(self, x, y, w, h):
+        x0, y0 = int(round(x * MS)), int(round(y * MS))
+        return x0, y0, max(1, int(round((x + w) * MS)) - x0), max(1, int(round((y + h) * MS)) - y0)
+
+    def rect(self, x, y, w, h, c):
+        self.R.rect(*self._r(x, y, w, h), c)
+
+    def set(self, x, y, c):
+        self.rect(x, y, 1, 1, c)
+
+    def ellipse(self, c, rx, ry, col, shade=None, rim=True):
+        self.R.ellipse(self._p(c), rx * MS, ry * MS, col, shade, rim)
+
+    def poly(self, pts, col, rim=True):
+        self.R.poly([self._p(p) for p in pts], col, rim)
+
+    def line(self, a, b, col):
+        self.R.line(self._p(a), self._p(b), col)
+
+    def box(self, x, y, w, h, c, s=None, hi=None):
+        x0, y0, w0, h0 = self._r(x, y, w, h)
+        self.R.rect(x0 - 1, y0 - 1, w0 + 2, h0 + 2, INK); self.R.rect(x0, y0, w0, h0, c)
+        if hi:
+            self.R.rect(x0, y0, w0, 1, hi)
+        if s:
+            self.R.rect(x0, y0 + h0 - 1, w0, 1, s)
 
 
 def mri_frame(state="idle", k=0):
-    S = Raster(MW, MH)
+    S = MSR(Raster(MW, MH))
     sh = (1 if k % 2 else -1) if state == "pull" else 0
     ox = 2 + sh
     # plinth + floor rail
-    box(S, ox + 18, 134, 144, 16, "#3a4258", "#262c3e", "#56607a")
+    S.box(ox + 18, 134, 144, 16, "#3a4258", "#262c3e", "#56607a")
     for x in range(ox + 24, ox + 158, 12):
         S.rect(x, 140, 6, 1, "#262c3e")
     # housing (rounded, cut corners)
@@ -310,8 +353,7 @@ def mri_frame(state="idle", k=0):
     S.poly([(ox + 36, 9), (ox + 144, 9), (ox + 148, 13), (ox + 32, 13)], "#f6f8fc", rim=False)
     S.rect(ox + 22, 118, 136, 2, "#b4bccb")
     # LCD face band (the face is drawn live in src/mri.js)
-    box(S, ox + 52, 16, 76, 20, "#0c1430", "#060a18", "#1c2850")
-    tinyfont.text(S, ox + 61, 39, "MAGNA-SCAN 3000", "#7c8696")
+    S.box(ox + 52, 16, 76, 20, "#0c1430", "#060a18", "#1c2850")
     # bore
     cx, cy = ox + 90, 82
     hot = state == "vent"
@@ -347,12 +389,15 @@ def mri_frame(state="idle", k=0):
     else:
         S.rect(ox + 120, 5, 22, 4, "#9aa4b4"); S.rect(ox + 120, 5, 22, 1, "#c8d0dc")
     # side details: control buttons (left), NO METAL sticker (right), feet
-    box(S, ox + 28, 60, 12, 30, "#c8d0dc", "#9aa4b4")
+    S.box(ox + 28, 60, 12, 30, "#c8d0dc", "#9aa4b4")
     for i, c in enumerate(("#5aff8a", "#ffd84a", "#ff5a3a")):
         S.rect(ox + 31, 64 + i * 8, 6, 4, c if state != "dead" else "#5c6676")
     S.poly([(ox + 146, 60), (ox + 154, 74), (ox + 138, 74)], "#ffd83a"); S.rect(ox + 145, 64, 2, 6, INK); S.set(ox + 145, 72, INK)
     S.rect(ox + 26, 150, 12, 4, "#262c3e"); S.rect(ox + 142, 150, 12, 4, "#262c3e")
-    return S
+    # the name plate lives on the plinth at this size (native-size font so it stays readable)
+    label = "MAGNA-SCAN 3000"
+    tinyfont.text(S.R, int(round((ox + 90) * MS)) - tinyfont.width(label) // 2, int(round(137 * MS)), label, "#9aa4b4" if state != "dead" else "#5c6676")
+    return S.R
 
 
 MRI_ANIMS = {"idle": ("idle", 2), "pull": ("pull", 2), "vent": ("vent", 2), "dead": ("dead", 1)}

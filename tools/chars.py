@@ -296,10 +296,11 @@ def bodies():
     B["yeller"] = hero_body(thigh=10, shin=10.5, torso=15, torso_w=10, skin="#f0a890", skin_s="#c87a64", hair_c="#f4f4f8", hair_s="#b8bcc8",
                             hair=hair_cap(top=-0.35, back=0.35, grow=1.6, spikes=6, seed=21), mouth="#a01c28",
                             **{**gown, "gown_len": 8}, pants="#f0a890", pants_s="#c87a64", **socks)
-    # v0.5 mini-boss LEAD-APRON LOU: a gentle giant ex-linebacker wearing three lead aprons like shoulder pads, ~2.2x a nurse's height
-    B["lou"] = hero_body(thigh=24, shin=23, torso=46, head=15.4, uarm=19, farm=18, arm_w=12.6, leg_w=16, torso_w=50, fist=6.2, foot=4.8, foot_len=9, belly=8.4,
+    # v0.5 mini-boss LEAD-APRON LOU: a gentle giant ex-linebacker wearing three lead aprons like shoulder pads.
+    # v0.7 (Bill's boss-size override for this game): ~1.4x a nurse's height, still twice as broad as anyone else.
+    B["lou"] = hero_body(thigh=14, shin=13.5, torso=27, head=9.4, uarm=11.5, farm=11, arm_w=7.8, leg_w=10, torso_w=31, fist=3.8, foot=3, foot_len=6, belly=5,
                          skin=sk["brown"][0], skin_s=sk["brown"][1], hair_c="#2a1a12", hair_s="#140c08", hair=hair_cap(top=-0.35, back=0.2, grow=0.5, seed=14),
-                         **{**gown, "shirt": "#2a6a9a", "shirt_s": "#1c4c74", "gown_len": 10}, pants=sk["brown"][0], pants_s=sk["brown"][1],
+                         **{**gown, "shirt": "#2a6a9a", "shirt_s": "#1c4c74", "gown_len": 7}, pants=sk["brown"][0], pants_s=sk["brown"][1],
                          shoe=SOCK[0], shoe_s=SOCK[1], sock=SOCK[0])
     # v0.7 (Bill): patients are the SAME size as the staff. Every patient type, elite and variant gets the nurses' average
     # height and build (only hair, props and a little belly differ). The Belligerent Visitor matches Nick's height with

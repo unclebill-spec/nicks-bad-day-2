@@ -56,7 +56,7 @@ with sync_playwright() as p:
         check('while holding, the GRAB button reads TOSS', lab == 'TOSS', lab)
         pg.screenshot(path='tests/out/v07_hold_hint.png')
         # 1) just the direction toward where you face = toss forward, and he bowls over the patient in the way
-        foe(pg, 'crutch', 80); time.sleep(0.05)
+        foe(pg, 'crutch', 80, st='dizzy'); time.sleep(0.05)  # dizzy = stands still (no stun timer), so load can't let him wander off
         key(pg, 'KeyD', 0.12, 0.05); r1 = gs(pg); time.sleep(0.9); r = gs(pg)
         check('FORWARD (just the direction) tosses him forward', r1['st'] == 'throw' and r['tosses'] == 1 and r['foes'][0]['dx'] > 60, [r1['st'], r])
         check('the tossed patient knocks down + damages the patient he hits', r['foes'][1]['hp'] < 42 and r['foes'][1]['st'] in DOWN, r['foes'])

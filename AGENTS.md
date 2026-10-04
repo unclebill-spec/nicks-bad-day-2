@@ -20,10 +20,14 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
   - **Patients = staff size (Bill's v0.7 rule for this game):** `NURSE_BUILD` is applied to every kind in `PATIENT_KINDS` at the end of
     `bodies()` in tools/chars.py (visitor: Nick height, broader). Runtime hitbox in enemy.js: h 52 / w 14 (visitor h 56 / w 16).
     Don't make patients bigger or smaller than the nurses again.
+  - **BOSS-SIZE OVERRIDE (Bill, v0.7, this game only):** bosses are only modestly bigger than the nurses, **~1.2-1.5x a nurse's height**
+    (Tilly 82 px, MRI 83 px, Lou 80 px vs the nurses' 56 px average). This replaces the older "bosses >= 5x, mini-bosses 2-3x" rule for
+    Nick's Very Bad, Terrible Bad Day Part II. Knobs: `SC` in tools/boss.py, `MS` in tools/radiology.py (mirrored by `BORE`/drawFace in
+    src/mri.js), `B["lou"]` in tools/chars.py; hitboxes/FX in src/boss.js (`SOLID`, `LANE`, `TOP`) and src/mri.js. `docs/v07_sizes.png` shows the lineup.
   - Tests: `tests/v07.py` (A keyboard grab/toss/slam/knee + help pages, B priority/pad/2P/touch layout, C jerky, D sizes).
 - **v0.6 additions:**
   - **Carry/throw props:** `carry: true` in `BREAKABLES` (data.js). Hero `lift`/`carry`/`toss` states in hero.js, flight physics `flyProp`/`landProp` and `THROW` in world.js. Priority: patient grab > gurney > weapon > lift > throw weapon.
-  - **Turbo Tilly** at 1.8x (`SC` in tools/boss.py, constants at the top of src/boss.js).
+  - **Turbo Tilly** was drawn at 1.8x in v0.6; v0.7 shrank her to 0.86x (`SC` in tools/boss.py, constants at the top of src/boss.js).
   - **Meter tiers:** `TIER = 100/3` in hero.js. `soloSpecial()`: full = `codeBlue()` (defib, shot kind `'defib'` in stage.js `shots()`), >= TIER = `ativan()`, else the special. Enemy `sleepT`, `'zapped'` state and skeleton flash in enemy.js; bosses use `stagT` (frozen while > 0).
   - **Food:** `pizza` and `jerky` (BEEF JERKY bag; v0.6's SNAP STIX meat stick, renamed in v0.7) in `ITEMS`/`LOOT` (plus `LOOT.patient` for KO drops).
   - **Fire Alarm Yeller (`src/alarm.js`):** `ALARM` tuning, wall stations, `maybeYeller()` on wave start, `pullAlarm()`, `updateAlarm()` (rain, wet floor, extra wave, `alarmPending()` blocks zone clear), drawing. Enemy kind `yeller` (ai `yeller`). `?yeller=1` forces one every wave (still capped), `?noalarm=1` turns it off. Settings `flash: 'full'|'reduced'` (`W.reducedFlash`).
@@ -38,11 +42,11 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
     IV stands, crash carts. All use the v0.3 kick/break system. `metal: true` marks what the MRI magnet pulls (props and weapons).
   - **Patients:** Contrast Chugger (`barium`, `ai:'tray'`, lobs barium cups `p_cup` → white chalky puddle `puddle_w`), Lead-Apron Hugger
     (`apron`, `ai:'wanderer'`, armor 2: shrugs off two jabs). `d.ai` lets a new patient reuse an AI; `e.kind` is the AI, `e.type` the patient id.
-  - **Mini-boss: LEAD-APRON LOU** (`Lou` in `src/mri.js`), ~133 px tall = **2.2x a nurse**. Telegraphed three-point stance → linebacker charge →
+  - **Mini-boss: LEAD-APRON LOU** (`Lou` in `src/mri.js`), ~80 px tall = **1.43x a nurse** (v0.7; was 133 px). Telegraphed three-point stance → linebacker charge →
     winded (`tired`, the weak point: full damage; 40% otherwise, no flinch). Stomp shock ring, X-ray film frisbees (`p_film`). Phase 2 at half HP
     ("FOURTH QUARTER! HIKE!") calls 2 helpers. Zone has `mini:true` (no cutscene); when beaten he is moved to `W.decor` (naps as scenery) and the zone opens.
-  - **Boss: MAGNA-SCAN 3000** (`MRI` in `src/mri.js`), a front-view MRI machine with a live LCD face. **Size: 2.5x a nurse's height, 6.6x her width,
-    23x her area.** Bill's rule is 5x; a 5x-tall boss (~280 px) can't fit the 224 px screen, so it is ≥5x by area/width and as tall as fits.
+  - **Boss: MAGNA-SCAN 3000** (`MRI` in `src/mri.js`), a front-view MRI machine with a live LCD face. **Size (v0.7): 83 px = 1.48x a nurse's height,
+    ~3.7x her width** (drawn at `MS = 0.56` of the old 184x158 layout).
     It is solid across the whole floor depth (`depthAny`, `front`). Rotation: MAGNET ON (pulls nurses 50 px/s, yanks metal weapons out of
     hands, drags floor weapons and metal props in; props hurt nurses on the way and smash on the magnet; touching the face zaps) → QUENCH vent
     (**weak point**: full damage, otherwise 20%) → KNOCK sound waves along lanes (jump/dodge) → TABLE shot down your lane after a red flash (jump).
@@ -199,14 +203,13 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 - Tested on emulated phones (Chromium, Pixel-size landscape) and desktop Chromium with a mocked gamepad. It has not been tested on real iPhone or Android hardware yet.
 - The heroes' skin tones and hair styles were guessed from Bill's short descriptions (they may be real coworkers). They are easy to change in `tools/chars.py` `bodies()`, followed by `python3 tools/make_art.py`.
 - Three floors exist (Med-Surg, Radiology, Night Shift) plus the Breakroom Bonus. The ending says "SEE YOU NEXT SHIFT...".
-- Turbo Tilly was resized in v0.6: 6x a nurse's width, about 10x her area, 2.8x her height (the 224 px screen limits height).
-- The MRI meets the 5x rule by area/width, not height (the screen is only 224 px tall). Lou is 2.2x height.
+- Boss sizes follow Bill's v0.7 override (1.2-1.5x a nurse's height): Tilly 1.46x, MRI 1.48x, Lou 1.43x. The MRI's vent frost plume touches the top of its cell.
 - Balance is first-pass: Tilly has 420 HP, the MRI 560, Lou 300 (x1.35 in 2P) and patient damage scales by difficulty in `DIFF`. The elite waves make zones 2–4 noticeably harder.
 - The gown check pattern is drawn on a fixed pixel grid, so it doesn't move with the body. It shimmers very slightly during animation.
 - Online co-op is not implemented. That was optional in the spec.
 
 ## Next steps
 1. Bill plays on his phone and gives feedback on feel, difficulty and hero looks.
-2. **Size rule from Bill:** bosses **at least 5x the player's size**, mini-bosses **2–3x** (applied to Tilly, the MRI and Lou).
+2. **Size rule from Bill (v0.7 override for this game):** bosses only **~1.2-1.5x a nurse's height**; patients **the same size as the nurses**.
 3. Character voice barks, plus an attract-mode demo on the title screen using the bot.
 4. More stages per the spec: lobby/ER, ICU, cafeteria, roof helipad.

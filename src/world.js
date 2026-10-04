@@ -420,7 +420,7 @@ export function updateCamera(dt) {
   if (W.lockX === null) W.camMin = Math.max(W.camMin, W.camX);  // arcade rule: no scrolling back
 }
 export const MRI_Y = 188;
-export const mriX = (lock) => Math.min(lock, W.lv.width - G.VW) + G.VW - 96;
+export const mriX = (lock) => Math.min(lock, W.lv.width - G.VW) + G.VW - 64;  // v0.7: smaller machine, front ~105 px from the right edge
 // ---------------------------------------------------------------- v0.5 lighting: dark floors with pools of light
 // The world is drawn normally, then a darkness layer with stepped (retro, banded) holes cut out for every light, then a
 // soft additive colour glow. W.dark = 0 (off) .. 1 (pitch black). Extra lights come from W.lightHook (heroes'
