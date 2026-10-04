@@ -179,7 +179,8 @@ def figure(body: dict, pose: dict, W=88, H=80, ax=44, ay=76):
         return hd, fa
 
     def leg(ta, sa, front):
-        h0 = add(hip, (1.2 if front else -1.2, 0))
+        hs = b.get("hip_sep", 1.2 if b.get("gown_len") else 1.9)  # v0.8.1: hip joints further apart so the legs part right under the seat
+        h0 = add(hip, (hs if front else -hs, 0))
         kn = add(h0, vec(ta, th))
         an = add(kn, vec(sa, sh))
         pc, ps = b["pants"], b["pants_s"]
@@ -188,7 +189,7 @@ def figure(body: dict, pose: dict, W=88, H=80, ax=44, ay=76):
         if not front:
             pc, lc, shoe = ps, lcs, shoe_s
         S.capsule(T(kn), T(an), b["leg_w"], lc, lcs)
-        S.capsule(T(h0), T(kn), b["leg_w"] + 0.8, pc, ps)
+        S.capsule(T(h0), T(kn), b["leg_w"] + b.get("thigh_add", 0.4), pc, ps)
         if b.get("pant_len", 1.0) > 0.5 and lc != pc:
             S.capsule(T(kn), T(add(kn, vec(sa, sh * (b["pant_len"] - 1.0)))), b["leg_w"] + 0.4, pc, ps) if b["pant_len"] > 1.0 else None
         toe = add(an, vec(sa + 90, b.get("foot_len", 3.2)))
@@ -203,7 +204,37 @@ def figure(body: dict, pose: dict, W=88, H=80, ax=44, ay=76):
     leg(pose["th_b"], pose["sh_b"], False)
     # ---- torso
     tw = b["torso_w"]
-    S.capsule(T(hip), T(neck), tw, b["shirt"], b["shirt_s"])
+    # v0.8.1 (Bill: "they look like they have a onesie or a diaper on ... no waist"): the torso is no longer one capsule
+    # whose round bottom swallowed the hips. It is a shaped top (shoulders -> narrower waist -> slight flare at the hips,
+    # ending in a hem just below the hip joint), with the pants' seat + waistband/drawstring peeking out under the hem
+    # and the legs hanging separately from it, so the crotch reads as a gap, not a nappy.
+    T_ = b["torso"]
+    hw = tw / 2
+    gown = bool(b.get("gown_len"))
+    wst = b.get("waist", 0.4 if gown else 2.0)        # waist inset per side
+    hem = b.get("hem", 0.5 if gown else -1.2)         # where the top ends (along the torso, 0 = hip joint)
+    flare = b.get("hip_flare", 0.2 if gown else 0.9)  # hips a touch wider than the waist
+    def up(u, sd):
+        return add(add(hip, vec(180 - lean, u)), vec(90 - lean, sd))
+    if not gown:  # seat of the pants + waistband just below the hem
+        band = b.get("belt") or b.get("band", b["pants_s"])
+        seat = [up(hem + 2.5, -hw + 1.0), up(hem + 2.5, hw - 1.0), up(hem - 1.4, hw - 0.6), up(hem - 3.4, 1.4), up(hem - 3.6, -0.6), up(hem - 1.6, -hw + 0.6)]
+        S.poly([T(q) for q in seat], b["pants"])
+        S.poly([T(up(hem + 0.4, -hw + 0.9)), T(up(hem + 0.4, hw - 0.7)), T(up(hem - 1.2, hw - 0.7)), T(up(hem - 1.2, -hw + 0.9))], band, rim=False)
+        if b.get("drawstring", not b.get("belt")):
+            ds = b.get("drawstring_c", "#e8eef4")
+            for k in (0.0, 1.0, 2.0):
+                S.set(*map(int, T(up(hem - 0.6 - k, hw * 0.35 + (0.6 if k > 1 else 0)))), ds)
+        if b.get("belt"):
+            S.set(*map(int, T(up(hem - 0.5, hw * 0.45))), b.get("buckle", "#c8b070"))
+    top = [up(hem, -hw - flare + 0.3), up(T_ * 0.38, -hw + wst), up(T_ * 0.72, -hw - 0.1), up(T_ - 1.4, -hw + 0.5),
+           up(T_ + 0.5, -hw * 0.45), up(T_ + 0.5, hw * 0.4), up(T_ - 1.4, hw - 0.3), up(T_ * 0.72, hw + 0.1),
+           up(T_ * 0.38, hw - wst + 0.3), up(hem, hw + flare)]
+    S.poly([T(q) for q in top], b["shirt"])
+    S.poly([T(q) for q in (up(hem + 1.2, -hw - flare + 1.4), up(T_ * 0.38, -hw + wst + 1.0), up(T_ * 0.72, -hw + 1.0), up(T_ - 1.6, -hw + 1.6),
+                           up(T_ - 1.6, -hw + 2.8), up(T_ * 0.72, -hw + 2.3), up(T_ * 0.38, -hw + wst + 2.2), up(hem + 1.2, -hw - flare + 2.6))], b["shirt_s"], rim=False)
+    if not gown:  # hem line: a darker stitch row just above the top's bottom edge
+        S.line(T(up(hem + 1.1, -hw - flare + 1.2)), T(up(hem + 1.1, hw + flare - 1.0)), b.get("hem_c", b["shirt_s"]))
     if b.get("belly"):
         bc = add(hip, vec(180 - lean, b["torso"] * 0.42))
         S.ellipse(T((bc[0] + b["belly"] * 0.5, bc[1])), tw / 2 + b["belly"] * 0.5, b["torso"] * 0.36, b["shirt"], b["shirt_s"])
@@ -227,9 +258,6 @@ def figure(body: dict, pose: dict, W=88, H=80, ax=44, ay=76):
     if b.get("badge"):
         bp = T(add(hip, vec(180 - lean, b["torso"] * 0.62)))
         S.rect(int(bp[0] + 1), int(bp[1]), 2, 2, b["badge"])
-    if b.get("belt"):
-        bp = T(hip)
-        S.rect(int(bp[0] - tw / 2), int(bp[1] - 1), int(tw), 1, b["belt"])
     # ---- head
     hc = T(head_c)
     r = b["head"]

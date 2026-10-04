@@ -8,6 +8,7 @@ from rig import INK, P, hair_cap, vec, add
 SKIN = {"light": ("#f2c8a2", "#d29a76"), "fair": ("#f6d2b6", "#dba88a"), "tan": ("#dca274", "#b27a52"),
         "brown": ("#b07448", "#875432"), "old": ("#efc6aa", "#c99a82")}
 NAVY, NAVY_S = "#283a7a", "#1b2756"
+NAVY_P, NAVY_PS = "#1d2a5e", "#121a40"   # v0.8.1 scrub pants: a slightly deeper navy than the top, so top and bottom read separately
 # Traditional checked hospital gown: pale green base, darker check lines. The runtime swaps these for the faded-olive set.
 GOWN = ("#bcd6a6", "#92ae7e")              # base, shade (the rig fills with these)
 GOWN_CHECK = ("#9cba88", "#78946a", "#86a274", "#647e58")   # line on base, line on shade, crossing on base, crossing on shade
@@ -235,13 +236,14 @@ def holder(kind):
 # ---------------- bodies
 def hero_body(**kw):
     base = dict(thigh=11, shin=11, torso=17, head=6.6, uarm=8, farm=8, arm_w=3.6, leg_w=5.0, torso_w=12.5, fist=2.0, foot=2, foot_len=3.4,
-                sleeve_len=0.6, shirt=NAVY, shirt_s=NAVY_S, sleeve=NAVY, sleeve_s=NAVY_S, pants=NAVY, pants_s=NAVY_S,
+                sleeve_len=0.6, shirt=NAVY, shirt_s=NAVY_S, sleeve=NAVY, sleeve_s=NAVY_S, pants=NAVY_P, pants_s=NAVY_PS, band="#10183a",
                 shoe="#e8eef4", shoe_s="#a8b2c0", vneck=True, steth=True, badge="#f4f4f4", eye_white=True)
     base.update(kw)
     return base
 
 
 NATE_TEAL = ("#1f7a80", "#145258")   # v0.8 Nate's teal scrubs (not the navy nurses, not the pale-green gowns)
+NATE_TEAL_P = ("#175e66", "#0e3e44")   # v0.8.1 his scrub pants: a deeper teal than the top
 NATE_HAIR = ("#5a3420", "#3a2010")   # brunette
 LEAD = ("#3c4658", "#2a3242", "#5a6880")   # lead apron: slate face, shade, edge highlight (not in any runtime palette)
 
@@ -351,7 +353,7 @@ def bodies():
                           skin=sk["light"][0], skin_s=sk["light"][1], hair_c=NATE_HAIR[0], hair_s=NATE_HAIR[1], glasses="#1e1e26",
                           hair=hair_cap(top=-0.28, back=0.12, grow=0.6, fringe=0), hair_back=low_ponytail, heavy_lids=True, beard="#cc9878",
                           shirt=NATE_TEAL[0], shirt_s=NATE_TEAL[1], sleeve=NATE_TEAL[0], sleeve_s=NATE_TEAL[1],
-                          pants=NATE_TEAL[0], pants_s=NATE_TEAL[1], shoe="#3a3a44", shoe_s="#22222a", mouth="#a05a5a")
+                          pants=NATE_TEAL_P[0], pants_s=NATE_TEAL_P[1], band="#0c3438", shoe="#3a3a44", shoe_s="#22222a", mouth="#a05a5a")
     gown = dict(shirt=GOWN[0], shirt_s=GOWN[1], sleeve=GOWN[0], sleeve_s=GOWN[1], check=True,
                 vneck=False, steth=False, badge=None, eye_white=True, gown_len=9, sleeve_len=0.45)
     socks = dict(shoe=SOCK[0], shoe_s=SOCK[1], sock=SOCK[0], foot_len=3.6)

@@ -13,7 +13,7 @@ const INK = '#1a1020', PANEL_T = [0, 2.7, 5.4], END = 8.6;
 const FLOOR_Y = 118;
 
 function nightNurse() {  // the night-shift nurse: Jackie's build in maroon scrubs, grey hair, white clogs
-  return tintSheet('jackie', 'night', [['#283a7a', '#7a2a5a'], ['#1b2756', '#561a40'], ['#4a2a18', '#b8bcc8'], ['#2e180c', '#868a98'], ['#9a5ae0', '#f4f4f8'], ['#6a34a8', '#b8c2d0']]);
+  return tintSheet('jackie', 'night', [['#283a7a', '#7a2a5a'], ['#1b2756', '#561a40'], ['#1d2a5e', '#66204c'], ['#121a40', '#4a1434'], ['#10183a', '#38102a'], ['#4a2a18', '#b8bcc8'], ['#2e180c', '#868a98'], ['#9a5ae0', '#f4f4f8'], ['#6a34a8', '#b8c2d0']]);
 }
 const lz = (id, s, lazy) => (id === 'nate' ? lazy : s);  // v0.8: Nasty Nate's lazy take on a hero line
 const heroIds = () => { const h = W.heroes.map((q) => q.id); return h.length ? h : ['nick']; };

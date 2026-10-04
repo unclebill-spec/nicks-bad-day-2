@@ -8,7 +8,14 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-04, v0.8)
+## Current state (2026-10-04, v0.8.1)
+- **v0.8.1 waistline (Bill):** the torso in tools/rig.py `figure()` is a shaped top polygon (shoulders -> waist inset `waist`
+  (default 2.0) -> hip flare `hip_flare` (0.9) -> hem at `hem` (-1.2, just below the hip joint) + a `hem_c` stitch row), drawn over a pants
+  "seat" polygon with a waistband (`band` colour, or `belt` + `buckle`) and drawstring ends (`drawstring`, `drawstring_c`). Legs hang
+  from hip joints `hip_sep` (1.9) apart with thighs `leg_w + thigh_add` (0.4). Gown bodies (`gown_len`) skip the seat, use waist 0.4 and
+  keep the skirt. Hero pants default to `NAVY_P`/`NAVY_PS` (a deeper navy than the top; Nate `NATE_TEAL_P`). The cutscene night nurse
+  (`nightNurse()` in cutscene.js) maps those pants colours to maroon; if you change them, update that tint list too.
+  Before/after: docs/v081_before_after.png, docs/v081_patients_before_after.png.
 - **v0.8 NASTY NATE (5th playable nurse):**
   - Data: `HEROES.nate` in data.js (`name` 'NASTY NATE', `short` 'NATE' for the HUD / ending, `reach` 1.45, `walk` 56, `atkK` 1.18,
     combo `lz1`-`lz3` in `ATTACKS`, `shout` = his Ativan bubble, `ativanSfx` 'ativan_nate', `lines` = his speech bubbles). `HERO_ORDER` has 5 ids.
@@ -217,6 +224,9 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v9: **bump N on every release**) |
 
 ## Bill's standing preferences
+- **Outfit style rule (Bill, v0.8.1):** every character's clothes read as a **separate top and bottom with a visible waist**
+  (hem line, waistband / drawstring or belt, pants a different shade, legs visibly separate). **Never** a onesie, diaper,
+  padded or armor look. Gowns hang like gowns with legs visible below.
 - Brief, plain replies, with times in ET. He often uses voice-to-text, so read his messages generously.
 - Every web game needs: a fullscreen button at the far left, a sideways-phone layout, display presets,
   an in-game Install app button (Add to Home Screen steps on iPhone), touch + gamepad + keyboard, and saves.

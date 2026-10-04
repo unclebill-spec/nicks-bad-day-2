@@ -2,6 +2,26 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-04: v0.8.1 "Waistline" (Bill: the nurses looked like they had a onesie or a diaper on, with no waist)
+- **All five nurses redrawn with a separate scrub top and scrub pants.** The torso used to be one capsule whose round bottom
+  swallowed the hips in the shirt colour, and the pants were the same colour as the top, so everyone read as a onesie / diaper.
+  Now the shared rig (`figure()` in tools/rig.py) draws:
+  - a shaped top (Will: his blue shirt) that goes shoulders -> narrower waist -> a slight flare at the hips and **ends at the hips
+    with a visible hem** (ink edge plus a darker stitch row), keeping the slight V-neck, stethoscope and badge;
+  - a **waistband** just below the hem (darker band, white drawstring ends; Will keeps his brown belt with a buckle);
+  - **pants in a deeper shade than the top** (navy scrubs: top `#283a7a`, pants `#1d2a5e`; Nate: teal top, deeper teal pants),
+    with slimmer thighs hung from hip joints set further apart, so the **legs part right under the seat** and there's a gap
+    between them instead of a bulky crotch;
+  - natural hips and a less boxy, more human torso.
+- Every animation frame of every nurse is regenerated from the rig, so the select cards, HUD portraits, title line-up, cutscenes,
+  tally card and ending all pick it up. The night-shift nurse in the cutscenes gets matching maroon pants.
+- **Patients checked the same way:** gowns still hang like gowns with legs showing below (they just get a very slight waist);
+  the Visitor's flannel / belt / jeans, the Lab-Coat Hugger's coat over slacks and Lou's gown + lead apron all read as separate
+  top and bottom. Elites use the gown look.
+- Sizes and hitboxes unchanged (every sprite keeps its height; widths within 1 px). Before/after: `docs/v081_before_after.png`
+  (the nurses) and `docs/v081_patients_before_after.png`; in-game `docs/v081_ingame.png`, select `docs/v081_select.png`.
+  Service worker cache `nbd2-app-v14`.
+
 ## 2026-10-04: v0.8 "Nasty Nate" (Bill: a fifth, playable, extremely lazy nurse)
 - **NASTY NATE joins the shift.** A tall brunette guy with glasses and a low ponytail in plain teal scrubs (scrub top with V-neck,
   stethoscope and badge, matching pants, dark clogs). Slim, normal build: nothing padded or armored. He is the tallest nurse
