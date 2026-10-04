@@ -23,7 +23,7 @@ export class Hero extends Actor {
     this.weapon = null; this.held = null; this.step = 0; this.gap = 9; this.buf = null; this.bufT = 0; this.speedT = 0; this.mash = 0; this.respawnT = 0; this.ctl = null;
     this.h = id === 'kim' || id === 'will' ? 48 : 54; this.w = id === 'will' ? 18 : 14;
   }
-  hittable() { return this.inv <= 0 && !['fall', 'down', 'getup', 'dead', 'super', 'ativan', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup'].includes(this.st); }
+  hittable() { return this.inv <= 0 && !['fall', 'down', 'getup', 'dead', 'super', 'ativan', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup', 'slam'].includes(this.st); }
   canAct() { return ['idle', 'walk', 'run'].includes(this.st); }
   set(st) { super.set(st); if (this.carry && !CARRY_OK.has(st)) this.releaseProp(false, st === 'win' || st === 'enter' || st === 'teamup'); }  // any hit / grab / KO drops the prop
   get spd() { return this.speedT > 0 ? 1.4 : 1; }
@@ -87,7 +87,7 @@ export class Hero extends Actor {
     if (moving) { if (this.carry) { this.move(dt, { ...I, run: false }, 0.74); this.st = 'walk'; } else { this.move(dt, I); this.st = I.run && Math.abs(I.mx) > 0.5 ? 'run' : 'walk'; } }
     this.common(dt, I);
   }
-  s_walk(dt, I) { this.s_idle(dt, I); if (Math.hypot(I.mx, I.my) <= 0.15) this.st = 'idle'; this.autoGrab(dt, I); }
+  s_walk(dt, I) { this.s_idle(dt, I); if (Math.hypot(I.mx, I.my) <= 0.15) this.st = 'idle'; }  // v0.7: no walk-in grabs; GRAB is a dedicated button
   s_run(dt, I) {
     if (!(I.run && Math.abs(I.mx) > 0.5)) { this.st = Math.hypot(I.mx, I.my) > 0.15 ? 'walk' : 'idle'; return; }
     this.move(dt, I); this.trail = (this.trail || 0) + dt; if (this.trail > 0.12) { this.trail = 0; addFx({ type: 'dust', x: this.x - this.face * 8, y: this.y, dur: 0.3 }); }
@@ -256,18 +256,58 @@ export class Hero extends Actor {
 
   grab(e) {
     this.held = e; e.set('held'); e.holder = this; this.set('grab'); this.knees = 0; this.pushT = 0;
-    e.face = -this.face; sfx('punch0', { vol: 0.3 });
+    this.dirArmed = false; this.dirHeld = 0;  // a direction only counts once the stick has been neutral (or is held on purpose)
+    e.face = -this.face; e.rot = 0; sfx('punch0', { vol: 0.3 }); W.stats.grabs = (W.stats.grabs || 0) + 1;
   }
+  // v0.7 holding a patient: FORWARD (tap, hold, or with ATK) = toss them forward; AWAY = over-the-shoulder body slam
+  // behind you; ATK alone = knees (the third one tosses); JUMP or GRAB again = toss forward (GRAB + AWAY = slam).
   s_grab(dt, I) {
     const e = this.held; if (!e || e.st !== 'held') { this.held = null; return this.set('idle'); }
     e.x = this.x + this.face * 15; e.y = this.y + 0.5; e.z = 0;
+    const sx = Math.abs(I.mx) > 0.55 ? Math.sign(I.mx) : 0;
+    if (!sx) { this.dirArmed = true; this.dirHeld = 0; } else this.dirHeld += dt;
+    if (I.atk && sx) return sx === this.face ? this.throwHeld(this.face) : this.slam();
+    if (sx && this.t > 0.06 && (this.dirArmed || this.dirHeld > 0.4)) return sx === this.face ? this.throwHeld(this.face) : this.slam();
+    if (I.jmp || I.prs.grab) return sx === -this.face ? this.slam() : this.throwHeld(this.face);
     if (I.atk) {
-      const away = I.mx && Math.sign(I.mx) !== this.face;
-      if (away || this.knees >= 2) return this.throwHeld(away ? -this.face : this.face);
+      if (this.knees >= 2) return this.throwHeld(this.face);
       this.knees++; this.set('knee'); e.takeHit({ dmg: ATTACKS.knee.dmg * this.d.power, dir: this.face, kb: 0, stun: 0.2, held: true, from: this }); sfx('punch0'); spark(e.x, e.y, 26);
       addScore(this, 60);
-    } else if (I.jmp || I.prs.grab) return this.throwHeld(I.mx ? Math.sign(I.mx) : this.face);
-    if (this.t > 1.7) { this.release(); this.set('idle'); }
+    }
+    if (this.t > 2.0) { this.release(); this.set('idle'); }
+  }
+  slam() {  // over-the-shoulder body slam: the patient arcs over your head and lands BEHIND you
+    const e = this.held; if (!e) return;
+    this.set('slam'); this.slamF = this.face; this.slamDone = false; e.rot = 0; sfx('toss', { vol: 0.6 }); this.inv = Math.max(this.inv, 0.1);
+  }
+  s_slam(dt) {
+    const e = this.held, f = this.slamF, T = 0.4;
+    if (e && !this.slamDone) {
+      if (e.st !== 'held' || !e.alive) { this.held = null; this.slamDone = true; }
+      else {
+        const p = Math.min(1, this.t / T), a = p * Math.PI;
+        e.x = this.x + f * 16 * Math.cos(a); e.y = this.y + 0.5; e.z = Math.sin(a) * 40 + (1 - p) * 2;
+        e.face = -f; e.rot = -f * a * 0.95;  // spin over the shoulder (head first)
+        if (p >= 1) this.slamLand(e, f);
+      }
+    }
+    if (this.t > 0.66) this.set('idle');
+  }
+  slamLand(e, f) {
+    this.slamDone = true; this.held = null; e.holder = null; e.rot = 0; e.z = 0; e.x = this.x - f * 20;
+    const pw = this.d.power;
+    e.takeHit({ dmg: 26 * pw, dir: -f, kb: 50, down: true, from: this, force: true });
+    shake(7); W.stop = Math.max(W.stop, 0.1); sfx('slam', { vol: 0.95 }); sfx('heavy', { vol: 0.6 }); word('w_slam', e.x, e.y, 10);
+    for (let i = 0; i < 4; i++) addFx({ type: 'dust', x: e.x + (i - 1.5) * 9, y: e.y + (i % 2) * 3, dur: 0.45 });
+    // the landing knocks over anyone close by (and smashes props), patients only take a knock, bosses a little damage
+    for (const o of W.enemies) {
+      if (o === e || !o.alive || !o.hittable() || Math.abs(o.y - e.y) > 14 || Math.abs(o.x - e.x) > 34) continue;
+      o.takeHit({ dmg: 14 * pw, dir: Math.sign(o.x - e.x) || -f, kb: 130, down: true, from: this }); spark(o.x, o.y, 24, 'bigspark'); addScore(this, 150);
+    }
+    const B = W.boss;
+    if (B && B.alive && B.hittable && B.hittable() && (B.depthAny || Math.abs(B.y - e.y) < 18) && Math.abs(B.x - e.x) < (B.w || 40) / 2 + 24) B.takeHit({ dmg: 12 * pw, dir: -f, from: this });
+    bumpProps({ x: e.x, y: e.y, z: 0, w: 20 }, 12, -f, this, new Set([e]), 16);
+    addScore(this, 250); W.stats.slams = (W.stats.slams || 0) + 1;
   }
   s_knee(dt) { const e = this.held; if (e) { e.x = this.x + this.face * 15; e.y = this.y + 0.5; } if (this.t > ATTACKS.knee.dur) { if (e && e.st === 'held' && e.hp > 0) { this.st = 'grab'; this.t = 0.2; } else { this.held = null; this.set('idle'); } } }
   throwHeld(dir) {
@@ -278,8 +318,8 @@ export class Hero extends Actor {
     const e = this.held;
     if (e && !this.thrown && this.t > 0.14) {
       this.thrown = true; this.held = null;
-      e.thrownBy(this, this.throwDir, this.d.throwK || 1);
-      sfx('whoosh', { vol: 0.7 }); addScore(this, 120);
+      e.thrownBy(this, this.throwDir, this.d.throwK || 1); e.rot = 0;
+      sfx('whoosh', { vol: 0.7 }); sfx('toss', { vol: 0.5 }); addScore(this, 120); W.stats.tosses = (W.stats.tosses || 0) + 1;
     }
     if (this.t > 0.36) this.set('idle');
   }
@@ -520,6 +560,7 @@ export class Hero extends Actor {
       case 'grab': return ['grab', 0];
       case 'knee': return ['knee', 0];
       case 'throw': return ['throw', t < 0.14 ? 0 : 1];
+      case 'slam': return this.t < 0.22 ? ['lift', 0] : ['throw', 1];
       case 'hurt': return ['hurt', 0];
       case 'grabbed': return ['hurt', Math.floor(W.t * 6)];
       case 'dizzy': return ['dizzy', Math.floor(W.t * 4)];

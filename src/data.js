@@ -43,9 +43,9 @@ export const ITEMS = {
   donut: { spr: 'donut', heal: 12, score: 500, msg: 'DONUT!' },
   star: { spr: 'star', score: 1000, msg: 'GOLD STAR!' },
   zynn: { spr: 'zynn', life: 1, score: 500, msg: 'ZYNN! +1 LIFE' },
-  // v0.6 food: a slightly green three-day-old pizza slice (mid heal) and a SNAP STIX meat stick (parody wrapper, small-mid heal)
+  // v0.6 food: a slightly green three-day-old pizza slice (mid heal) and a bag of BEEF JERKY (v0.7 rename of the meat stick; plain made-up label, small-mid heal)
   pizza: { spr: 'pizza', heal: 45, score: 250, msg: '3-DAY-OLD PIZZA!', sfx: 'stink', stink: true },
-  snapstix: { spr: 'snapstix', heal: 30, score: 200, msg: 'SNAP STIX!', sfx: 'snap' },
+  jerky: { spr: 'jerky', heal: 30, score: 200, msg: 'BEEF JERKY!', sfx: 'jerky' },
 };
 
 // Patients. Every one is a person having a rough day; their defeat is a nap, never a mean joke.
@@ -128,12 +128,12 @@ export const BREAKABLES = {
 };
 // what a smashed prop coughs up (one roll per break, on top of any authored drops). Odds are per break.
 export const LOOT = {
-  patient: [['snapstix', 0.06], ['pizza', 0.04]],  // v0.6: rolled when a patient (with no drop of their own) naps
-  cart: [['pizza', 0.05], ['snapstix', 0.05], ['energy', 0.22], ['snacks', 0.12], ['donut', 0.14], ['star', 0.1], ['w:mop', 0.05], ['w:bedpan', 0.05], ['w:clipboard', 0.04], ['w:extinguisher', 0.02], ['zynn', 0.025]],
-  linen: [['pizza', 0.05], ['snapstix', 0.06], ['energy', 0.16], ['snacks', 0.06], ['donut', 0.08], ['star', 0.06], ['w:bedpan', 0.08], ['w:mop', 0.03], ['zynn', 0.015]],
-  trash: [['pizza', 0.1], ['snapstix', 0.05], ['energy', 0.12], ['snacks', 0.05], ['donut', 0.12], ['star', 0.05], ['w:bedpan', 0.04], ['w:clipboard', 0.03], ['zynn', 0.01]],
-  small: [['pizza', 0.04], ['snapstix', 0.06], ['energy', 0.14], ['snacks', 0.05], ['donut', 0.09], ['star', 0.06], ['w:mop', 0.03], ['w:bedpan', 0.02], ['zynn', 0.01]],
-  vending: [['snacks', 0.35], ['energy', 0.3], ['snapstix', 0.15], ['star', 0.15], ['zynn', 0.03]],
+  patient: [['jerky', 0.06], ['pizza', 0.04]],  // v0.6: rolled when a patient (with no drop of their own) naps
+  cart: [['pizza', 0.05], ['jerky', 0.05], ['energy', 0.22], ['snacks', 0.12], ['donut', 0.14], ['star', 0.1], ['w:mop', 0.05], ['w:bedpan', 0.05], ['w:clipboard', 0.04], ['w:extinguisher', 0.02], ['zynn', 0.025]],
+  linen: [['pizza', 0.05], ['jerky', 0.06], ['energy', 0.16], ['snacks', 0.06], ['donut', 0.08], ['star', 0.06], ['w:bedpan', 0.08], ['w:mop', 0.03], ['zynn', 0.015]],
+  trash: [['pizza', 0.1], ['jerky', 0.05], ['energy', 0.12], ['snacks', 0.05], ['donut', 0.12], ['star', 0.05], ['w:bedpan', 0.04], ['w:clipboard', 0.03], ['zynn', 0.01]],
+  small: [['pizza', 0.04], ['jerky', 0.06], ['energy', 0.14], ['snacks', 0.05], ['donut', 0.09], ['star', 0.06], ['w:mop', 0.03], ['w:bedpan', 0.02], ['zynn', 0.01]],
+  vending: [['snacks', 0.35], ['energy', 0.3], ['jerky', 0.15], ['star', 0.15], ['zynn', 0.03]],
 };
 
 // ---- Level 1: Floor 3 West, Med-Surg. x in world pixels. Doors / elevators are wall features enemies can come out of.

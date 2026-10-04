@@ -12,7 +12,8 @@ in her electric wheelchair.
 | Attack | J / , | X | HIT |
 | Jump | K or Space / . | A | JUMP |
 | Special (1/3 meter = Ativan jab, full = defib paddles) | L / / | Y | SP (shows ATIVAN / CODE BLUE) |
-| Grab / lift a prop | H / M | B | GRAB (shows RIDE / PICK UP / THROW) |
+| Grab a patient / lift a prop | H / M | B | GRAB (shows TOSS / RIDE / PICK UP / THROW) |
+| Holding a patient: toss / body slam | toward facing / away (alone or + Attack), or GRAB again | same | push the stick, or GRAB |
 | Run | double-tap or Shift | double-tap or RB | double-flick |
 | Pause | Enter or Esc | Start | Pause button |
 

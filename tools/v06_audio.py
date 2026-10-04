@@ -1,6 +1,6 @@
 """v0.6 sounds, without rebuilding older audio:
 
-    python3 tools/v06_audio.py -> audio/sfx/{ativan,snap,defib,crackle,alarm,yell,sprinkler,stink}.wav
+    python3 tools/v06_audio.py -> audio/sfx/{ativan,defib,crackle,alarm,yell,sprinkler,stink}.wav
 """
 from __future__ import annotations
 
@@ -31,11 +31,7 @@ def save(name, x, g=0.85):
 
 def build():
     rng = np.random.default_rng(66)
-    # snap: a meat stick snapping (a dry crack + a tiny high click)
-    tt = t(0.16)
-    crack = rng.uniform(-1, 1, len(tt)) * np.exp(-tt * 70)
-    click = np.sin(2 * np.pi * 2400 * tt) * np.exp(-tt * 120) * 0.6
-    save("snap", crack + click + np.sin(2 * np.pi * 380 * tt) * np.exp(-tt * 45) * 0.5, 0.8)
+    # (v0.7: the meat-stick "snap" became the BEEF JERKY bag rip in tools/v07_audio.py)
     # defib: the capacitor charging whine (rising) then a fat discharge thump
     tt = t(0.9); f = 600 + 2600 * np.minimum(1, tt / 0.6)
     whine = np.sin(2 * np.pi * np.cumsum(f) / RATE) * 0.35 * (tt < 0.62)

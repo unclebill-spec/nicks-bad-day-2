@@ -1,7 +1,7 @@
 # v0.6: nurses pick up small / medium props and throw them (golden-axe style), with keyboard / gamepad / touch / 2P,
 # priorities vs grab-a-patient / weapons / gurney rides, jump-throws, depth + back throws, hits drop it, loose meal
 # trays; and Turbo Tilly scaled to boss size (>= 5x a nurse) with a fair, readable charge-lane fight.
-# v0.6 (part 2): Code Blue meter tiers (Ativan jab at 1/3, defib paddles at full), three-day-old pizza + SNAP STIX,
+# v0.6 (part 2): Code Blue meter tiers (Ativan jab at 1/3, defib paddles at full), three-day-old pizza + BEEF JERKY,
 # and the Fire Alarm Yeller event (any floor, capped, never in boss fights, REDUCED FLASHING setting).
 # Screenshots -> tests/out/v06_*.png
 import time, sys
@@ -313,22 +313,22 @@ with sync_playwright() as p:
         check('Ativan on a boss: damage + a short stagger (no sleep)', r['hp'] < hp0 and r['stag'] > 0.1, [hp0, r])
         check('a staggered boss is frozen', abs(x2 - r['x']) < 2, [r['x'], x2])
         pg.close()
-    # ================================================================ G: three-day-old pizza + SNAP STIX
+    # ================================================================ G: three-day-old pizza + BEEF JERKY
     if 'G' in ONLY:
         pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
         pg.goto(U + '?level=1&hero=nick&nocut=1&noalarm=1'); ready(pg); pg.evaluate(FREEZE); time.sleep(0.2)
-        for k, heal in (('pizza', 45), ('snapstix', 30)):
+        for k, heal in (('pizza', 45), ('jerky', 30)):
             pg.evaluate(f"(()=>{{const h=__nbd.W.heroes[0]; h.hp=30; h.x=__nbd.W.camX+90; const it=__nbd.drop('{k}'); it.x=h.x+40; it.y=h.y; }})()"); time.sleep(0.2)
             if k == 'pizza': pg.screenshot(path='tests/out/v06_food.png')
             pg.keyboard.down('KeyD'); time.sleep(0.6); pg.keyboard.up('KeyD'); time.sleep(0.2)
             hp = pg.evaluate("__nbd.W.heroes[0].hp"); left = pg.evaluate(f"__nbd.W.items.filter(i=>i.k==='{k}').length")
             check(f'{k} heals {heal}', hp == 30 + heal and left == 0, [hp, left])
         t = pg.evaluate("""(async()=>{const D=await import('./src/data.js'); const has=(t,k)=>(D.LOOT[t]||[]).some(r=>r[0]===k);
-          return {pc:['cart','linen','trash','small'].every(t=>has(t,'pizza')&&has(t,'snapstix')), vend:has('vending','snapstix'), pat:has('patient','pizza')&&has('patient','snapstix'), spr:!!(__nbd.G.atlas.sprites||__nbd.G.atlas).pizza||true};})()""")
+          return {pc:['cart','linen','trash','small'].every(t=>has(t,'pizza')&&has(t,'jerky')), vend:has('vending','jerky'), pat:has('patient','pizza')&&has('patient','jerky'), spr:!!(__nbd.G.atlas.sprites||__nbd.G.atlas).pizza||true};})()""")
         check('both foods are in the prop drop tables (carts, linen, trash, small props, vending)', t['pc'] and t['vend'], t)
         check('...and in the patient KO drop table', t['pat'], t)
-        n = pg.evaluate("(()=>{let p=0,s=0; for(let i=0;i<4000;i++){const k=__nbd.rollLoot('trash'); if(k==='pizza')p++; if(k==='snapstix')s++;} return [p,s];})()")
-        check('rolling trash-can loot actually produces pizza and SNAP STIX', n[0] > 0 and n[1] > 0, n)
+        n = pg.evaluate("(()=>{let p=0,s=0; for(let i=0;i<4000;i++){const k=__nbd.rollLoot('trash'); if(k==='pizza')p++; if(k==='jerky')s++;} return [p,s];})()")
+        check('rolling trash-can loot actually produces pizza and BEEF JERKY', n[0] > 0 and n[1] > 0, n)
         pg.close()
     # ================================================================ H: Fire Alarm Yeller
     if 'H' in ONLY:

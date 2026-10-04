@@ -47,8 +47,9 @@ export class Actor {
     const X = this.x - W.camX, Y = this.y + offY() - this.z + (opts.dy || 0);
     const idx = this.frameOf(name, i);
     const flip = (opts.face ?? this.face) < 0;
-    frame(this.sheet, idx, X + (opts.dx || 0), Y, { flip, alpha: opts.alpha ?? 1 });
-    if (this.flash > 0) frame(this.sheet, idx, X + (opts.dx || 0), Y, { flip, white: true, alpha: Math.min(1, this.flash * 9) });
+    const rot = this.rot || 0;
+    frame(this.sheet, idx, X + (opts.dx || 0), Y, { flip, alpha: opts.alpha ?? 1, rot });
+    if (this.flash > 0) frame(this.sheet, idx, X + (opts.dx || 0), Y, { flip, white: true, alpha: Math.min(1, this.flash * 9), rot });
   }
 }
 

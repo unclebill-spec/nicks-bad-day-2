@@ -8,12 +8,21 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-03, v0.6)
+## Current state (2026-10-04, v0.7)
+- **v0.7 additions:**
+  - **Dedicated GRAB:** walking into a patient no longer grabs (`autoGrab()` in hero.js is kept but unused). GRAB (H / M, pad B, touch `#b_grab`)
+    calls `grab()`. While holding (`s_grab`): direction toward facing (|stick| > 0.55, alone once re-armed by a neutral stick or held 0.4 s,
+    or with ATK) = `throwHeld(face)`; away from facing = `slam()` → `s_slam` (0.4 s over-the-shoulder arc, `e.rot` drives the sprite
+    rotation via `frame(..., {rot})` in gfx.js) → `slamLand()` (26x power to the victim, forced knockdown, area hit 34 px / 14 depth).
+    `grabContext()` in main.js: THROW (carrying) > TOSS (holding) > GRAB (patient in reach, no weapon) > RIDE > PICK UP. Stats: `W.stats.grabs/tosses/slams`.
+  - **How to play:** `drawHelp()` in main.js is two pages (CONTROLS / MOVES), max 44 chars a line, panel height `min(VH - 34, 190)` so it clears the phone pause row.
+  - **BEEF JERKY** replaces SNAP STIX (`jerky` item, `V6.jerky()` art in tools/v06_art.py, sounds in tools/v07_audio.py: jerky, toss, slam).
+  - Tests: `tests/v07.py` (A keyboard grab/toss/slam/knee + help pages, B priority/pad/2P/touch layout, C jerky, D sizes).
 - **v0.6 additions:**
   - **Carry/throw props:** `carry: true` in `BREAKABLES` (data.js). Hero `lift`/`carry`/`toss` states in hero.js, flight physics `flyProp`/`landProp` and `THROW` in world.js. Priority: patient grab > gurney > weapon > lift > throw weapon.
   - **Turbo Tilly** at 1.8x (`SC` in tools/boss.py, constants at the top of src/boss.js).
   - **Meter tiers:** `TIER = 100/3` in hero.js. `soloSpecial()`: full = `codeBlue()` (defib, shot kind `'defib'` in stage.js `shots()`), >= TIER = `ativan()`, else the special. Enemy `sleepT`, `'zapped'` state and skeleton flash in enemy.js; bosses use `stagT` (frozen while > 0).
-  - **Food:** `pizza` and `snapstix` in `ITEMS`/`LOOT` (plus `LOOT.patient` for KO drops).
+  - **Food:** `pizza` and `jerky` (BEEF JERKY bag; v0.6's SNAP STIX meat stick, renamed in v0.7) in `ITEMS`/`LOOT` (plus `LOOT.patient` for KO drops).
   - **Fire Alarm Yeller (`src/alarm.js`):** `ALARM` tuning, wall stations, `maybeYeller()` on wave start, `pullAlarm()`, `updateAlarm()` (rain, wet floor, extra wave, `alarmPending()` blocks zone clear), drawing. Enemy kind `yeller` (ai `yeller`). `?yeller=1` forces one every wave (still capped), `?noalarm=1` turns it off. Settings `flash: 'full'|'reduced'` (`W.reducedFlash`).
 - **A full shift is playable, start to finish:** Level 1 "Floor 3: Med-Surg" (Turbo Tilly) → Breakroom Bonus → comic cutscene →
   Level 2 "Floor 4: Radiology" (Lead-Apron Lou mini-boss, MAGNA-SCAN 3000 MRI boss) → cutscene → Level 3 "Night Shift" → ending
@@ -48,7 +57,7 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
   - Will: power, Body Slam, big throws. He is bald (skin-tone head with a shine) in a normal fitted short-sleeve bright blue top, with skin forearms, a belt, dark pants and shoes. His stat color is blue. There's no orange/Halloween look and no padded suit/armor look.
   - Jackie: reach, Clipboard Spin, strong jump and dash.
 - **Moves:** combos with a finisher, jump and jump kick, run (double-tap or Shift/RB) and dash attack, back attack (Attack+Jump),
-  auto-grab, then knee or throw (throws hit other patients), a special that costs 8 HP, and the Code Blue super when the meter is full.
+  GRAB a patient, then knee, toss forward or body slam behind (both hit other patients), a special that costs 8 HP, and the Code Blue super when the meter is full.
 - **Patients:** all wear checked hospital gowns (pale green or faded olive) with yellow grip socks, and get random hair and skin at runtime.
   - Types: Wanderer (hugs), Call-light Spammer (throws remotes and pudding), Escape Artist (slaps and runs), IV-pole Swinger (sweeps),
     Sundowner (charges), Crutch Crusader (crutch poke), and Bell Ringer (call bell on a cord, whip that dizzies).
@@ -132,7 +141,8 @@ python3 tests/props.py      # v0.3 breakables: roll/plow/bounce/break, every kin
 python3 tests/v04.py        # v0.4: new patients, gurney (keys/pad/touch), 2P team-up + fallbacks, cutscenes + skips, bonus round + tally + flow
 python3 tests/v05.py        # v0.5: Radiology, Lou, MRI (pull/yank/vent/waves/table/phase 2), night shift lights, full flow + cutscenes, 2P carry/continue, pad, touch, bot playthroughs
 python3 tests/v05.py C D    # sections: A radiology, B Lou, C MRI, D night, E flow, F 2P/pad/touch, G bot playthrough (~4 min)
-python3 tests/v06.py        # v0.6: A carry/throw, B priorities, C directions/trays/magnet, D touch/pad/2P, E big Tilly, F meter tiers, G food, H fire alarm
+python3 tests/v06.py        # v0.6: A carry/throw, B priorities, C directions/trays/magnet, D touch/pad/2P, E Tilly, F meter tiers, G food, H fire alarm
+python3 tests/v07.py        # v0.7: A grab/toss/slam + help pages, B priority/pad/2P/touch layout, C beef jerky, D boss + patient sizes
 python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
 python3 tests/shots.py "autostart=1&bot=1&god=1" 240 full 1280 720 6   # whole level with the bot
@@ -145,10 +155,10 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
   (`chars.<patient>.pal` and `palettes`), and the game swaps those exact colors per spawn (a pool of 6 looks per type).
   If you add a patient, give it `**gown` and `**socks`, and add it to `PATIENTS` in `make_art.py`.
 - `python3 tools/make_art.py` rewrites `art/*.png`, `art/atlas.json`, the font and the icons.
-  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art, and `tools/v06_art.py` the v0.6 art (pizza, SNAP STIX, Ativan syringe, skeleton, fire-alarm station; the `yeller` patient is in chars.py) (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
+  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art, and `tools/v06_art.py` the v0.6 art (pizza, BEEF JERKY bag, Ativan syringe, skeleton, fire-alarm station; the `yeller` patient is in chars.py) (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
   - It uses vendored copies of Master Builder's Gravewake `sprite_writer`/`pixel_writer` and brileta-sprites (plants, via node).
   - Never edit `/workspace/gravewake` itself. It belongs to another bot.
-- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, snap, defib, crackle, clear, alarm, yell, sprinkler, stink).
+- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, defib, crackle, clear, alarm, yell, sprinkler, stink); `tools/v07_audio.py` the v0.7 ones (jerky, slam, toss).
 - `python3 tools/make_audio.py` rewrites `audio/music/*.mp3` (with loop points in `music.json`) and `audio/sfx/*.wav`, using the N64 suite in `/workspace/n64-suite` (music.compose with the chiptune fallback, sfx.make, babble).
 - All art is original. There are no copyrighted characters or sprites.
 

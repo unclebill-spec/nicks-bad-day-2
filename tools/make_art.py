@@ -192,8 +192,8 @@ for st in range(3):
     add(f"apronrack{st}", RA.apron_rack(st)); add(f"contrastcart{st}", RA.contrast_cart(st)); add(f"viewer{st}", RA.film_viewer(st))
 for k, S in RA.rbits().items():
     add(k, S)
-import v06_art as V6  # noqa: E402  (v0.6: old pizza, SNAP STIX, Ativan syringe, zap skeleton, fire-alarm pull station)
-add("pizza", V6.pizza()); add("snapstix", V6.snapstix()); add("ativan", V6.ativan()); add("skel", V6.skeleton())
+import v06_art as V6  # noqa: E402  (v0.6: old pizza, BEEF JERKY bag (v0.7), Ativan syringe, zap skeleton, fire-alarm pull station)
+add("pizza", V6.pizza()); add("jerky", V6.jerky()); add("ativan", V6.ativan()); add("skel", V6.skeleton())
 add("firealarm0", V6.firealarm(False)); add("firealarm1", V6.firealarm(True))
 add("p_cup", RA.proj_cup()); add("puddle_w", RA.barium_splat()); add("p_film", RA.proj_film()); add("mri_wave0", RA.mri_wave(0)); add("mri_wave1", RA.mri_wave(1)); add("mri_table", RA.mri_table())
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),

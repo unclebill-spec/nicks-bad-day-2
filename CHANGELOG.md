@@ -2,6 +2,19 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-04: v0.7 "Body Slam" (Bill's v0.7 list: a real GRAB, smaller bosses, staff-sized patients, BEEF JERKY)
+- **Dedicated GRAB (touch, gamepad, keyboard; P1 and P2).** Walking into a patient no longer grabs him; press GRAB (H / M, pad B, touch GRAB).
+  - Holding a patient: direction toward where you FACE (alone, or with ATK) **tosses him forward**, bowling over and damaging anyone he hits.
+  - Direction AWAY from where you face (alone, or with ATK) is an **over-the-shoulder BODY SLAM** behind you: big damage, a forced knockdown,
+    screen shake, and a shockwave that knocks down and damages patients near the landing spot (and dents bosses).
+  - ATK alone still knees (the third knee tosses). GRAB again tosses, or slams if you're pushing away. You let go after 2 s.
+  - Context priority for the one button: throw a carried prop > toss a held patient > grab a patient > ride a gurney > pick up a weapon or prop.
+    The touch button relabels itself GRAB / TOSS / RIDE / PICK UP / THROW, and a small <SLAM TOSS> hint shows on your first grabs each floor.
+  - New sounds: toss whoosh and slam thud.
+- **How to play** is now two pages (CONTROLS and MOVES) that fit on a phone screen above the pause button; flip with PAGE or left/right.
+- **SNAP STIX is now BEEF JERKY** everywhere: a made-up kraft-bag wrapper with a red BEEF JERKY label (no real brand), "BEEF JERKY!"
+  pickup text, its own crunchy-chew sound, docs and tests.
+
 ## 2026-10-03: v0.6 "Hands Full" (Bill's v0.6 list: throwable props, a bigger Tilly, meter tiers, new food, the Fire Alarm Yeller)
 - **Pick up and throw props (Golden Axe / TMNT style).**
   - GRAB (or ATK when no patient is in reach) lifts small and medium props overhead: chairs, trash cans, plants, IV stands, wheelchairs, O2 tanks, linen and med carts, apron racks, film viewers, wet-floor signs and new loose meal trays.
@@ -17,8 +30,8 @@ All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are Amer
   - Under 1/3 meter SP is still the regular special (costs a little health). The 2P Charge Nurse team-up is unchanged.
 - **New food:**
   - **Three-day-old pizza:** a slightly green slice with stink lines. Mid heal (45).
-  - **SNAP STIX meat stick:** a parody wrapper (like the ZYNN tin). Small-to-mid heal (30), with a "snap" pickup sound.
-  - Both are in the prop drop tables (carts, linen, trash, small props; SNAP STIX in vending) and the new patient KO drop table.
+  - **SNAP STIX meat stick** (renamed **BEEF JERKY** in v0.7): a parody wrapper (like the ZYNN tin). Small-to-mid heal (30), with a "snap" pickup sound.
+  - Both are in the prop drop tables (carts, linen, trash, small props; the meat stick in vending) and the new patient KO drop table.
 - **Fire Alarm Yeller (any floor: Med-Surg, Radiology, Night Shift and future floors).**
   - Red pull stations hang on the walls. Now and then a yelling patient ("FIRE! FIRE!") sprints to one and reaches up for 1.6 s with a big flashing "!" and a progress bar. Knock him down to stop it; knocked down, he has to start over.
   - **If he pulls it:** the alarm blares, the screen strobes red/white (2.5 flashes/s), the sprinklers rain on everything, the floor gets a wet sheen and slippery puddles, every patient on screen gets ENRAGED (red tint, steam, faster, 1.35x harder hits) for 14 s, and an extra wave of 4 pours out of the doors and elevators.

@@ -122,7 +122,7 @@ export class Enemy extends Actor {
     addFx({ type: 'zzz', x: this.x + 4, y: this.y, z: 20, dur: 1.5 });
     sfx(this.d.voice, { vol: 0.35, rate: 0.8 });
     if (this.d.drop && W.rnd() < this.d.drop[1]) dropItem(this.d.drop[0], this.x, this.y);
-    else if (this.type !== 'thief') { let r = W.rnd(); for (const [k, pr] of LOOT.patient) { if (r < pr) { dropItem(k, this.x, this.y); break; } r -= pr; } }  // v0.6: old pizza / SNAP STIX
+    else if (this.type !== 'thief') { let r = W.rnd(); for (const [k, pr] of LOOT.patient) { if (r < pr) { dropItem(k, this.x, this.y); break; } r -= pr; } }  // v0.6: old pizza / BEEF JERKY (v0.7 rename)
     if (this.d.runner) {  // caught the runner: a good drop and a bonus
       word('w_caught', this.x, this.y, 20); sfx('powerup', { vol: 0.5 }); W.stats.caught = (W.stats.caught || 0) + 1;
       if (k && k.isHero) { addScore(k, 1000); floatText('+1000', this.x, this.y, 70, '#ffe84a'); }

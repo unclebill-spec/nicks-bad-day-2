@@ -1,4 +1,4 @@
-"""v0.6 sprites: three-day-old pizza, SNAP STIX meat stick (parody wrapper), the Ativan syringe, an X-ray skeleton for
+"""v0.6 sprites: three-day-old pizza, a bag of BEEF JERKY (v0.7 rename of the meat stick; plain made-up label), the Ativan syringe, an X-ray skeleton for
 the defib zap flash, and the red wall-mounted fire-alarm pull station (normal / pulled)."""
 from __future__ import annotations
 
@@ -22,14 +22,17 @@ def pizza():
     return S
 
 
-def snapstix():
-    """Small-mid heal: a SNAP STIX meat stick (made-up brand, parody wrapper; no real logo)."""
-    S = Raster(28, 11)
-    S.capsule((3, 5), (24, 5), 8, "#d8303c", "#a01c28")            # wrapper
-    S.rect(4, 2, 18, 7, "#ffd84a")                                  # label band
-    tinyfont.text(S, 5, 3, "SNAP", "#a01c28")
-    S.rect(25, 3, 3, 5, "#8a4a2a"); S.set(26, 4, "#b86a3a")         # torn end: the meat stick pokes out
-    S.set(2, 3, "#ff6a6a")
+def jerky():
+    """Small-mid heal (v0.7, was the SNAP STIX meat stick): a resealable bag of BEEF JERKY. Plain made-up label, no real brand."""
+    S = Raster(24, 22)
+    S.rect(4, 1, 4, 5, "#7a3a1e"); S.rect(5, 0, 2, 2, "#9a5230")              # jerky strips poking out of the open top
+    S.rect(15, 2, 4, 4, "#7a3a1e"); S.rect(16, 1, 2, 2, "#9a5230")
+    S.rect(1, 4, 22, 18, INK)                                                     # bag outline
+    S.rect(2, 5, 20, 16, "#b88a52"); S.rect(2, 5, 20, 2, "#d4a868")               # kraft-paper bag + crimped top
+    S.rect(2, 20, 20, 1, "#8a6236"); S.rect(20, 7, 2, 13, "#9a7040")              # shading
+    S.rect(2, 8, 20, 12, "#a01c28"); S.rect(2, 8, 20, 1, "#d8303c")               # red label
+    tinyfont.text(S, 5, 9, "BEEF", "#ffe8a0")
+    tinyfont.text(S, 3, 14, "JERKY", "#ffffff")
     return S
 
 

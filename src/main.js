@@ -78,7 +78,10 @@ function applySettings() {
   document.documentElement.dataset.touchui = st.touch;
 }
 function helpMenu(back) {
-  return Menu('HOW TO PLAY', [{ label: 'BACK', act: back }], { back, help: true, w: Math.min(G.VW - 16, 400) });
+  const m = Menu('HOW TO PLAY', [], { back, help: true, w: Math.min(G.VW - 16, 400), page: 0 });
+  const flip = () => { m.page = (m.page + 1) % 2; sfx('blip', { vol: 0.5 }); };
+  m.items = [{ label: 'PAGE', act: flip, left: flip, right: flip }, { label: 'BACK', act: back, left: flip, right: flip }];
+  return m;
 }
 function titleMenu() {
   return Menu(null, [
@@ -128,29 +131,38 @@ function drawMenu(m) {
     else text(it.label, m.plain ? VW / 2 : x + 20, iy, { col: on ? '#ffffff' : '#c8d4f0', align: m.plain ? 'center' : 'left' });
   });
 }
-function drawHelp(m) {
-  const VW = G.VW, VH = G.VH, w = m.w, h = Math.min(VH - 12, 210), x = Math.round((VW - w) / 2), y = Math.round((VH - h) / 2);
+function drawHelp(m) {  // v0.7: two pages (controls, moves) sized to fit a sideways phone above the pause/clock row
+  const VW = G.VW, VH = G.VH, w = m.w, h = Math.min(VH - 34, 190), x = Math.round((VW - w) / 2), y = 4, pg = m.page || 0;
   rect(0, 0, VW, VH, '#05060c', 0.6); panel(x, y, w, h);
-  text('HOW TO PLAY', VW / 2, y + 6, { col: '#ffe84a', align: 'center' });
-  const L = [
-    ['', 'KEYS', 'PAD', 'TOUCH'],
-    ['MOVE', 'WASD/ARROWS', 'STICK/DPAD', 'L-THUMB'],
-    ['ATTACK', 'J (Z)', 'X / []', 'HIT'],
-    ['JUMP', 'K/SPACE (X)', 'A / X', 'JUMP'],
-    ['SPECIAL', 'L (C)', 'Y / /\\', 'SP'],
-    ['GRAB/LIFT', 'H (V)', 'B / O', 'GRAB'],
-    ['RUN', '2-TAP / SHIFT', 'RB / 2-TAP', '2-FLICK'],
-    ['BACK ATK', 'ATK+JUMP', 'ATK+JUMP', 'HIT+JUMP'],
-    ['PAUSE', 'ENTER/ESC', 'START', 'II'],
-  ];
-  const cw = (w - 16) / 4;
-  L.forEach((r, i) => r.forEach((c, j) => text(c, x + 8 + j * cw, y + 20 + i * 11, { col: i === 0 ? '#8ad8ff' : j === 0 ? '#ffe84a' : '#ffffff', scale: 1 })));
-  const tips = ['RUN + ATTACK = DASH ATTACK.  JUMP + ATTACK = KICK.', 'WALK INTO A PATIENT = GRAB (ATK KNEE, GRAB THROW).', 'GRAB/ATK AT A SMALL PROP = PICK UP. ATK = THROW IT!',
-    'SP: 1/3 METER = ATIVAN JAB. FULL = DEFIB PADDLES!', 'EMPTY METER: SP = SPECIAL (COSTS A LITTLE HEALTH).', 'GRAB A GURNEY = RIDE. STOP THE FIRE ALARM YELLER!',
-    '2P: BOTH HOLD SP CLOSE TOGETHER = CHARGE NURSE!', '2P ON ONE KEYBOARD: P1 WASD+HJKL, P2 ARROWS+,./M'];
-  tips.forEach((s, i) => text(s, x + 8, y + 118 + i * 9, { col: '#c8d4f0', scale: 1 }));
-  m.rects = [[x, y + h - 18, w, 16]];
-  text('> BACK', VW / 2, y + h - 14, { col: '#ffe84a', align: 'center' });
+  text(pg ? 'HOW TO PLAY: MOVES' : 'HOW TO PLAY: CONTROLS', VW / 2, y + 6, { col: '#ffe84a', align: 'center' });
+  if (!pg) {
+    const L = [
+      ['', 'KEYS', 'PAD', 'TOUCH'],
+      ['MOVE', 'WASD/ARROWS', 'STICK/DPAD', 'L-THUMB'],
+      ['ATTACK', 'J (Z)', 'X / []', 'HIT'],
+      ['JUMP', 'K/SPACE(X)', 'A / X', 'JUMP'],
+      ['SPECIAL', 'L (C)', 'Y / /\\', 'SP'],
+      ['GRAB', 'H (V)', 'B / O', 'GRAB'],
+      ['RUN', '2TAP/SHIFT', 'RB/2TAP', '2-FLICK'],
+      ['BACK ATK', 'ATK+JUMP', 'ATK+JUMP', 'HIT+JUMP'],
+      ['PAUSE', 'ENTER/ESC', 'START', 'II'],
+    ];
+    const cw = (w - 16) / 4;
+    L.forEach((r, i) => r.forEach((c, j) => text(c, x + 8 + j * cw, y + 20 + i * 11, { col: i === 0 ? '#8ad8ff' : j === 0 ? '#ffe84a' : '#ffffff' })));
+    ['GRAB A PATIENT: FORWARD = TOSS, AWAY = SLAM.', 'P2 KEYS: ARROWS + , (ATK) . (JUMP) / (SP) M', '(GRAB). GAMEPADS: P1 + P2. TOUCH: P1.']
+      .forEach((t, i) => text(t, x + 8, y + 124 + i * 10, { col: '#c8d4f0' }));
+  } else {
+    const T = [['RUN + ATK = DASH ATTACK. JUMP+ATK = KICK.', '#c8d4f0'], ['GRAB BUTTON NEXT TO A PATIENT, THEN:', '#ffe84a'],
+      [' ATK = KNEE THEM (THE 3RD ONE TOSSES)', '#c8d4f0'], [' FORWARD (OR FWD+ATK) = TOSS FORWARD', '#8ae87a'], [' AWAY (OR AWAY+ATK) = BODY SLAM BEHIND', '#ff8a6a'],
+      [' TOSSED / SLAMMED PATIENTS BOWL OTHERS!', '#c8d4f0'], ['GRAB AT A PROP = PICK UP, ATK = THROW IT.', '#c8d4f0'], ['GRAB AT A GURNEY = RIDE. AT A WEAPON = TAKE.', '#c8d4f0'],
+      ['SP: 1/3 METER = ATIVAN JAB, FULL = DEFIB!', '#8ad8ff'], ['EMPTY METER: SP = SPECIAL (COSTS SOME HP).', '#c8d4f0'], ['2P: BOTH HOLD SP CLOSE = CHARGE NURSE!', '#c8d4f0'],
+      ['KO THE FIRE ALARM YELLER BEFORE HE PULLS!', '#ff8a6a']];
+    T.forEach(([t, col], i) => text(t, x + 8, y + 20 + i * 11, { col }));
+  }
+  const by = y + h - 15, half = Math.round(w / 2);
+  m.rects = [[x, by - 2, half, 14], [x + half, by - 2, w - half, 14]];
+  text(`${m.sel === 0 ? '>' : ' '} PAGE ${pg + 1}/2`, x + half / 2, by, { col: m.sel === 0 ? '#ffe84a' : '#c8d4f0', align: 'center' });
+  text(`${m.sel === 1 ? '>' : ' '} BACK`, x + half + (w - half) / 2, by, { col: m.sel === 1 ? '#ffe84a' : '#c8d4f0', align: 'center' });
 }
 function hitMenu(m, lx, ly) {
   for (let i = 0; i < m.rects.length; i++) { const r = m.rects[i]; if (lx >= r[0] && lx <= r[0] + r[2] && ly >= r[1] && ly <= r[1] + r[3]) return i; }
@@ -383,6 +395,11 @@ function drawWorld() {
   // gurney hint: RIDE! over a gurney a nurse is standing next to
   for (const h of W.heroes) { if (!h.canAct()) continue; const g = h.nearGurney(); if (g && Math.floor(W.t * 3) % 2) text('RIDE!', g.x - W.camX, g.y + offY() - 44, { col: '#8ad8ff', align: 'center' }); }
   // v0.6 lift hint: PICK UP over the prop a nurse would lift with GRAB
+  for (const h of W.heroes) {  // v0.7: while holding a patient, show which way tosses and which way slams (first few grabs each floor)
+    if (!h.held || (h.st !== 'grab' && h.st !== 'knee') || (W.stats.grabs || 0) > 4) continue;
+    const X = h.x - W.camX, Y = h.y + offY() - 74, L = h.face > 0 ? '<SLAM' : '<TOSS', R = h.face > 0 ? 'TOSS>' : 'SLAM>';
+    rect(X - 46, Y - 2, 92, 11, '#1a1020', 0.75); text(L, X - 3, Y, { col: L.includes('TOSS') ? '#8ae87a' : '#ff8a6a', align: 'right' }); text(R, X + 3, Y, { col: R.includes('TOSS') ? '#8ae87a' : '#ff8a6a' });
+  }
   for (const h of W.heroes) { if (h.carry || grabContext(h) !== 'PICK UP') continue; const p = h.liftTarget(); if (p && Math.floor(W.t * 3) % 2) text('PICK UP', p.x - W.camX, p.y + offY() - (p.def.h || 24) - 12, { col: '#8ae87a', align: 'center' }); }
   c.restore();
   drawAlarmFront(W.reducedFlash);
@@ -420,6 +437,7 @@ let rideLabel = 'GRAB';
 function grabContext(h) {
   if (!h || !(game.scene === 'play' || game.scene === 'bonus')) return 'GRAB';
   if (h.carry) return 'THROW';
+  if (h.held && (h.st === 'grab' || h.st === 'knee')) return 'TOSS';  // v0.7: GRAB again tosses (AWAY + GRAB slams)
   if (!h.canAct()) return 'GRAB';
   if (h.grabTarget(24) && !h.weapon) return 'GRAB';
   if (h.nearGurney()) return 'RIDE';
@@ -436,7 +454,7 @@ function updateRideLabel() {
   updateSpLabel();
   const want = grabContext(W.heroes[0]);
   if (want === rideLabel) return; rideLabel = want;
-  const b = document.getElementById('b_grab'); if (b) { b.textContent = want === 'PICK UP' ? 'PICK\nUP' : want; b.classList.toggle('ctx', want !== 'GRAB'); b.classList.toggle('thr', want === 'THROW'); b.dataset.ctx = want; }
+  const b = document.getElementById('b_grab'); if (b) { b.textContent = want === 'PICK UP' ? 'PICK\nUP' : want; b.classList.toggle('ctx', want !== 'GRAB'); b.classList.toggle('thr', want === 'THROW' || want === 'TOSS'); b.dataset.ctx = want; }
 }
 function drawBonusTally() {
   const VW = G.VW, VH = G.VH;
