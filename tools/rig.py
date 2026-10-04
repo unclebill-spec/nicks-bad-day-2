@@ -290,6 +290,13 @@ def face(S, hc, r, b, pose):
     elif f == "hurt":
         for i in range(-1, 2):
             S.rect(ex + (1 - abs(i)) * k, ey + i * k, k, k, INK)
+    elif b.get("heavy_lids") and f != "yell":  # v0.8 Nate: half-closed, bored eyes under a heavy lid
+        S.rect(ex, ey + k, k, k, INK)
+        S.rect(ex - k, ey, 2 * k, k, b["skin_s"])
+        if b.get("eye_white"):
+            S.rect(ex - k, ey + k, k, k, "#f4f4f4")
+        if k > 1:
+            S.rect(ex - k, ey - k - 1, 3 * k, 1, b.get("hair_s", INK))
     else:
         S.rect(ex, ey, k, 2 * k, INK)
         if b.get("eye_white"):

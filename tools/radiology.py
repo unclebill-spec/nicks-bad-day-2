@@ -296,7 +296,10 @@ def mri_table():
 # bosses only ~1.2-1.5x a nurse) draws it at MS = 0.56, so the whole machine stands ~1.45x a nurse's height.
 # src/mri.js mirrors MS for the live LCD face.
 MS = 0.56
-BMW, BMH, BMAX, BMAY = 184, 158, 92, 154
+# v0.8: MOY base units of headroom above the housing so the open vent's frost plume isn't cut off at the top of the cell
+# (12.5 x 0.56 = exactly 7 px; the anchor moves down with the drawing, so anchor-relative offsets in src/mri.js are unchanged)
+MOY = 12.5
+BMW, BMH, BMAX, BMAY = 184, 158 + MOY, 92, 154 + MOY
 MW, MH, MAX, MAY = int(BMW * MS) + 1, int(BMH * MS) + 1, round(BMAX * MS), round(BMAY * MS)
 
 
@@ -308,11 +311,11 @@ class MSR:
 
     @staticmethod
     def _p(p):
-        return (p[0] * MS, p[1] * MS)
+        return (p[0] * MS, (p[1] + MOY) * MS)
 
     def _r(self, x, y, w, h):
-        x0, y0 = int(round(x * MS)), int(round(y * MS))
-        return x0, y0, max(1, int(round((x + w) * MS)) - x0), max(1, int(round((y + h) * MS)) - y0)
+        x0, y0 = int(round(x * MS)), int(round((y + MOY) * MS))
+        return x0, y0, max(1, int(round((x + w) * MS)) - x0), max(1, int(round((y + h + MOY) * MS)) - y0)
 
     def rect(self, x, y, w, h, c):
         self.R.rect(*self._r(x, y, w, h), c)
@@ -384,7 +387,7 @@ def mri_frame(state="idle", k=0):
     # vent hatch on top: closed, or flipped open with a frost plume
     if hot:
         S.poly([(ox + 118, 8), (ox + 142, 8), (ox + 146, -2 + 2), (ox + 122, 0)], "#9aa4b4")
-        for i, (fx, fy, fr) in enumerate(((ox + 130, 5, 6), (ox + 124, 2, 4), (ox + 138, 3, 4))):
+        for i, (fx, fy, fr) in enumerate(((ox + 130, 5, 6), (ox + 124, 2, 4), (ox + 138, 3, 4), (ox + 131, -4, 4.5))):
             S.ellipse((fx + (k % 2) * (1 if i % 2 else -1), fy), fr, fr * 0.7, "#e8f8ff", rim=False)
     else:
         S.rect(ox + 120, 5, 22, 4, "#9aa4b4"); S.rect(ox + 120, 5, 22, 1, "#c8d0dc")
@@ -396,7 +399,7 @@ def mri_frame(state="idle", k=0):
     S.rect(ox + 26, 150, 12, 4, "#262c3e"); S.rect(ox + 142, 150, 12, 4, "#262c3e")
     # the name plate lives on the plinth at this size (native-size font so it stays readable)
     label = "MAGNA-SCAN 3000"
-    tinyfont.text(S.R, int(round((ox + 90) * MS)) - tinyfont.width(label) // 2, int(round(137 * MS)), label, "#9aa4b4" if state != "dead" else "#5c6676")
+    tinyfont.text(S.R, int(round((ox + 90) * MS)) - tinyfont.width(label) // 2, int(round((137 + MOY) * MS)), label, "#9aa4b4" if state != "dead" else "#5c6676")
     return S.R
 
 

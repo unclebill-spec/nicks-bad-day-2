@@ -80,7 +80,7 @@ export const Director = {
       const z = zs[W.zone];
       if (W.wave + 1 < z.waves.length) { W.wave++; this.startWave(); }
       else if (z.final && !W.finalT) { W.finalT = 0.001; }  // night shift's last wave: the lights come back on (main.js), then the tally
-      else { W.zoneOn = false; W.lockX = null; W.camMin = W.camX; W.camMax = W.zone + 1 < zs.length ? zs[W.zone + 1].lock : L.width - G.VW; W.go = 3.2; sfx('select'); }
+      else { W.zoneOn = false; W.lockX = null; W.camMin = W.camX; W.camMax = W.zone + 1 < zs.length ? zs[W.zone + 1].lock : L.width - G.VW; W.go = 3.2; sfx('select'); for (const h of W.heroes) if (h.say && h.alive) h.say('zone'); }
     }
     W.go = Math.max(0, W.go - dt);
     W.enemies = W.enemies.filter((e) => e.alive);

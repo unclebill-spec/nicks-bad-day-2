@@ -2,6 +2,36 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-04: v0.8 "Nasty Nate" (Bill: a fifth, playable, extremely lazy nurse)
+- **NASTY NATE joins the shift.** A tall brunette guy with glasses and a low ponytail in plain teal scrubs (scrub top with V-neck,
+  stethoscope and badge, matching pants, dark clogs). Slim, normal build: nothing padded or armored. He is the tallest nurse
+  (~63 px vs the nurses' 56 px average, 61 px for Jackie) but still staff-sized (1.12x the average). Heavy-lidded "can I sit down"
+  eyes and a faint five-o'clock shadow. Same pixel rig and style as Nick, Kim, Will and Jackie.
+- **Lazy stats:** longest reach (1.45x), slowest walk and run, slower wind-ups (attacks take 1.18x as long), 105 HP, solid power.
+  Card stats POW 3 / SPD 1 / RCH 5 / TUF 3, role LAZY.
+- **His own moves:** a long-armed backhand, a palm shove, then a stretched-out push-kick finisher (`lz1`-`lz3`). Idle, he's on his
+  phone. Win pose: hands behind his head.
+- **Special: ROLLING CHAIR** (8 HP like the others). He plops into a black mesh office chair, leans back on his phone and coasts
+  forward ~130 px, plowing over every patient in the way (knockdown). He can't be hit while rolling.
+- **Speech bubbles with a lazy personality**, at spawn, idle (after ~6 s), grabbing a patient, picking up food / coffee / a weapon / a prop,
+  taking damage, getting knocked out, being revived or continuing, Code Blue, his special, clearing a zone and clearing the floor
+  (he signs off on the tally card too). Bill's exact lines are all in: "You made me get up from my chair." (every spawn),
+  "I was playing a game on my phone." (idle) and "Oh btw, your IVs are all blown." (grabs and floor clear). Plus "Is it time for my
+  break yet?", "I'm not charting that.", "Ugh, call bells.", "Ow. Rude.", "Five more minutes...", "Fine. CODE BLUE. Happy?",
+  "Rolling chair. Best invention.", "Can I go home now?" and more.
+- **His Ativan call:** the shout bubble reads "UGH. IT'S TIME FOR / SOME ATIVAN... *YAWN*" with a slower, lower voice clip.
+- **Everywhere the nurses show up:** select card, HUD portrait (normal + hurt), title screen line-up (now five nurses), tally card,
+  ending, and the cutscenes (he gets lazy versions of the lead nurse's lines when he's P1, e.g. "Double shift? You made me get up from
+  my chair.").
+- **Select screen fits five cards** on desktop and phones (tested 915x412, 844x390 and 667x375): narrower cards, NASTY NATE wraps to two
+  lines, 1P / 2P markers moved to the card's top corners, "OK!" when locked. Keyboard, d-pad, touch (double-tap) and 2P all wrap
+  across five cards. 2P works with Nate on either side.
+- **MRI fix:** the open vent's frost plume is no longer cut off at the top of the machine's sprite (7 px of headroom added to the cell;
+  the anchor moved with it, so the machine and its LCD face sit exactly where they did).
+- New art: `tools/v08_art.py` (office chair), `low_ponytail()` + phone holder in tools/chars.py, heavy-lid eyes in tools/rig.py `face()`.
+  New sounds: `tools/v08_audio.py` (ativan_nate, yawn). New test: `tests/v08.py`; `tests/moves.py` now covers Nate.
+  Service worker cache `nbd2-app-v13`. Screens: `docs/v08_select.png`, `docs/v08_select_phone.png`, `docs/v08_nate.gif`.
+
 ## 2026-10-04: v0.7.1 "Dress Code" (Bill's art fixes: Lou, the apron patient, the Visitor)
 - **Lead-Apron Lou redrawn** (Bill: the puffy blue body "looked weird"). Same height (~78-80 px, ~1.4x a nurse) and still broad, but now a
   natural patient build in the standard checked gown (random green/olive like everyone else) and yellow grip socks, with visible arms,

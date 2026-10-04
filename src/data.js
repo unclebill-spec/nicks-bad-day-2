@@ -5,19 +5,44 @@ export const HEROES = {
   nick: { name: 'NICK', role: 'Balanced', blurb: 'Tall, glasses, orange shoes. Steady hands.', hp: 100, walk: 72, depth: 50, run: 150, jump: 250, power: 1.0, reach: 1.0,
     combo: ['atk1', 'atk2', 'atk1', 'atk3'], special: 'CRASH CART', stats: [3, 3, 3, 3], color: '#ff8a1e' },
   kim: { name: 'KIM', role: 'Fast', blurb: 'Quick combos, lighter hits.', hp: 90, walk: 88, depth: 60, run: 170, jump: 255, power: 0.78, reach: 0.95,
-    combo: ['atk1', 'atk2', 'atk1', 'atk2', 'atk4'], special: 'WHIRLWIND KICK', stats: [2, 5, 2, 2], color: '#ff5a3a', comboGap: 0.85 },
+    combo: ['atk1', 'atk2', 'atk1', 'atk2', 'atk4'], special: 'WHIRLWIND KICK', stats: [2, 5, 2, 2], color: '#ff5a3a', comboGap: 0.85, atkK: 0.85 },
   will: { name: 'WILL', role: 'Power', blurb: 'Slow, hits hard, big throws.', hp: 120, walk: 58, depth: 42, run: 128, jump: 225, power: 1.38, reach: 1.0,
-    combo: ['atk1', 'atk2', 'atk4'], special: 'BODY SLAM', stats: [5, 2, 3, 5], color: '#3a92ff', throwK: 1.45, grabR: 1.3 },
+    combo: ['atk1', 'atk2', 'atk4'], special: 'BODY SLAM', stats: [5, 2, 3, 5], color: '#3a92ff', throwK: 1.45, grabR: 1.3, atkK: 1.12 },
   jackie: { name: 'JACKIE', role: 'Reach', blurb: 'Long reach, big jumps, strong dash.', hp: 100, walk: 74, depth: 50, run: 160, jump: 290, power: 1.0, reach: 1.3,
     combo: ['atk1', 'atk2', 'atk3'], special: 'CLIPBOARD SPIN', stats: [3, 3, 5, 3], color: '#9a5ae0', dashK: 1.4 },
+  // v0.8 NASTY NATE: tall, glasses, ponytail, teal scrubs, extremely lazy. Longest reach, slowest feet and wind-ups.
+  // lines = his speech bubbles (Hero.say), shout = his take on the Ativan call, ativanSfx = his slower voice clip.
+  nate: { name: 'NASTY NATE', short: 'NATE', role: 'Lazy', blurb: 'Longest reach, slowest walk. Would rather be sitting.', hp: 105, walk: 56, depth: 40, run: 124, jump: 230,
+    power: 1.08, reach: 1.45, combo: ['lz1', 'lz2', 'lz3'], special: 'ROLLING CHAIR', stats: [3, 1, 5, 3], color: '#2ad0b8', atkK: 1.18, comboGap: 0.75,
+    shout: ["UGH. IT'S TIME FOR", 'SOME ATIVAN... *YAWN*'], ativanSfx: 'ativan_nate',
+    lines: {
+      spawn: ['You made me get up from my chair.'],
+      idle: ['I was playing a game on my phone.', 'Is it time for my break yet?', 'Ugh, call bells.'],
+      grab: ['Oh btw, your IVs are all blown.', "Hold still. I'm on break."],
+      lift: ["Ugh. Fine. I'll carry it."],
+      food: ['Is it time for my break yet?', 'Snack break. Finally.'],
+      coffee: ["Coffee. Now we're talking."],
+      weapon: ["I'm not charting that.", "Ugh, fine. I'll hold it."],
+      hurt: ['Ow. Rude.', "I'm not charting that.", 'Ugh, call bells.'],
+      ko: ["Wake me when it's over."],
+      revive: ['You made me get up from my chair.', 'Five more minutes...'],
+      codeblue: ['Fine. CODE BLUE. Happy?', "Ugh. Code Blue. I'm up."],
+      special: ["Don't make me get up.", 'Rolling chair. Best invention.'],
+      zone: ['Ugh, call bells.', 'Is it time for my break yet?', "I'm not charting that."],
+      clear: ['Is it time for my break yet?', 'Oh btw, your IVs are all blown.', 'Can I go home now?'],
+    } },
 };
-export const HERO_ORDER = ['nick', 'kim', 'will', 'jackie'];
+export const HERO_ORDER = ['nick', 'kim', 'will', 'jackie', 'nate'];
 
 // hit = which frame lands; box = [x0, x1] forward reach, z band [z0, z1]
 export const ATTACKS = {
   atk1: { t: [0.06, 0.1], dur: 0.2, dmg: 6, box: [6, 30], z: [26, 46], kb: 30, stun: 0.32, sfx: 'punch0' },
   atk2: { t: [0.07, 0.11], dur: 0.22, dmg: 7, box: [6, 32], z: [26, 46], kb: 34, stun: 0.34, sfx: 'punch1' },
   atk3: { t: [0.1, 0.2, 0.08], dur: 0.38, dmg: 12, box: [6, 40], z: [18, 50], kb: 140, stun: 0.5, down: true, sfx: 'punch2', word: 1 },
+  // v0.8 Nate's lazy combo: a long backhand, a palm shove, then a stretched-out push-kick (long boxes, slow wind-ups via atkK)
+  lz1: { t: [0.08, 0.12], dur: 0.24, dmg: 6, box: [6, 34], z: [24, 48], kb: 34, stun: 0.34, sfx: 'punch0' },
+  lz2: { t: [0.09, 0.13], dur: 0.26, dmg: 8, box: [6, 36], z: [22, 48], kb: 40, stun: 0.36, sfx: 'punch1' },
+  lz3: { t: [0.12, 0.2, 0.1], dur: 0.42, dmg: 13, box: [6, 42], z: [12, 46], kb: 150, stun: 0.5, down: true, sfx: 'heavy', word: 1 },
   atk4: { t: [0.14, 0.2], dur: 0.36, dmg: 13, box: [6, 38], z: [10, 52], kb: 150, stun: 0.5, down: true, sfx: 'heavy', word: 1 },
   jkick: { dmg: 12, box: [4, 36], z: [6, 40], kb: 150, stun: 0.5, down: true, sfx: 'punch2' },
   dash: { dur: 0.42, dmg: 14, box: [0, 34], z: [10, 46], kb: 170, stun: 0.5, down: true, sfx: 'heavy', word: 1 },

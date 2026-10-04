@@ -52,7 +52,7 @@ def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
 
 
 B = chars.bodies()
-for h in ("nick", "kim", "will", "jackie"):
+for h in ("nick", "kim", "will", "jackie", "nate"):
     char_sheet(h, chars.hero_anims(h), B[h])
 PATIENTS = ("wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite", "runner", "tray", "o2", "barium", "apron", "lou", "yeller")
 for e in PATIENTS + ("visitor",):
@@ -197,6 +197,8 @@ for k, S in RA.rbits().items():
 import v06_art as V6  # noqa: E402  (v0.6: old pizza, BEEF JERKY bag (v0.7), Ativan syringe, zap skeleton, fire-alarm pull station)
 add("pizza", V6.pizza()); add("jerky", V6.jerky()); add("ativan", V6.ativan()); add("skel", V6.skeleton())
 add("firealarm0", V6.firealarm(False)); add("firealarm1", V6.firealarm(True))
+import v08_art as V8  # noqa: E402  (v0.8: Nasty Nate's rolling office chair)
+add("chair0", V8.office_chair(0)); add("chair1", V8.office_chair(1))
 add("p_cup", RA.proj_cup()); add("puddle_w", RA.barium_splat()); add("p_film", RA.proj_film()); add("mri_wave0", RA.mri_wave(0)); add("mri_wave1", RA.mri_wave(1)); add("mri_table", RA.mri_table())
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
              ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
@@ -297,7 +299,7 @@ def portrait(body, pose_face="norm", k=2):
     return im.crop((int(hx - 18), top - 2, int(hx - 18) + 36, top + 34))
 
 
-for h in ("nick", "kim", "will", "jackie"):
+for h in ("nick", "kim", "will", "jackie", "nate"):
     SPR[f"face_{h}"] = portrait(B[h])
     SPR[f"face_{h}_hurt"] = portrait(B[h], "hurt")
 SPR["face_tilly"] = portrait(boss.tilly_body(), "grin")

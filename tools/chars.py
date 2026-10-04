@@ -85,6 +85,16 @@ def ponytail(S, hc, r, b, pose):
     S.set(int(a[0] + 0.5), int(a[1]), "#3aa0e8")
 
 
+def low_ponytail(S, hc, r, b, pose):
+    """v0.8 Nate: hair pulled back into a low ponytail: a little knot at the back of the head, a dark tie, a thin tail to the shoulders."""
+    sw = pose.get("tail", 0)
+    a = (hc[0] - r * 1.02, hc[1] + r * 0.02)
+    S.ellipse(a, 1.7, 1.7, b["hair_c"], b["hair_s"])
+    tip = (a[0] - 2.6 - sw * 0.5, a[1] + r * 1.2)
+    S.capsule((a[0] - 1.2, a[1] + 2.4), tip, 2.3, b["hair_c"], b["hair_s"])
+    S.rect(int(a[0] - 1.5), int(a[1] + 1.4), 3, 1, "#14141a")
+
+
 def nightcap(S, hc, r, b, pose):
     c, s = "#4a6ad8", "#2e48a8"
     S.poly([(hc[0] - r - 1, hc[1] - r * 0.15), (hc[0] + r * 0.9, hc[1] - r * 0.25), (hc[0] - r * 1.6, hc[1] - r * 2.1)], c)
@@ -173,6 +183,9 @@ def holder(kind):
         elif kind == "cane_up":
             S.line((hx + 4, hy + 6), (hx - 12, hy - 20), "#8a5a2a"); S.line((hx + 5, hy + 6), (hx - 11, hy - 20), "#5a3a18")
             S.capsule((hx - 12, hy - 20), (hx - 15, hy - 18), 2.4, "#8a5a2a", "#5a3a18")
+        elif kind == "phone":  # v0.8 Nate's phone: dark slab with a glowing game screen
+            S.rect(int(hx) - 1, int(hy) - 4, 4, 6, "#1c1c24")
+            S.rect(int(hx), int(hy) - 3, 2, 4, "#6ad8ff"); S.set(int(hx), int(hy) - 3, "#ffe84a")
         elif kind == "syringe":
             S.capsule((hx - 3, hy), (hx + 5, hy), 2.4, "#e8f4ff", "#9ac4e8"); S.line((hx + 6, hy), (hx + 9, hy), "#c8ccd6")
         elif kind == "urinal":
@@ -228,6 +241,8 @@ def hero_body(**kw):
     return base
 
 
+NATE_TEAL = ("#1f7a80", "#145258")   # v0.8 Nate's teal scrubs (not the navy nurses, not the pale-green gowns)
+NATE_HAIR = ("#5a3420", "#3a2010")   # brunette
 LEAD = ("#3c4658", "#2a3242", "#5a6880")   # lead apron: slate face, shade, edge highlight (not in any runtime palette)
 
 
@@ -330,6 +345,13 @@ def bodies():
     B["jackie"] = hero_body(thigh=12, shin=11.5, torso=17.5, head=6.4, uarm=8.5, farm=8.5, torso_w=11, arm_w=3.3, leg_w=4.7, skin=sk["tan"][0], skin_s=sk["tan"][1],
                             hair_c="#4a2a18", hair_s="#2e180c", hair=hair_cap(top=0.05, back=0.2, grow=2.2, bumps=1.3, fringe=0, seed=2),
                             shoe="#9a5ae0", shoe_s="#6a34a8", mouth="#b04a5a")
+    # v0.8 NASTY NATE: the tallest nurse (still staff-sized), teal scrubs, glasses, slicked-back brunette hair in a low ponytail,
+    # heavy-lidded "can I sit down" eyes and a faint five-o'clock shadow. Plain scrubs on a normal build: nothing padded.
+    B["nate"] = hero_body(thigh=13, shin=12.5, torso=19, head=6.6, uarm=8.5, farm=8.5, torso_w=12, arm_w=3.4, leg_w=4.9,
+                          skin=sk["light"][0], skin_s=sk["light"][1], hair_c=NATE_HAIR[0], hair_s=NATE_HAIR[1], glasses="#1e1e26",
+                          hair=hair_cap(top=-0.28, back=0.12, grow=0.6, fringe=0), hair_back=low_ponytail, heavy_lids=True, beard="#cc9878",
+                          shirt=NATE_TEAL[0], shirt_s=NATE_TEAL[1], sleeve=NATE_TEAL[0], sleeve_s=NATE_TEAL[1],
+                          pants=NATE_TEAL[0], pants_s=NATE_TEAL[1], shoe="#3a3a44", shoe_s="#22222a", mouth="#a05a5a")
     gown = dict(shirt=GOWN[0], shirt_s=GOWN[1], sleeve=GOWN[0], sleeve_s=GOWN[1], check=True,
                 vneck=False, steth=False, badge=None, eye_white=True, gown_len=9, sleeve_len=0.45)
     socks = dict(shoe=SOCK[0], shoe_s=SOCK[1], sock=SOCK[0], foot_len=3.6)
@@ -474,6 +496,11 @@ def hero_anims(name):
         A["special"] = [P(lean=20, hy=6, th_f=60, sh_f=-30, th_b=-40, sh_b=-80, ua_f=-40, fa_f=0, ua_b=-60, fa_b=-20),
                         P(plant=False, lean=-20, th_f=40, sh_f=-10, th_b=10, sh_b=-30, ua_f=160, fa_f=170, ua_b=150, fa_b=170, face="yell"),
                         P(lean=34, hy=8, th_f=70, sh_f=0, th_b=-60, sh_b=-90, ua_f=80, fa_f=10, ua_b=70, fa_b=0, face="yell")]
+    elif name == "nate":  # ROLLING CHAIR: drops into an office chair (drawn by the game), reclines, one hand behind his head, phone in the other
+        ph = holder("phone")
+        A["special"] = [P(plant=False, hy=8, lean=-4, th_f=82, sh_f=6, th_b=74, sh_b=0, ua_f=30, fa_f=80, ua_b=20, fa_b=70),
+                        P(plant=False, hy=9, lean=-16, head=4, th_f=84, sh_f=70, th_b=78, sh_b=60, ua_f=24, fa_f=140, ua_b=-150, fa_b=50, hold=ph),
+                        P(plant=False, hy=9, lean=-14, head=6, th_f=88, sh_f=80, th_b=80, sh_b=66, ua_f=22, fa_f=136, ua_b=-148, fa_b=56, hold=ph)]
     else:  # jackie
         cb = holder("clipboard")
         A["special"] = [P(lean=-10, ua_f=-130, fa_f=-160, ua_b=40, fa_b=110, th_f=26, th_b=-26, hold=cb),
@@ -496,6 +523,15 @@ def hero_anims(name):
     A["carry"] = walk_cycle(swing=16, arm=0)
     for f in A["carry"]:
         f.update(lean=-1, **up)
+    if name == "nate":  # v0.8 lazy moves: phone idle, long-armed backhand, palm shove, stretched push-kick
+        ph = holder("phone")
+        A["idle"] = [P(lean=-3, head=12, ua_f=10, fa_f=150, ua_b=-6, fa_b=130, hold=ph), P(lean=-3, head=13, ua_f=10, fa_f=146, ua_b=-6, fa_b=128, hold=ph, hy=1)]
+        A["lz1"] = [P(lean=-2, ua_f=-20, fa_f=60, ua_b=-10, fa_b=110, head=6), P(lean=8, ua_f=92, fa_f=88, ua_b=-12, fa_b=118, th_f=14, th_b=-14, head=4)]
+        A["lz2"] = [P(lean=0, ua_f=30, fa_f=120, ua_b=-20, fa_b=100), P(lean=12, ua_f=88, fa_f=86, ua_b=-26, fa_b=90, th_f=20, th_b=-20)]
+        A["lz3"] = [P(lean=-6, ua_f=-20, fa_f=20, ua_b=-30, fa_b=30, th_f=36, sh_f=-30, th_b=-6, sh_b=-6),
+                    P(lean=-18, ua_f=-50, fa_f=-10, ua_b=-80, fa_b=-50, th_f=92, sh_f=90, th_b=-8, sh_b=-6, face="yell"),
+                    P(lean=-8, ua_f=-30, fa_f=30, ua_b=-50, fa_b=20, th_f=46, sh_f=10, th_b=-8, sh_b=-6)]
+        A["win"] = [P(lean=-6, head=-4, ua_f=-150, fa_f=40, ua_b=-150, fa_b=50, face="grin"), P(lean=-7, head=-5, ua_f=-152, fa_f=44, ua_b=-150, fa_b=52, face="grin", hy=1)]
     if name == "kim":  # Kim's quick 4th hit: spinning back kick
         A["atk4"] = [P(lean=0, th_f=10, sh_f=10, th_b=-96, sh_b=-96, ua_f=100, fa_f=110, ua_b=60, fa_b=90, face="yell", flip=True),
                      P(lean=-12, th_f=96, sh_f=94, th_b=-6, ua_f=-70, fa_f=-80, ua_b=-100, fa_b=-110, face="yell")]

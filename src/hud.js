@@ -27,12 +27,12 @@ export function drawHUD(game) {
       continue;
     }
     if (h.st === 'out') {
-      if (game.continuesLeft() > 0 && h.continueT > 0) { text(`${h.d.name}`, x + 30, y + 2, { col: '#ffffff' }); text(`CONTINUE? ${Math.ceil(h.continueT - 1)}`, x + 30, y + 13, { col: Math.floor(W.t * 4) % 2 ? '#ffe84a' : '#ff8a1e' }); portrait(h.id, x, y + 1, true); }
+      if (game.continuesLeft() > 0 && h.continueT > 0) { text(`${h.d.short || h.d.name}`, x + 30, y + 2, { col: '#ffffff' }); text(`CONTINUE? ${Math.ceil(h.continueT - 1)}`, x + 30, y + 13, { col: Math.floor(W.t * 4) % 2 ? '#ffe84a' : '#ff8a1e' }); portrait(h.id, x, y + 1, true); }
       else text('SHIFT OVER', x + slotW / 2, y + 10, { col: '#ff8ac0', align: 'center' });
       continue;
     }
     portrait(h.id, x, y + 1, h.st === 'hurt' || h.st === 'fall' || h.hp < h.maxHp * 0.25);
-    text(h.d.name, x + 30, y, { col: s ? '#8ad8ff' : '#ffe84a' });
+    text(h.d.short || h.d.name, x + 30, y, { col: s ? '#8ad8ff' : '#ffe84a' });
     text(pad(h.score), x + slotW - 4, y, { col: '#ffffff', align: 'right' });
     const bw = slotW - 34;
     bar(x + 30, y + 10, bw, 5, h.hp / h.maxHp, h.hp < h.maxHp * 0.3 ? (Math.floor(W.t * 6) % 2 ? '#ff3a3a' : '#ffe84a') : '#3ae86a');

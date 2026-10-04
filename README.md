@@ -1,6 +1,6 @@
 # Nick's Very Bad, Terrible Bad Day Part II
 
-A 1990s-arcade-style beat 'em up about a nurse's worst shift. Pick Nick, Kim, Will or Jackie, then fight your way
+A 1990s-arcade-style beat 'em up about a nurse's worst shift. Pick Nick, Kim, Will, Jackie or (v0.8) the very lazy NASTY NATE, then fight your way
 down the Med-Surg hallway past wandering, call-light-spamming and escape-artist patients. Then face **Turbo Tilly**
 in her electric wheelchair.
 
@@ -21,6 +21,10 @@ Plain HTML5 Canvas, with no build step: serve the folder (`python3 -m http.serve
 and `CHANGELOG.md` for history.
 
 ![screenshots](docs/screenshots.png)
+
+v0.8: NASTY NATE, the fifth nurse (long reach, slow, Rolling Chair special, lazy speech bubbles):
+
+![Nasty Nate](docs/v08_nate.gif)
 
 v0.7: GRAB, toss forward, body slam behind:
 

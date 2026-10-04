@@ -21,9 +21,10 @@ export class Hero extends Actor {
     this.isHero = true; this.id = id; this.slot = slot; this.d = HEROES[id];
     this.maxHp = this.hp = this.d.hp; this.lives = 3; this.score = 0; this.meter = 0; this.combo = 0; this.comboT = 0; this.maxCombo = 0; this.kos = 0;
     this.weapon = null; this.held = null; this.step = 0; this.gap = 9; this.buf = null; this.bufT = 0; this.speedT = 0; this.mash = 0; this.respawnT = 0; this.ctl = null;
-    this.h = id === 'kim' || id === 'will' ? 48 : 54; this.w = id === 'will' ? 18 : 14;
+    this.h = id === 'kim' || id === 'will' ? 48 : id === 'nate' ? 57 : 54; this.w = id === 'will' ? 18 : 14;
+    this.sayS = null; this.sayUntil = 0; this.sayCd = 0; this.sayLast = {}; this.idleT = 0; this.hiLv = null;  // v0.8 speech bubbles (heroes with d.lines)
   }
-  hittable() { return this.inv <= 0 && !['fall', 'down', 'getup', 'dead', 'super', 'ativan', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup', 'slam'].includes(this.st); }
+  hittable() { return this.inv <= 0 && !(this.st === 'special' && this.id === 'nate') && !['fall', 'down', 'getup', 'dead', 'super', 'ativan', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup', 'slam'].includes(this.st); }
   canAct() { return ['idle', 'walk', 'run'].includes(this.st); }
   set(st) { super.set(st); if (this.carry && !CARRY_OK.has(st)) this.releaseProp(false, st === 'win' || st === 'enter' || st === 'teamup'); }  // any hit / grab / KO drops the prop
   get spd() { return this.speedT > 0 ? 1.4 : 1; }
@@ -36,7 +37,8 @@ export class Hero extends Actor {
     const d = dmg * W.diff.dmg * (from && from.rageT > W.t ? 1.35 : 1);  // enraged patients (fire alarm) hit harder
     this.hp -= d; this.flash = 0.12; this.meter = Math.min(100, this.meter + d * 0.35); this.combo = 0;
     sfx('hurt', { vol: 0.55 });
-    if (this.hp <= 0) { this.hp = 0; this.knock(dir, 150, 220); floatText(['OUCH!', 'MY BACK!', 'NOT TODAY!'][Math.floor(W.rnd() * 3)], this.x, this.y, 64, '#ff8ac0'); return; }
+    if (this.hp <= 0) { this.hp = 0; this.knock(dir, 150, 220); if (!this.say('ko', true)) floatText(['OUCH!', 'MY BACK!', 'NOT TODAY!'][Math.floor(W.rnd() * 3)], this.x, this.y, 64, '#ff8ac0'); return; }
+    this.say('hurt');
     if (dizzy) { this.set('dizzy'); this.stun = dizzy; return; }
     if (down) this.knock(dir, kb || 140, 180);
     else { this.set('hurt'); this.stun = stun || 0.3; this.vx = dir * (kb || 30); }
@@ -56,6 +58,7 @@ export class Hero extends Actor {
     const I = { ...inp, atk, jmp };
     const falling = this.fallStep(dt, 0.8);
     if (!falling) { const fn = this['s_' + this.st]; if (fn) fn.call(this, dt, I); }
+    this.sayTick(dt, I);
     this.y = clampY(this.y);
     const L = W.camX + 10, R = W.camX + G.VW - 10;
     if (this.st !== 'enter' && this.st !== 'out') this.x = Math.max(L, Math.min(R, this.x));
@@ -72,6 +75,7 @@ export class Hero extends Actor {
   }
   respawn() {
     this.hp = this.maxHp; this.set('respawn'); this.z = 140; this.vz = 0; this.inv = 2.4; this.weapon = null; this.x = Math.max(W.camX + 40, Math.min(W.camX + G.VW - 40, this.x)); this.alive = true;
+    this.hiLv = W.lv; this.idleT = 0; this.say('revive', true);
   }
   move(dt, I, k = 1) {
     const sp = (I.run ? this.d.run : this.d.walk) * this.spd * k;
@@ -119,7 +123,7 @@ export class Hero extends Actor {
     sfx('whoosh', { vol: 0.25, rate: 1.3 });
   }
   s_atk(dt, I) {
-    const A = this.atk, dur = A.dur * (this.id === 'kim' ? 0.85 : this.id === 'will' ? 1.12 : 1);
+    const A = this.atk, dur = A.dur * (this.d.atkK || 1);
     this.slide(dt, 10);
     const hitAt = dur * 0.45;
     if (!this.hitDone && this.t >= hitAt) {
@@ -218,6 +222,7 @@ export class Hero extends Actor {
   lift(p) {
     const i = W.props.indexOf(p); if (i >= 0) W.props.splice(i, 1);  // out of the world while it's overhead
     p.vx = p.vy = p.vz = 0; p.z = 0; p.shake = 0; p.nudge = false; p.magnet = false; p.carrier = this;
+    this.say('lift');
     this.carry = p; this.liftDX = (p.x - this.x) * this.face; this.liftDY = p.y - this.y; this.vx = 0; this.pushT = 0;
     if (Math.abs(p.x - this.x) > 3) this.face = Math.sign(p.x - this.x) || this.face;
     this.set('lift'); sfx('whoosh', { vol: 0.35, rate: 0.7 }); W.stats.lifts = (W.stats.lifts || 0) + 1;
@@ -257,7 +262,7 @@ export class Hero extends Actor {
   grab(e) {
     this.held = e; e.set('held'); e.holder = this; this.set('grab'); this.knees = 0; this.pushT = 0;
     this.dirArmed = false; this.dirHeld = 0;  // a direction only counts once the stick has been neutral (or is held on purpose)
-    e.face = -this.face; e.rot = 0; sfx('punch0', { vol: 0.3 }); W.stats.grabs = (W.stats.grabs || 0) + 1;
+    e.face = -this.face; e.rot = 0; sfx('punch0', { vol: 0.3 }); W.stats.grabs = (W.stats.grabs || 0) + 1; this.say('grab');
   }
   // v0.7 holding a patient: FORWARD (tap, hold, or with ATK) = toss them forward; AWAY = over-the-shoulder body slam
   // behind you; ATK alone = knees (the third one tosses); JUMP or GRAB again = toss forward (GRAB + AWAY = slam).
@@ -331,7 +336,7 @@ export class Hero extends Actor {
   s_pickup(dt) {
     if (this.t > 0.18) {
       const it = this.pick; this.pick = null;
-      if (it && !it.gone) { it.gone = true; if (this.weapon) this.dropWeapon(); this.weapon = { k: it.k.slice(2), w: it.w, uses: it.uses, ammo: it.ammo }; floatText(it.w.name, this.x, this.y, 60, '#8ad8ff'); sfx('select'); }
+      if (it && !it.gone) { it.gone = true; if (this.weapon) this.dropWeapon(); this.weapon = { k: it.k.slice(2), w: it.w, uses: it.uses, ammo: it.ammo }; floatText(it.w.name, this.x, this.y, 60, '#8ad8ff'); sfx('select'); this.say('weapon'); }
       this.set('idle');
     }
   }
@@ -345,6 +350,7 @@ export class Hero extends Actor {
         if (d.speed) this.speedT = d.speed;
         if (d.life) this.lives += d.life;
         this.score += d.score; floatText(d.msg, this.x, this.y, 60, d.heal ? '#8ae87a' : '#ffe84a'); sfx(d.sfx || (d.life ? 'powerup' : 'coin'), { vol: d.sfx ? 0.9 : 1 }); if (d.sfx) sfx('coin', { vol: 0.4 });
+        if (d.heal) this.say('food', true); else if (d.speed) this.say('coffee');
       }
     }
   }
@@ -455,9 +461,10 @@ export class Hero extends Actor {
     if (this.meter >= 100) return this.codeBlue();
     if (this.meter >= TIER - 0.01) return this.ativan();
     if (this.hp <= 1) { floatText('TOO TIRED!', this.x, this.y, 60, '#ff8ac0'); return; }
-    this.hp = Math.max(1, this.hp - 8); this.set('special'); this.spDone = false; this.hitSet = new Set(); this.inv = Math.max(this.inv, 0.4);
+    this.hp = Math.max(1, this.hp - 8); this.set('special'); this.spDone = false; this.hitSet = new Set(); this.inv = Math.max(this.inv, this.id === 'nate' ? 0 : 0.4);
     floatText(this.d.special + '!', this.x, this.y, 70, '#8ad8ff');
     if (this.id === 'kim') sfx('whoosh');
+    if (this.id === 'nate') sfx('clunk', { vol: 0.6 });
   }
   s_special(dt) {
     const id = this.id;
@@ -474,6 +481,15 @@ export class Hero extends Actor {
     } else if (id === 'will') {  // body slam
       if (this.t < 0.18) {} else if (!this.spDone) { this.z = Math.sin(Math.min(1, (this.t - 0.18) / 0.4) * Math.PI) * 44; this.x += this.face * 40 * dt; if (this.t > 0.58) { this.spDone = true; this.z = 0; addShot({ kind: 'shock', x: this.x, y: this.y, z: 0, r: 8, grow: 280, rmax: 100, owner: this, dmg: 24 * this.d.power, life: 0.4, col: '#ffe84a' }); word('w_slam', this.x, this.y, 10); shake(7); sfx('explosion'); } }
       if (this.t > 0.85) this.set('idle');
+    } else if (id === 'nate') {  // v0.8 ROLLING CHAIR: plops into an office chair and coasts forward, plowing patients over
+      if (this.t > 0.16 && this.t < 0.98) {
+        const v = 190 * Math.min(1, (this.t - 0.16) / 0.12) * (this.t > 0.8 ? (0.98 - this.t) / 0.18 : 1);
+        this.x += this.face * v * dt;  // (not hittable while rolling: see hittable(); no inv so he doesn't blink)
+        if (Math.floor(this.t * 12) !== this.lastTick) { this.lastTick = Math.floor(this.t * 12); addFx({ type: 'dust', x: this.x - this.face * 12, y: this.y, dur: 0.3 }); sfx('rattle', { vol: 0.3, gap: 0.25 }); }
+        const hits = strike(this, { box: [-6, 30], z: [0, 40], depth: 14, dmg: 15 * this.d.power, kb: 170, stun: 0.5, down: true, once: this.hitSet, sfxName: 'heavy', wordName: 'w_wham' });
+        if (hits.length) addScore(this, 150 * hits.length);
+      }
+      if (this.t > 1.12) { this.set('idle'); addFx({ type: 'dust', x: this.x, y: this.y, dur: 0.35 }); this.say('special'); }
     } else {  // jackie: spinning clipboard boomerang
       if (!this.spDone && this.t > 0.22) { this.spDone = true; addShot({ kind: 'boomerang', spr: 'w_clipboard', x: this.x + this.face * 14, y: this.y, z: 34, vx: this.face * 300, owner: this, dmg: 16 * this.d.power, spin: 18, life: 2.2, x0: this.x, dir: this.face }); sfx('whoosh'); }
       if (this.t > 0.5) this.set('idle');
@@ -494,7 +510,7 @@ export class Hero extends Actor {
   ativan() {
     this.meter = Math.max(0, this.meter - TIER); this.set('ativan'); this.spDone = false; this.inv = Math.max(this.inv, 0.5);
     this.shoutT = W.t + 1.7; this.jabT = this.jabTarget(80);
-    sfx('ativan', { vol: 0.85 }); W.stats.ativan = (W.stats.ativan || 0) + 1;
+    sfx(this.d.ativanSfx || 'ativan', { vol: 0.85 }); this.sayS = null; W.stats.ativan = (W.stats.ativan || 0) + 1;
   }
   s_ativan(dt) {
     const e = this.jabT;
@@ -524,7 +540,7 @@ export class Hero extends Actor {
   codeBlue() {
     this.meter = 0; this.set('super'); this.inv = 1.6; W.stop = 0.2; W.flash = 0.8; W.flashCol = '#3a7aff'; this.spDone = false; this.cleared = false;
     sfx('page'); sfx('defib', { vol: 0.9 }); word('w_codeblue', W.camX + G.VW / 2, 110, 40); floatText('CODE BLUE! PADDLES!', this.x, this.y, 132, '#c8f0ff');
-    W.codeBlue = { t: 0, by: this }; W.stats.supers = (W.stats.supers || 0) + 1;
+    W.codeBlue = { t: 0, by: this }; W.stats.supers = (W.stats.supers || 0) + 1; this.say('codeblue', true);
   }
   s_super(dt) {
     if (!this.cleared && this.t > 0.34) { this.cleared = true; word('w_clear', this.x + this.face * 10, this.y, 62); sfx('clear', { vol: 0.9 }); W.flash = Math.max(W.flash, 0.3); W.flashCol = '#c8f0ff'; }
@@ -553,7 +569,7 @@ export class Hero extends Actor {
       case 'lift': return t < 0.1 ? ['pickup', 0] : ['lift', 0];
       case 'toss': return ['throw', t < 0.1 ? 0 : 1];
       case 'run': return ['run', Math.floor(W.t * 12)];
-      case 'atk': { const A = this.atk; const n = this.atkName; const k = t / (A.dur * (this.id === 'kim' ? 0.85 : this.id === 'will' ? 1.12 : 1)); return [n, n === 'atk3' ? (k < 0.3 ? 0 : k < 0.75 ? 1 : 2) : (k < 0.4 ? 0 : 1)]; }
+      case 'atk': { const A = this.atk; const n = this.atkName; const k = t / (A.dur * (this.d.atkK || 1)); return [n, A.t.length === 3 ? (k < 0.3 ? 0 : k < 0.75 ? 1 : 2) : (k < 0.4 ? 0 : 1)]; }
       case 'dash': return ['dash', 0];
       case 'back': return ['back', 0];
       case 'jump': case 'respawn': return this.carry ? ['lift', 0] : (this.airTossT || 0) > W.t ? ['throw', 1] : this.kicked ? ['jkick', 0] : ['jump', this.vz > 0 ? 0 : 1];
@@ -580,18 +596,55 @@ export class Hero extends Actor {
         if (this.id === 'nick') return ['special', t < 0.3 ? 0 : t < 0.6 ? 1 : 2];
         if (this.id === 'kim') return ['special', Math.floor(t * 18)];
         if (this.id === 'will') return ['special', t < 0.18 ? 0 : !this.spDone ? 1 : 2];
+        if (this.id === 'nate') return t < 0.16 || t > 1.0 ? ['special', 0] : ['special', 1 + (Math.floor(t * 8) % 2)];
         return ['special', t < 0.22 ? 0 : t < 0.36 ? 1 : 2];
       }
     }
     return ['idle', 0];
   }
-  drawShout() {  // speech bubble: "It's time for some Ativan!"
-    const X = Math.round(this.x - W.camX), Y = Math.round(this.y + offY() - this.z - this.h - 40), w = 112, h = 22;
+  drawShout() {  // speech bubble: "It's time for some Ativan!" (v0.8: each hero can have their own wording, d.shout)
+    const L = this.d.shout || ["IT'S TIME FOR", 'SOME ATIVAN!'];
+    const w = Math.max(112, Math.max(...L.map((q) => q.length)) * 8 + 8), h = 22;
+    const X = Math.round(this.x - W.camX), Y = Math.round(this.y + offY() - this.z - this.h - 40);
     const bx = Math.max(2, Math.min(G.VW - w - 2, X - w / 2));
     rect(bx - 1, Y - 1, w + 2, h + 2, '#1a1020'); rect(bx, Y, w, h, '#ffffff');
     rect(X - 3, Y + h, 6, 3, '#ffffff'); rect(X - 1, Y + h + 3, 3, 3, '#ffffff');
-    text("IT'S TIME FOR", bx + w / 2, Y + 2, { col: '#1a1020', align: 'center', shadow: null });
-    text('SOME ATIVAN!', bx + w / 2, Y + 12, { col: '#7a3ab8', align: 'center', shadow: null });
+    text(L[0], bx + w / 2, Y + 2, { col: '#1a1020', align: 'center', shadow: null });
+    text(L[1], bx + w / 2, Y + 12, { col: '#7a3ab8', align: 'center', shadow: null });
+  }
+  // ---- v0.8 speech bubbles: heroes with d.lines say something in character (Nasty Nate: lazy). ev = spawn, idle, grab, food,
+  // weapon, hurt, ko, revive, codeblue, special, zone, clear. A line shows ~2.6 s; `force` skips the cooldown (big moments).
+  say(ev, force = false) {
+    const L = this.d.lines && this.d.lines[ev];
+    if (!L || !L.length || (!force && W.t < this.sayCd)) return null;
+    let i = Math.floor(W.rnd() * L.length);
+    if (L.length > 1 && i === this.sayLast[ev]) i = (i + 1) % L.length;
+    this.sayLast[ev] = i; this.sayS = L[i]; this.sayUntil = W.t + 2.6; this.sayCd = W.t + 4.5;
+    W.stats.says = (W.stats.says || 0) + 1; (W.said || (W.said = [])).push(L[i]);
+    return L[i];
+  }
+  sayTick(dt, I) {  // spawn line (once per floor, when he can first act) + the idle line after ~6 s doing nothing
+    if (!this.d.lines) return;
+    if (this.hiLv !== W.lv && this.canAct()) { this.hiLv = W.lv; this.say('spawn', true); }
+    const busy = Math.hypot(I.mx, I.my) > 0.15 || I.atk || I.jmp || I.prs.sp || I.prs.grab || this.st !== 'idle';
+    this.idleT = busy ? 0 : this.idleT + dt;
+    if (this.idleT > 6) { this.idleT = -6; if (this.say('idle', true)) sfx('yawn', { vol: 0.5 }); }
+    if (this.sayS && W.t > this.sayUntil) this.sayS = null;
+  }
+  drawSay() {
+    if (!this.sayS || this.shoutT > W.t || this.st === 'out') return;
+    const words = this.sayS.split(' '), lines = [];
+    let cur = '';
+    for (const wd of words) { if (cur && (cur + ' ' + wd).length > 18) { lines.push(cur); cur = wd; } else cur = cur ? cur + ' ' + wd : wd; }
+    if (cur) lines.push(cur);
+    const w = Math.max(...lines.map((q) => q.length)) * 8 + 8, h = lines.length * 10 + 4;
+    const X = Math.round(this.x - W.camX), head = Math.round(this.y + offY() - this.z - this.h - 6 - (this.held ? 14 : 0));  // clear the <SLAM TOSS> hint
+    const Y = Math.max(32, head - h - 6), bx = Math.max(2, Math.min(G.VW - w - 2, X - w / 2));
+    const a = Math.min(1, (this.sayUntil - W.t) / 0.25);
+    rect(bx - 1, Y - 1, w + 2, h + 2, '#1a1020', a); rect(bx, Y, w, h, '#ffffff', a);
+    const tx = Math.max(bx + 3, Math.min(bx + w - 6, X));
+    if (head - (Y + h) > 1) { rect(tx - 2, Y + h, 5, 2, '#ffffff', a); rect(tx - 1, Y + h + 2, 3, 2, '#ffffff', a); }
+    lines.forEach((q, k) => text(q, bx + w / 2, Y + 3 + k * 10, { col: '#1a1020', align: 'center', shadow: null, alpha: a }));
   }
   drawCarry(name, i) {  // the prop rides on her hands, overhead (it swings up from the floor during the lift)
     const p = this.carry, h = this.handOf(name, i), sn = propSprite(p), [w, ph] = sprSize(sn);
@@ -610,6 +663,9 @@ export class Hero extends Actor {
     if (this.st === 'super') { const X = this.x - W.camX, Y = this.y + offY() - 30; ellipse(X, Y, 26 + Math.sin(W.t * 30) * 3, 30, '#8ad8ff', 0.35); }
     if (this.st === 'teamwait' || this.st === 'teamup') { const X = this.x - W.camX, Y = this.y + offY() - this.z - 28; ellipse(X, Y, 22 + Math.sin(W.t * 24) * 3, 30, this.st === 'teamup' ? '#ffffff' : '#ffe84a', 0.35); }
     if (this.speedT > 0 && Math.floor(W.t * 10) % 2) ellipse(this.x - W.camX, this.y + offY() - 26, 14, 28, '#ffe84a', 0.18);
+    if (this.st === 'special' && this.id === 'nate') {  // v0.8 the rolling office chair under Nate (backrest behind him)
+      spr('chair' + (Math.floor(W.t * 14) % 2), this.x - W.camX - this.face * 3, this.y + offY() - this.z + 1, { ax: 13, ay: 34, flip: this.face < 0 });
+    }
     this.drawSprite(name, i);
     // weapon in hand
     if (this.weapon && !['down', 'fall', 'dead', 'getup'].includes(this.st)) {

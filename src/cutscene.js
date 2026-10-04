@@ -15,6 +15,7 @@ const FLOOR_Y = 118;
 function nightNurse() {  // the night-shift nurse: Jackie's build in maroon scrubs, grey hair, white clogs
   return tintSheet('jackie', 'night', [['#283a7a', '#7a2a5a'], ['#1b2756', '#561a40'], ['#4a2a18', '#b8bcc8'], ['#2e180c', '#868a98'], ['#9a5ae0', '#f4f4f8'], ['#6a34a8', '#b8c2d0']]);
 }
+const lz = (id, s, lazy) => (id === 'nate' ? lazy : s);  // v0.8: Nasty Nate's lazy take on a hero line
 const heroIds = () => { const h = W.heroes.map((q) => q.id); return h.length ? h : ['nick']; };
 const nm = (id) => (HEROES[id] ? HEROES[id].name : 'NURSE');
 
@@ -26,7 +27,7 @@ const SCRIPTS = {
       (w, h) => ({ bg: ['hall', 0, 58], cap: '6:58 AM. FLOOR 3 WEST.', acts: [{ s: a, a: 'walk', x: w * 0.2, y: h - 3, mv: 14 }, ...(b ? [{ s: b, a: 'walk', x: w * 0.2 - 26, y: h - 1, mv: 14 }] : []), { s: night, a: 'idle', x: w * 0.72, y: h - 3, flip: true }],
         bubbles: [{ x: w * 0.3, y: 4, s: 'Morning! 30 patients, 12 call lights, and one RUNNER.', tail: [w * 0.7, h - 52], at: 0.35, mw: Math.min(220, w * 0.62) }] }),
       (w, h) => ({ bg: ['hall', 620, 58], dark: true, faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
-        bubbles: [{ x: 6, y: 6, s: `Did you say... RUNNER?`, tail: [w / 2 - 6, h - 70], at: 0.3, mw: w - 20 }] }),
+        bubbles: [{ x: 6, y: 6, s: lz(a, `Did you say... RUNNER?`, 'RUNNER? Ugh. I was playing a game on my phone.'), tail: [w / 2 - 6, h - 70], at: 0.3, mw: w - 20 }] }),
       (w, h) => ({ bg: ['hall', 1340, 58], speed: true, acts: [{ s: 'tilly', a: 'drive', x: w * 0.85, y: h - 4, flip: true, mv: -70, rate: 10 }],
         bubbles: [{ x: 4, y: 4, s: 'OUT OF MY WAY, SWEETIE! HONK HONK!', tail: [w * 0.7, h - 70], at: 0.2, mw: w - 16, shout: true },
           { x: 4, y: h - 26, s: "One of THOSE days.", tail: [8, h - 2], at: 1.4, mw: w - 16 }] }),
@@ -47,7 +48,7 @@ const SCRIPTS = {
     const [a, b] = heroIds(), thief = lookFor('wanderer', 3);
     return [
       (w, h) => ({ bg: ['hall', 600, 58], cap: '12:30 PM. FLOOR 3: QUIET. FOR NOW.', acts: [{ s: a, a: 'win', x: w * 0.3, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.3 + 34, y: h - 1, rate: 3 }] : [])],
-        bubbles: [{ x: w * 0.5, y: 20, s: 'Finally... LUNCH BREAK!', tail: [w * 0.36, h - 50], at: 0.35, mw: Math.min(200, w * 0.45) }] }),
+        bubbles: [{ x: w * 0.5, y: 20, s: lz(a, 'Finally... LUNCH BREAK!', 'Is it time for my break yet? ...It IS?!'), tail: [w * 0.36, h - 50], at: 0.35, mw: Math.min(200, w * 0.45) }] }),
       (w, h) => ({ bg: ['break', 'fridge', 58], cap: 'MEANWHILE, IN THE BREAKROOM...', fridge: true, acts: [{ s: thief, a: 'atk', x: w * 0.42, y: h - 3, rate: 6 }],
         bubbles: [{ x: 4, y: h - 30, s: 'Nom nom nom!', tail: [w * 0.42, h - 52], at: 0.4, mw: w - 16 }] }),
       (w, h) => ({ bg: null, burst: '#ff8a1e', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
@@ -62,7 +63,7 @@ const SCRIPTS = {
       (w, h) => ({ bg: null, elevator: true, cap: 'THE PAGER GOES OFF...',
         bubbles: [{ x: 4, y: h - 30, s: '*BZZT* Floor 4, Radiology. STAT!', tail: [w - 10, h - 40], at: 0.3, mw: w - 16, shout: true }] }),
       (w, h) => ({ bg: null, glow: true, cap: 'FLOOR 4: RADIOLOGY', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
-        bubbles: [{ x: 4, y: 20, s: 'Why is everything up there... GLOWING?', tail: [w / 2, h - 70], at: 0.4, mw: w - 16 }] }),
+        bubbles: [{ x: 4, y: 20, s: lz(a, 'Why is everything up there... GLOWING?', "Glowing? Ugh. I'm not charting that."), tail: [w / 2, h - 70], at: 0.4, mw: w - 16 }] }),
     ];
   },
   mri() {
@@ -80,7 +81,7 @@ const SCRIPTS = {
     const [a, b] = heroIds();
     return [
       (w, h) => ({ bg: ['hall', 600, 58], dark: true, moon: true, cap: '11:00 PM. BACK ON FLOOR 3.', acts: [{ s: a, a: 'idle', x: w * 0.3, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.3 + 28, y: h - 1 }] : [])],
-        bubbles: [{ x: w * 0.46, y: 12, s: 'Double shift. Quiet night, right?', tail: [w * 0.33, h - 52], at: 0.35, mw: Math.min(200, w * 0.48) }] }),
+        bubbles: [{ x: w * 0.46, y: 12, s: lz(a, 'Double shift. Quiet night, right?', 'Double shift? You made me get up from my chair.'), tail: [w * 0.33, h - 52], at: 0.35, mw: Math.min(200, w * 0.48) }] }),
       (w, h) => ({ bg: null, blackout: true, cap: 'KA-CHUNK!',
         bubbles: [{ x: 4, y: h - 26, s: '...nurse?  ...nurse?  ...NURSE?', tail: [w * 0.5, h - 50], at: 0.6, mw: w - 16 }] }),
       (w, h) => ({ bg: null, flashlight: true, faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],

@@ -256,13 +256,13 @@ function selectUpdate(dt) {
     let pi = S.p.findIndex((p) => p.dev === d.id || (!p.dev && game.mode === 1));
     if (pi < 0 && game.mode === 2 && S.p.length < 2 && (d.prs.atk || d.prs.start || d.prs.jmp) && d.id !== S.p[0].dev) {
       if (d.id === 'kb') continue;
-      S.p.push({ dev: d.id, cur: (S.p[0].cur + 1) % 4, locked: false }); sfx('powerup'); continue;
+      S.p.push({ dev: d.id, cur: (S.p[0].cur + 1) % HERO_ORDER.length, locked: false }); sfx('powerup'); continue;
     }
     if (pi < 0) continue;
     const P = S.p[pi];
     if (!P.locked) {
-      if (d.menuEdge === 'left' || d.menuEdge === 'up') { P.cur = (P.cur + 3) % 4; sfx('blip', { vol: 0.5 }); }
-      if (d.menuEdge === 'right' || d.menuEdge === 'down') { P.cur = (P.cur + 1) % 4; sfx('blip', { vol: 0.5 }); }
+      if (d.menuEdge === 'left' || d.menuEdge === 'up') { P.cur = (P.cur + HERO_ORDER.length - 1) % HERO_ORDER.length; sfx('blip', { vol: 0.5 }); }
+      if (d.menuEdge === 'right' || d.menuEdge === 'down') { P.cur = (P.cur + 1) % HERO_ORDER.length; sfx('blip', { vol: 0.5 }); }
       if (d.prs.atk || d.prs.jmp || d.prs.start) { const other = S.p.find((q) => q !== P && q.locked && q.cur === P.cur); if (other) { sfx('hurt'); game.toast('Already picked: choose another nurse'); } else { P.locked = true; sfx('powerup'); } }
       if (d.prs.grab && pi === 0) { toTitle(); return; }
     } else if (d.prs.grab) { P.locked = false; sfx('blip'); }
@@ -360,6 +360,7 @@ function toTally() {
   for (const h of W.heroes) if (h.alive && h.st !== 'out') { h.set('win'); h.inv = 0; }
   const timeBonus = Math.max(0, Math.round(((W.lv.clock || 7 * 60) + 120 - W.clock) * 40));
   game.tally = W.heroes.map((h) => ({ h, score0: h.score, rows: [['SCORE', h.score], [`TUCKED IN x${h.kos}`, h.kos * 100], [`COMBO x${h.maxCombo || 0}`, (h.maxCombo || 0) * 50], ['ON TIME', h.st === 'out' ? 0 : timeBonus]], shown: 0 }));
+  for (const t of game.tally) { t.quote = t.h.say ? t.h.say('clear', true) : null; t.h.sayS = null; }  // v0.8: heroes with lines (Nate) sign off on the card
   for (const t of game.tally) { t.total = t.rows.reduce((s, r, i) => s + (i ? r[1] : 0), t.rows[0][1]); t.h.score = t.total; }  // the bonus carries to the next floor
   save.best = Math.max(save.best, W.lv.id || 1); writeSave();
 }
@@ -405,6 +406,7 @@ function drawWorld() {
     rect(X - 46, Y - 2, 92, 11, '#1a1020', 0.75); text(L, X - 3, Y, { col: L.includes('TOSS') ? '#8ae87a' : '#ff8a6a', align: 'right' }); text(R, X + 3, Y, { col: R.includes('TOSS') ? '#8ae87a' : '#ff8a6a' });
   }
   for (const h of W.heroes) { if (h.carry || grabContext(h) !== 'PICK UP') continue; const p = h.liftTarget(); if (p && Math.floor(W.t * 3) % 2) text('PICK UP', p.x - W.camX, p.y + offY() - (p.def.h || 24) - 12, { col: '#8ae87a', align: 'center' }); }
+  for (const h of W.heroes) h.drawSay();  // v0.8 speech bubbles on top of everything (and of the dark)
   c.restore();
   drawAlarmFront(W.reducedFlash);
   if (W.flash > 0) rect(0, 0, G.VW, G.VH, W.flashCol, Math.min(W.reducedFlash ? 0.22 : 0.75, W.flash * (W.reducedFlash ? 0.3 : 0.8)));
@@ -488,7 +490,7 @@ function drawTitle() {
   spr('logo2', VW / 2, 42 + bob, { ax: lw('logo2') / 2, scale: sc });
   spr('logo3', VW / 2, 80 + bob, { ax: lw('logo3') / 2, scale: sc });
   // the four nurses and Tilly
-  const xs = [26, 60, VW - 60, VW - 26];
+  const xs = [24, 56, VW - 88, VW - 56, VW - 24];  // v0.8: five nurses, two left of the menu, three right (Nate on the end)
   HERO_ORDER.forEach((id, i) => { const A = anim(id, 'idle'); frame(id, A.s + (Math.floor(game.t * 2 + i) % A.n), xs[i], 212, { flip: i > 1 }); });
   // Tilly cruises back and forth along the bottom, behind the menu
   const per = 14, ph = (game.t % per) / per, dir = ph < 0.5 ? 1 : -1, u = ph < 0.5 ? ph * 2 : (1 - ph) * 2;
@@ -502,27 +504,32 @@ function drawSelect() {
   const VW = G.VW, VH = G.VH, S = game.sel;
   W.camX = 600; drawBackground(); rect(0, 0, VW, VH, '#0a1030', 0.72);
   text('CHOOSE YOUR NURSE', VW / 2, 8, { col: '#ffe84a', align: 'center', scale: 1 });
-  const cw = Math.min(92, Math.floor((VW - 16) / 4) - 4), ch = 172, x0 = Math.round((VW - (cw + 4) * 4 + 4) / 2), y0 = 22;
+  // v0.8: five cards. Fits 398 px (16:9 phones/desktop) up to wide phones; long names (NASTY NATE) wrap onto two lines
+  const n = HERO_ORDER.length, cw = Math.min(84, Math.floor((VW - 12) / n) - 4), ch = 176, x0 = Math.round((VW - (cw + 4) * n + 4) / 2), y0 = 20;
   game.cardRects = [];
   HERO_ORDER.forEach((id, i) => {
     const H = HEROES[id], x = x0 + i * (cw + 4), y = y0;
     const p1 = S.p[0] && S.p[0].cur === i, p2 = S.p[1] && S.p[1].cur === i;
     game.cardRects.push([x, y, cw, ch]);
     panel(x, y, cw, ch, p1 || p2 ? '#2a3a7a' : '#141c40', p1 && p2 ? '#ffffff' : p1 ? '#ffe84a' : p2 ? '#8ad8ff' : '#3a4c92');
-    spr(`face_${id}`, x + cw / 2 - 18, y + 4);
-    text(H.name, x + cw / 2, y + 42, { col: '#ffffff', align: 'center' });
-    text(H.role.toUpperCase(), x + cw / 2, y + 52, { col: H.color, align: 'center' });
+    spr(`face_${id}`, x + cw / 2 - 18, y + 3);
+    const nm = H.name.length * 8 > cw - 8 ? H.name.split(' ') : [H.name];
+    nm.forEach((q, k) => text(q, x + cw / 2, y + 41 + k * 9, { col: '#ffffff', align: 'center' }));
+    text(H.role.toUpperCase(), x + cw / 2, y + 41 + nm.length * 9, { col: H.color, align: 'center' });
     const A = anim(id, (p1 && S.p[0].locked) || (p2 && S.p[1].locked) ? 'win' : 'idle');
-    frame(id, A.s + (Math.floor(game.t * 3) % A.n), x + cw / 2, y + 122, {});
+    frame(id, A.s + (Math.floor(game.t * 3) % A.n), x + cw / 2, y + 131, {});
+    const bw = Math.floor((cw - 34) / 5);
     ['POW', 'SPD', 'RCH', 'TUF'].forEach((lab, j) => {
-      const yy = y + 128 + j * 9; text(lab, x + 4, yy, { col: '#c8d4f0', shadow: null });
-      for (let k = 0; k < 5; k++) rect(x + 30 + k * Math.floor((cw - 34) / 5), yy + 1, Math.floor((cw - 34) / 5) - 1, 5, k < H.stats[j] ? H.color : '#2a2e4a');
+      const yy = y + 134 + j * 8; text(lab, x + 3, yy, { col: '#c8d4f0', shadow: null });
+      for (let k = 0; k < 5; k++) rect(x + 30 + k * bw, yy + 1, bw - 1, 5, k < H.stats[j] ? H.color : '#2a2e4a');
     });
-    if (p1) text(S.p[0].locked ? '1P OK!' : '1P', x + 4, y + ch - 10, { col: '#ffe84a' });
-    if (p2) text(S.p[1].locked ? '2P OK!' : '2P', x + cw - 4, y + ch - 10, { col: '#8ad8ff', align: 'right' });
+    if (p1) text('1P', x + 2, y + 4, { col: '#ffe84a' });
+    if (p2) text('2P', x + cw - 2, y + 4, { col: '#8ad8ff', align: 'right' });
+    const ok = (p1 && S.p[0].locked) || (p2 && S.p[1].locked);
+    if (ok) text('OK!', x + cw / 2, y + ch - 9, { col: p1 && S.p[0].locked ? '#ffe84a' : '#8ad8ff', align: 'center' });
   });
   const P = S.p[0]; const H = HEROES[HERO_ORDER[P.cur]];
-  text(`SPECIAL: ${H.special}`, VW / 2, y0 + ch + 6, { col: '#8ad8ff', align: 'center' });
+  text(`SPECIAL: ${H.special}`, VW / 2, y0 + ch + 4, { col: '#8ad8ff', align: 'center' });
   if (game.mode === 2 && S.p.length < 2 && Math.floor(game.t * 2) % 2) text('2P: PRESS ATTACK ON ANOTHER PAD OR ARROWS + , KEY', VW / 2, VH - 10, { col: '#ffffff', align: 'center', scale: 1 });
   else text(P.locked ? (game.mode === 2 && S.p.length < 2 ? 'START = PLAY SOLO' : 'GET READY!') : 'LEFT/RIGHT, ATTACK TO PICK. TAP A CARD TWICE.', VW / 2, VH - 10, { col: '#c8d4f0', align: 'center' });
   game.backRect = [2, 2, 40, 14]; text('< BACK', 4, 6, { col: '#8a94b4' });
@@ -537,6 +544,12 @@ function drawIntro() {
     if (k > 0.8) { const [w] = sprSize('w_ready'); spr('w_ready', VW / 2, y + 26, { ax: w / 2, ay: 0, scale: Math.min(0.62, (k - 0.8) * 3) }); }
   }
 }
+function wrapText(s, max) {  // v0.8: greedy word wrap for 8 px text
+  const out = []; let cur = '';
+  for (const w of s.split(' ')) { if (cur && (cur + ' ' + w).length > max) { out.push(cur); cur = w; } else cur = cur ? cur + ' ' + w : w; }
+  if (cur) out.push(cur);
+  return out;
+}
 function drawTally() {
   const VW = G.VW, VH = G.VH;
   rect(0, 0, VW, VH, '#05060c', Math.min(0.6, game.t));
@@ -546,6 +559,7 @@ function drawTally() {
     const x = Math.round(VW / 2 - (n * (pw + 6)) / 2 + i * (pw + 6)), y = 56;
     panel(x, y, pw, 118);
     spr(`face_${T.h.id}`, x + 4, y + 4); text(T.h.d.name, x + 44, y + 10, { col: T.h.slot ? '#8ad8ff' : '#ffe84a' });
+    if (T.quote && game.t > 0.6) wrapText(`"${T.quote}"`, Math.floor((pw - 50) / 8)).slice(0, 2).forEach((q, k) => text(q, x + 44, y + 21 + k * 9, { col: '#c8f0e8', shadow: null }));  // v0.8 Nate's floor-clear line
     const reveal = Math.min(T.rows.length, Math.floor(game.t * 2));
     T.rows.forEach((r, j) => { if (j >= reveal) return; text(r[0], x + 6, y + 44 + j * 14, { col: '#c8d4f0' }); text(String(r[1]), x + pw - 6, y + 44 + j * 14, { col: '#ffffff', align: 'right' }); });
     if (reveal >= T.rows.length) text(`TOTAL ${T.total}`, x + pw / 2, y + 104, { col: '#ffe84a', align: 'center' });
@@ -559,7 +573,7 @@ function drawEnding() {  // v0.5: the end of the shift
   spr('w_theend', VW / 2, 26, { ax: w / 2, scale: sc * Math.min(1, game.t * 2) });
   text('NICK AND THE CREW SURVIVED THE SHIFT.', VW / 2, 82, { col: '#ffffff', align: 'center' });
   text('EVERY PATIENT TUCKED IN. MOSTLY.', VW / 2, 96, { col: '#c8d4f0', align: 'center' });
-  W.heroes.forEach((h, i) => { const n = W.heroes.length, x = VW / 2 + (i - (n - 1) / 2) * 120; spr(`face_${h.id}`, x - 52, 112); text(h.d.name, x - 10, 118, { col: h.slot ? '#8ad8ff' : '#ffe84a' }); text(String(h.score).padStart(7, '0'), x - 10, 132, { col: '#ffffff' }); });
+  W.heroes.forEach((h, i) => { const n = W.heroes.length, x = VW / 2 + (i - (n - 1) / 2) * 120; spr(`face_${h.id}`, x - 52, 112); text(h.d.short || h.d.name, x - 10, 118, { col: h.slot ? '#8ad8ff' : '#ffe84a' }); text(String(h.score).padStart(7, '0'), x - 10, 132, { col: '#ffffff' }); });
   text('SEE YOU NEXT SHIFT...', VW / 2, 164, { col: '#3aa8ff', align: 'center' });
   if (game.newHi) text('NEW HIGH SCORE!', VW / 2, 178, { col: Math.floor(game.t * 6) % 2 ? '#ffe84a' : '#ff8a1e', align: 'center' });
   if (game.t > 1.5) text('PRESS ATTACK', VW / 2, VH - 20, { col: '#c8d4f0', align: 'center' });

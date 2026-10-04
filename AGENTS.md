@@ -4,11 +4,32 @@ Handoff notes for any builder (Cursor reads this file automatically, and so do B
 `CHANGELOG.md` current before every commit and push. **Pull first** when you resume work.
 
 ## What it is
-A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons arcade games. Four nurses fight
+A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons arcade games. Five nurses fight
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-04, v0.7.1)
+## Current state (2026-10-04, v0.8)
+- **v0.8 NASTY NATE (5th playable nurse):**
+  - Data: `HEROES.nate` in data.js (`name` 'NASTY NATE', `short` 'NATE' for the HUD / ending, `reach` 1.45, `walk` 56, `atkK` 1.18,
+    combo `lz1`-`lz3` in `ATTACKS`, `shout` = his Ativan bubble, `ativanSfx` 'ativan_nate', `lines` = his speech bubbles). `HERO_ORDER` has 5 ids.
+    `atkK` (attack duration multiplier) replaced the old kim/will id checks in hero.js (kim 0.85, will 1.12); 3-frame attacks are any with 3 `t` entries.
+  - **Speech bubbles:** `Hero.say(ev, force)` picks from `d.lines[ev]` (no immediate repeats), shows 2.6 s, 4.5 s cooldown unless `force`.
+    `sayTick()` does the once-per-floor spawn line (`hiLv`) and the idle line (~6 s of no input, plays `yawn`). `drawSay()` is a wrapped
+    white bubble drawn by main.js after everything else (on top of the dark). Events: spawn, idle, grab, lift, food, coffee, weapon,
+    hurt, ko, revive (respawn + continue), codeblue, special, zone (stage.js zone clear), clear (toTally; also shown on the tally card
+    as `T.quote`). Any hero can get lines by adding `lines` to its HEROES entry. Debug: `W.said` lists every line said, `W.stats.says`.
+    **Bill's exact lines must stay verbatim:** "You made me get up from my chair." / "I was playing a game on my phone." / "Oh btw, your IVs are all blown."
+  - **ROLLING CHAIR** special (`s_special` nate branch): t 0.16-0.98 coasts up to 190 px/s, `strike` once per target (knockdown);
+    not hittable while rolling (`hittable()`), no inv blink. The chair sprite (`chair0/1`, tools/v08_art.py) is drawn under him in `draw()`.
+  - Art: `B["nate"]` in tools/chars.py (teal `NATE_TEAL` scrubs, `NATE_HAIR`, `hair_cap(top=-0.28, back=0.12, grow=0.6, fringe=0)`,
+    `low_ponytail`, `heavy_lids` in rig.py `face()`, light `beard` stubble, glasses). `hero_anims("nate")`: phone idle (`holder("phone")`),
+    lz1-3, chair special (phone in hand), hands-behind-head win. Height ~63 px (taller than Jackie's 61, <= 1.15x the 56 px average).
+    Plain scrubs only: Bill dislikes bulky / padded / armor-looking outfits.
+  - Select (`drawSelect`): `cw = min(84, floor((VW-12)/n)-4)`, `ch` 176, names longer than the card wrap at the space, 1P/2P in the top
+    corners, OK! at the bottom. Title line-up `xs` has five slots. Cutscenes use `lz(a, normal, lazy)` for Nate's versions of hero-a lines.
+  - MRI sheet: `MOY` = 12.5 base units of headroom in tools/radiology.py (cell 104x96, anchor 52,93) so the vent plume isn't clipped.
+  - Tests: `tests/v08.py` (A desktop select + title, B phones + touch, C pad, D size/art/stats, E combo/reach/chair, F bubbles + Ativan +
+    Code Blue + tally line, G 2P keyboard with Nate as P2, H cutscene + MRI headroom).
 - **v0.7 additions:**
   - **Dedicated GRAB:** walking into a patient no longer grabs (`autoGrab()` in hero.js is kept but unused). GRAB (H / M, pad B, touch `#b_grab`)
     calls `grab()`. While holding (`s_grab`): direction toward facing (|stick| > 0.55, alone once re-armed by a neutral stick or held 0.4 s,
@@ -62,11 +83,12 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
   (`drawEyes`). The last zone has `final:true`: when it's cleared the power comes back (`W.finalT`, "POWER'S BACK!") and then the tally.
 - **Lighting (v0.5, `drawLighting()` in world.js):** an offscreen darkness layer at `W.dark` with banded (retro-stepped) holes cut for every
   light, then an additive colour glow. `W.lights` is built from the wall pieces in `buildLevel`; moving lights come from `W.lightHook`.
-- **4 heroes:**
+- **5 heroes:**
   - Nick: balanced, Crash Cart special.
   - Kim: fast, Whirlwind Kick.
   - Will: power, Body Slam, big throws. He is bald (skin-tone head with a shine) in a normal fitted short-sleeve bright blue top, with skin forearms, a belt, dark pants and shoes. His stat color is blue. There's no orange/Halloween look and no padded suit/armor look.
   - Jackie: reach, Clipboard Spin, strong jump and dash.
+  - Nasty Nate (v0.8): lazy; longest reach, slowest, Rolling Chair special, speech bubbles. Tall, glasses, ponytail, teal scrubs.
 - **Moves:** combos with a finisher, jump and jump kick, run (double-tap or Shift/RB) and dash attack, back attack (Attack+Jump),
   GRAB a patient, then knee, toss forward or body slam behind (both hit other patients), a special that costs 8 HP, and the Code Blue super when the meter is full.
 - **Patients:** all wear checked hospital gowns (pale green or faded olive) with yellow grip socks, and get random hair and skin at runtime.
@@ -154,6 +176,7 @@ python3 tests/v05.py        # v0.5: Radiology, Lou, MRI (pull/yank/vent/waves/ta
 python3 tests/v05.py C D    # sections: A radiology, B Lou, C MRI, D night, E flow, F 2P/pad/touch, G bot playthrough (~4 min)
 python3 tests/v06.py        # v0.6: A carry/throw, B priorities, C directions/trays/magnet, D touch/pad/2P, E Tilly, F meter tiers, G food, H fire alarm
 python3 tests/v07.py        # v0.7: A grab/toss/slam + help pages, B priority/pad/2P/touch layout, C beef jerky, D boss + patient sizes
+python3 tests/v08.py        # v0.8: Nasty Nate: A select/title, B phones/touch, C pad, D size/art, E combo/chair, F speech bubbles, G 2P, H cutscene + MRI headroom
 python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
 python3 tests/shots.py "autostart=1&bot=1&god=1" 240 full 1280 720 6   # whole level with the bot
@@ -166,10 +189,10 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
   (`chars.<patient>.pal` and `palettes`), and the game swaps those exact colors per spawn (a pool of 6 looks per type).
   If you add a patient, give it `**gown` and `**socks`, and add it to `PATIENTS` in `make_art.py`.
 - `python3 tools/make_art.py` rewrites `art/*.png`, `art/atlas.json`, the font and the icons.
-  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art, and `tools/v06_art.py` the v0.6 art (pizza, BEEF JERKY bag, Ativan syringe, skeleton, fire-alarm station; the `yeller` patient is in chars.py) (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
+  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art, `tools/v08_art.py` Nate's office chair, and `tools/v06_art.py` the v0.6 art (pizza, BEEF JERKY bag, Ativan syringe, skeleton, fire-alarm station; the `yeller` patient is in chars.py) (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
   - It uses vendored copies of Master Builder's Gravewake `sprite_writer`/`pixel_writer` and brileta-sprites (plants, via node).
   - Never edit `/workspace/gravewake` itself. It belongs to another bot.
-- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, defib, crackle, clear, alarm, yell, sprinkler, stink); `tools/v07_audio.py` the v0.7 ones (jerky, slam, toss).
+- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, defib, crackle, clear, alarm, yell, sprinkler, stink); `tools/v07_audio.py` the v0.7 ones (jerky, slam, toss); `tools/v08_audio.py` the v0.8 ones (ativan_nate, yawn).
 - `python3 tools/make_audio.py` rewrites `audio/music/*.mp3` (with loop points in `music.json`) and `audio/sfx/*.wav`, using the N64 suite in `/workspace/n64-suite` (music.compose with the chiptune fallback, sfx.make, babble).
 - All art is original. There are no copyrighted characters or sprites.
 
@@ -207,7 +230,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 - Tested on emulated phones (Chromium, Pixel-size landscape) and desktop Chromium with a mocked gamepad. It has not been tested on real iPhone or Android hardware yet.
 - The heroes' skin tones and hair styles were guessed from Bill's short descriptions (they may be real coworkers). They are easy to change in `tools/chars.py` `bodies()`, followed by `python3 tools/make_art.py`.
 - Three floors exist (Med-Surg, Radiology, Night Shift) plus the Breakroom Bonus. The ending says "SEE YOU NEXT SHIFT...".
-- Boss sizes follow Bill's v0.7 override (1.2-1.5x a nurse's height): Tilly 1.46x, MRI 1.48x, Lou 1.43x. The MRI's vent frost plume touches the top of its cell.
+- Boss sizes follow Bill's v0.7 override (1.2-1.5x a nurse's height): Tilly 1.46x, MRI 1.48x, Lou 1.43x.
 - Balance is first-pass: Tilly has 420 HP, the MRI 560, Lou 300 (x1.35 in 2P) and patient damage scales by difficulty in `DIFF`. The elite waves make zones 2–4 noticeably harder.
 - The gown check pattern is drawn on a fixed pixel grid, so it doesn't move with the body. It shimmers very slightly during animation.
 - Online co-op is not implemented. That was optional in the spec.
@@ -215,5 +238,5 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 ## Next steps
 1. Bill plays on his phone and gives feedback on feel, difficulty and hero looks.
 2. **Size rule from Bill (v0.7 override for this game):** bosses only **~1.2-1.5x a nurse's height**; patients **the same size as the nurses**.
-3. Character voice barks, plus an attract-mode demo on the title screen using the bot.
+3. More voice barks (Nate has speech bubbles via `say()`; the others could get lines too), plus an attract-mode demo on the title screen using the bot.
 4. More stages per the spec: lobby/ER, ICU, cafeteria, roof helipad.
