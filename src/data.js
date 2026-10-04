@@ -43,6 +43,9 @@ export const ITEMS = {
   donut: { spr: 'donut', heal: 12, score: 500, msg: 'DONUT!' },
   star: { spr: 'star', score: 1000, msg: 'GOLD STAR!' },
   zynn: { spr: 'zynn', life: 1, score: 500, msg: 'ZYNN! +1 LIFE' },
+  // v0.6 food: a slightly green three-day-old pizza slice (mid heal) and a SNAP STIX meat stick (parody wrapper, small-mid heal)
+  pizza: { spr: 'pizza', heal: 45, score: 250, msg: '3-DAY-OLD PIZZA!', sfx: 'stink', stink: true },
+  snapstix: { spr: 'snapstix', heal: 30, score: 200, msg: 'SNAP STIX!', sfx: 'snap' },
 };
 
 // Patients. Every one is a person having a rough day; their defeat is a nap, never a mean joke.
@@ -72,6 +75,9 @@ export const ENEMIES = {
     ko: ['Tastes like... chalk... zzz', 'Banana flavor, my foot... zzz'], voice: 'voice1', lines: ['BANANA FLAVOR?!', 'Drink it ALL, they said!', 'Bottoms up!'] },
   apron: { name: 'LEAD-APRON HUGGER', sheet: 'apron', ai: 'wanderer', hp: 56, speed: 26, depth: 22, reach: 24, score: 450, atk: 'hug', cd: [1.8, 2.8], armor: 2,
     ko: ['So... heavy... zzz', 'Is the scan over? ...zzz'], voice: 'voice0', lines: ['They said keep it ON!', 'Hug for the X-ray tech?'] },
+  // v0.6 Fire Alarm Yeller (any floor, src/alarm.js): sprints for a pull station; knock him down before he pulls it
+  yeller: { name: 'FIRE ALARM YELLER', sheet: 'yeller', ai: 'yeller', hp: 30, speed: 72, depth: 40, reach: 22, score: 600, atk: 'slap', cd: [1.3, 2.1],
+    ko: ['Was it... not a fire? ...zzz', 'I smelled TOAST! ...zzz', 'False alarm... zzz'], voice: 'voice5', lines: ['FIRE! FIIIRE!', 'I SMELL SMOKE!'] },
   visitor: { name: 'BELLIGERENT VISITOR', sheet: 'visitor', hp: 110, speed: 44, depth: 26, reach: 34, score: 800, atk: 'punch', cd: [1.4, 2.2], armor: 3, ko: ['I want the manager... zzz', 'Visiting hours are over.'], voice: 'voice3', big: true },
 };
 export const VARIANTS = {};  // v0.2: looks are randomized at runtime instead (src/enemy.js lookFor)
@@ -122,11 +128,12 @@ export const BREAKABLES = {
 };
 // what a smashed prop coughs up (one roll per break, on top of any authored drops). Odds are per break.
 export const LOOT = {
-  cart: [['energy', 0.28], ['snacks', 0.12], ['donut', 0.14], ['star', 0.1], ['w:mop', 0.05], ['w:bedpan', 0.05], ['w:clipboard', 0.04], ['w:extinguisher', 0.02], ['zynn', 0.025]],
-  linen: [['energy', 0.18], ['snacks', 0.06], ['donut', 0.08], ['star', 0.06], ['w:bedpan', 0.08], ['w:mop', 0.03], ['zynn', 0.015]],
-  trash: [['energy', 0.14], ['snacks', 0.05], ['donut', 0.12], ['star', 0.05], ['w:bedpan', 0.04], ['w:clipboard', 0.03], ['zynn', 0.01]],
-  small: [['energy', 0.16], ['snacks', 0.05], ['donut', 0.09], ['star', 0.06], ['w:mop', 0.03], ['w:bedpan', 0.02], ['zynn', 0.01]],
-  vending: [['snacks', 0.4], ['energy', 0.4], ['star', 0.15], ['zynn', 0.03]],
+  patient: [['snapstix', 0.06], ['pizza', 0.04]],  // v0.6: rolled when a patient (with no drop of their own) naps
+  cart: [['pizza', 0.05], ['snapstix', 0.05], ['energy', 0.22], ['snacks', 0.12], ['donut', 0.14], ['star', 0.1], ['w:mop', 0.05], ['w:bedpan', 0.05], ['w:clipboard', 0.04], ['w:extinguisher', 0.02], ['zynn', 0.025]],
+  linen: [['pizza', 0.05], ['snapstix', 0.06], ['energy', 0.16], ['snacks', 0.06], ['donut', 0.08], ['star', 0.06], ['w:bedpan', 0.08], ['w:mop', 0.03], ['zynn', 0.015]],
+  trash: [['pizza', 0.1], ['snapstix', 0.05], ['energy', 0.12], ['snacks', 0.05], ['donut', 0.12], ['star', 0.05], ['w:bedpan', 0.04], ['w:clipboard', 0.03], ['zynn', 0.01]],
+  small: [['pizza', 0.04], ['snapstix', 0.06], ['energy', 0.14], ['snacks', 0.05], ['donut', 0.09], ['star', 0.06], ['w:mop', 0.03], ['w:bedpan', 0.02], ['zynn', 0.01]],
+  vending: [['snacks', 0.35], ['energy', 0.3], ['snapstix', 0.15], ['star', 0.15], ['zynn', 0.03]],
 };
 
 // ---- Level 1: Floor 3 West, Med-Surg. x in world pixels. Doors / elevators are wall features enemies can come out of.

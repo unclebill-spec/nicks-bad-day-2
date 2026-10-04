@@ -13,14 +13,15 @@ import { HEROES, HERO_ORDER, LEVEL1, LEVELS, DIFF } from './data.js';
 import { dropItem } from './world.js';
 import { W, buildLevel, drawBackground, updateWorld, updateCamera, drawProp, drawItem, drawShot, drawFx, offY, floatText, makeProp, hitProp, rollLoot, drawLighting, word } from './world.js';
 import { Director, spawn } from './stage.js';
-import { Hero, drawTeamBack, drawTeamFront } from './hero.js';
+import { Hero, drawTeamBack, drawTeamFront, TIER } from './hero.js';
+import { ALARM, drawStations, drawWetFloor, drawAlarmFront, maybeYeller, pullAlarm, stationFor, alarmAllowed } from './alarm.js';
 import { drawHUD } from './hud.js';
 import { makeCut, updateCut, drawCut } from './cutscene.js';
 import { B as BONUS_STATE, buildBreakroom, startBonus, updateBonus, drawBonusHUD, bonusRows } from './bonus.js';
 
 // ------------------------------------------------------------------ save
 const SAVE_KEY = 'nbd2.save';
-const DEF = { hi: [], best: 0, plays: 0, settings: { music: 0.6, sfx: 0.8, diff: 'normal', cont: 3, shake: true, touch: 'auto' } };
+const DEF = { hi: [], best: 0, plays: 0, settings: { music: 0.6, sfx: 0.8, diff: 'normal', cont: 3, shake: true, touch: 'auto', flash: 'full' } };
 function loadSave() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s) return { ...DEF, ...s, settings: { ...DEF.settings, ...(s.settings || {}) } }; } catch (e) { /* private mode */ } return JSON.parse(JSON.stringify(DEF)); }
 export const save = loadSave();
 function writeSave() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* private mode */ } }
@@ -61,6 +62,7 @@ function settingsMenu(back) {
     { label: 'CONTINUES', ...cyc('cont', [3, 5, 99], ['3', '5', 'FREE PLAY']) },
     { label: 'SCREEN SHAKE', value: () => onoff(st.shake), act: () => { st.shake = !st.shake; writeSave(); applySettings(); }, left: () => { st.shake = !st.shake; writeSave(); applySettings(); }, right: () => { st.shake = !st.shake; writeSave(); applySettings(); } },
     { label: 'TOUCH BUTTONS', ...cyc('touch', ['auto', 'on', 'off'], ['AUTO', 'ON', 'OFF']) },
+    { label: 'FLASHING', ...cyc('flash', ['full', 'reduced'], ['FULL', 'REDUCED']) },  // v0.6: photosensitivity (fire-alarm strobe + screen flashes)
     { label: 'RESET SAVE', value: () => (game.confirmReset ? 'SURE? OK AGAIN' : ''), act: () => { if (game.confirmReset) { save.hi = []; save.best = 0; writeSave(); game.confirmReset = false; game.toast('Save data cleared'); } else game.confirmReset = true; } },
     { label: 'BACK', act: back },
   ], { back, w: 260 });
@@ -72,7 +74,7 @@ function setRes(d) {
   else if (before === 'retro' && now !== 'retro' && prevAspect) { display.set('aspect', prevAspect); prevAspect = null; }
 }
 function applySettings() {
-  const st = save.settings; W.shakeOn = st.shake; W.diff = DIFF[st.diff] || DIFF.normal;
+  const st = save.settings; W.shakeOn = st.shake; W.diff = DIFF[st.diff] || DIFF.normal; W.reducedFlash = st.flash === 'reduced';
   document.documentElement.dataset.touchui = st.touch;
 }
 function helpMenu(back) {
@@ -136,16 +138,17 @@ function drawHelp(m) {
     ['ATTACK', 'J (Z)', 'X / []', 'HIT'],
     ['JUMP', 'K/SPACE (X)', 'A / X', 'JUMP'],
     ['SPECIAL', 'L (C)', 'Y / /\\', 'SP'],
-    ['GRAB/PICK', 'H (V)', 'B / O', 'GRAB'],
+    ['GRAB/LIFT', 'H (V)', 'B / O', 'GRAB'],
     ['RUN', '2-TAP / SHIFT', 'RB / 2-TAP', '2-FLICK'],
     ['BACK ATK', 'ATK+JUMP', 'ATK+JUMP', 'HIT+JUMP'],
     ['PAUSE', 'ENTER/ESC', 'START', 'II'],
   ];
   const cw = (w - 16) / 4;
   L.forEach((r, i) => r.forEach((c, j) => text(c, x + 8 + j * cw, y + 20 + i * 11, { col: i === 0 ? '#8ad8ff' : j === 0 ? '#ffe84a' : '#ffffff', scale: 1 })));
-  const tips = ['RUN + ATTACK = DASH ATTACK.  JUMP + ATTACK = KICK.', 'WALK INTO A PATIENT TO GRAB. ATTACK = KNEE,', 'JUMP/GRAB = THROW. GRAB ON A WEAPON PICKS IT UP.', 'SP COSTS A LITTLE HEALTH. FULL METER = CODE BLUE!',
-    'GURNEY: GRAB OR ATK+JUMP (TOUCH: RIDE) = RIDE IT', '2P: BOTH HOLD SP, CLOSE TOGETHER = CHARGE NURSE!', '2P ON ONE KEYBOARD: P1 WASD+HJKL, P2 ARROWS+,./M'];
-  tips.forEach((s, i) => text(s, x + 8, y + 122 + i * 10, { col: '#c8d4f0', scale: 1 }));
+  const tips = ['RUN + ATTACK = DASH ATTACK.  JUMP + ATTACK = KICK.', 'WALK INTO A PATIENT = GRAB (ATK KNEE, GRAB THROW).', 'GRAB/ATK AT A SMALL PROP = PICK UP. ATK = THROW IT!',
+    'SP: 1/3 METER = ATIVAN JAB. FULL = DEFIB PADDLES!', 'EMPTY METER: SP = SPECIAL (COSTS A LITTLE HEALTH).', 'GRAB A GURNEY = RIDE. STOP THE FIRE ALARM YELLER!',
+    '2P: BOTH HOLD SP CLOSE TOGETHER = CHARGE NURSE!', '2P ON ONE KEYBOARD: P1 WASD+HJKL, P2 ARROWS+,./M'];
+  tips.forEach((s, i) => text(s, x + 8, y + 118 + i * 9, { col: '#c8d4f0', scale: 1 }));
   m.rects = [[x, y + h - 18, w, 16]];
   text('> BACK', VW / 2, y + h - 14, { col: '#ffe84a', align: 'center' });
 }
@@ -192,6 +195,7 @@ function afterTally() {
 function loadLevel(idx, zone = 0) {
   const lv = LEVELS[idx];
   W.enemies = []; W.boss = null; W.shots = []; W.fx = []; W.items = []; W.decor = []; W.t = 0; W.finalT = 0; W.vc = 0; W.bgHook = null; W.team = null;
+  W.forceYeller = !!Q.get('yeller'); W.noAlarm = !!Q.get('noalarm');
   buildLevel(lv); Director.reset(); W.camX = 0; W.camMin = 0; W.clock = lv.clock || 7 * 60; W.stats.time = 0;
   if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else W.nightBg = W.bg;
   W.heroes.forEach((h, i) => {
@@ -362,6 +366,7 @@ function drawWorld() {
   const sx = W.shakeAmt > 0 ? Math.round((Math.random() - 0.5) * W.shakeAmt) : 0, sy = W.shakeAmt > 0 ? Math.round((Math.random() - 0.5) * W.shakeAmt) : 0;
   c.save(); c.translate(sx, sy);
   drawBackground();
+  drawStations(G.VH - 224); drawWetFloor(G.VH - 224);  // v0.6 fire-alarm pull stations + wet-floor sheen
   drawTeamBack();
   const list = [];
   for (const p of W.props) list.push({ y: p.y - 2, d: () => drawProp(p) });
@@ -380,7 +385,8 @@ function drawWorld() {
   // v0.6 lift hint: PICK UP over the prop a nurse would lift with GRAB
   for (const h of W.heroes) { if (h.carry || grabContext(h) !== 'PICK UP') continue; const p = h.liftTarget(); if (p && Math.floor(W.t * 3) % 2) text('PICK UP', p.x - W.camX, p.y + offY() - (p.def.h || 24) - 12, { col: '#8ae87a', align: 'center' }); }
   c.restore();
-  if (W.flash > 0) rect(0, 0, G.VW, G.VH, W.flashCol, Math.min(0.75, W.flash * 0.8));
+  drawAlarmFront(W.reducedFlash);
+  if (W.flash > 0) rect(0, 0, G.VW, G.VH, W.flashCol, Math.min(W.reducedFlash ? 0.22 : 0.75, W.flash * (W.reducedFlash ? 0.3 : 0.8)));
   drawTeamFront();
 }
 // v0.5 light sources that move: nurses' flashlights on the night shift (a little glow around them on Radiology), the MRI
@@ -419,7 +425,15 @@ function grabContext(h) {
   if (h.nearGurney()) return 'RIDE';
   return h.canLift() ? 'PICK UP' : 'GRAB';
 }
+let spLabel = 'SP';
+function updateSpLabel() {  // v0.6: the touch SP button shows what SP will do right now
+  const h = W.heroes[0], play = game.scene === 'play' || game.scene === 'bonus';
+  const want = !play || !h ? 'SP' : h.meter >= 100 ? 'CODE BLUE' : h.meter >= TIER - 0.01 ? 'ATIVAN' : 'SP';
+  if (want === spLabel) return; spLabel = want;
+  const b = document.getElementById('b_sp'); if (b) { b.textContent = want === 'CODE BLUE' ? 'CODE\nBLUE' : want; b.dataset.ctx = want; b.classList.toggle('ctx', want !== 'SP'); b.classList.toggle('full', want === 'CODE BLUE'); }
+}
 function updateRideLabel() {
+  updateSpLabel();
   const want = grabContext(W.heroes[0]);
   if (want === rideLabel) return; rideLabel = want;
   const b = document.getElementById('b_grab'); if (b) { b.textContent = want === 'PICK UP' ? 'PICK\nUP' : want; b.classList.toggle('ctx', want !== 'GRAB'); b.classList.toggle('thr', want === 'THROW'); b.dataset.ctx = want; }
@@ -675,7 +689,7 @@ async function boot() {
   requestAnimationFrame(frameLoop);
   // test hooks
   window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, Director, display,
-    cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext };
+    cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext, ALARM, maybeYeller, pullAlarm, stationFor, alarmAllowed, settingsMenu, applySettings };
   if (Q.get('autostart') || Q.get('zone') || Q.get('level')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } }
 }
 boot().catch((e) => { const t = document.getElementById('loadtxt'); if (t) t.textContent = 'Could not load: ' + e.message; console.error(e); });

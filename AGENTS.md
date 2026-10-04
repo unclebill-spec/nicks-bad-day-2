@@ -8,7 +8,13 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-03, v0.5)
+## Current state (2026-10-03, v0.6)
+- **v0.6 additions:**
+  - **Carry/throw props:** `carry: true` in `BREAKABLES` (data.js). Hero `lift`/`carry`/`toss` states in hero.js, flight physics `flyProp`/`landProp` and `THROW` in world.js. Priority: patient grab > gurney > weapon > lift > throw weapon.
+  - **Turbo Tilly** at 1.8x (`SC` in tools/boss.py, constants at the top of src/boss.js).
+  - **Meter tiers:** `TIER = 100/3` in hero.js. `soloSpecial()`: full = `codeBlue()` (defib, shot kind `'defib'` in stage.js `shots()`), >= TIER = `ativan()`, else the special. Enemy `sleepT`, `'zapped'` state and skeleton flash in enemy.js; bosses use `stagT` (frozen while > 0).
+  - **Food:** `pizza` and `snapstix` in `ITEMS`/`LOOT` (plus `LOOT.patient` for KO drops).
+  - **Fire Alarm Yeller (`src/alarm.js`):** `ALARM` tuning, wall stations, `maybeYeller()` on wave start, `pullAlarm()`, `updateAlarm()` (rain, wet floor, extra wave, `alarmPending()` blocks zone clear), drawing. Enemy kind `yeller` (ai `yeller`). `?yeller=1` forces one every wave (still capped), `?noalarm=1` turns it off. Settings `flash: 'full'|'reduced'` (`W.reducedFlash`).
 - **A full shift is playable, start to finish:** Level 1 "Floor 3: Med-Surg" (Turbo Tilly) → Breakroom Bonus → comic cutscene →
   Level 2 "Floor 4: Radiology" (Lead-Apron Lou mini-boss, MAGNA-SCAN 3000 MRI boss) → cutscene → Level 3 "Night Shift" → ending
   cutscene → THE END screen → high scores. Score, lives, meter, continues used and 2P carry from floor to floor (`loadLevel(idx)` in main.js).
@@ -111,6 +117,7 @@ Debug query params:
 - `?bot=1` lets a simple bot drive P1 (used for tests and GIFs).
 - `?nocut=1` skips the cutscenes, and `&cuts=1` forces them back on for autostart/zone URLs.
 - `?autostart=1&scene=bonus` jumps straight to the Breakroom Bonus.
+- `?yeller=1` forces a Fire Alarm Yeller into every wave (still capped at 2 per floor); `?noalarm=1` disables the event.
 
 Tests (Playwright + Chromium; the server must be running):
 ```bash
@@ -125,22 +132,23 @@ python3 tests/props.py      # v0.3 breakables: roll/plow/bounce/break, every kin
 python3 tests/v04.py        # v0.4: new patients, gurney (keys/pad/touch), 2P team-up + fallbacks, cutscenes + skips, bonus round + tally + flow
 python3 tests/v05.py        # v0.5: Radiology, Lou, MRI (pull/yank/vent/waves/table/phase 2), night shift lights, full flow + cutscenes, 2P carry/continue, pad, touch, bot playthroughs
 python3 tests/v05.py C D    # sections: A radiology, B Lou, C MRI, D night, E flow, F 2P/pad/touch, G bot playthrough (~4 min)
+python3 tests/v06.py        # v0.6: A carry/throw, B priorities, C directions/trays/magnet, D touch/pad/2P, E big Tilly, F meter tiers, G food, H fire alarm
 python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
 python3 tests/shots.py "autostart=1&bot=1&god=1" 240 full 1280 720 6   # whole level with the bot
 python3 tests/video.py      # webm clips for the GIF (ffmpeg converts)
 ```
-Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `docs/gameplay.gif`, `docs/props.gif`, `docs/v04_patients.gif`, `docs/v04_gurney_teamup.gif`, `docs/v05_radiology.gif`, `docs/v05_mri.gif` and `docs/v05_night.png` are committed copies.
+Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `docs/gameplay.gif`, `docs/props.gif`, `docs/v04_patients.gif`, `docs/v04_gurney_teamup.gif`, `docs/v05_radiology.gif`, `docs/v05_mri.gif`, `docs/v05_night.png` and the `docs/v06_*` GIFs and food images are committed copies.
 
 ## Rebuilding art and audio
 - Patient looks: `tools/chars.py` has `GOWN`, `GOWN_OLIVE`, `SOCK`, `SOCK_ELITE` and `HAIRS`. `make_art.py` writes them to `atlas.json`
   (`chars.<patient>.pal` and `palettes`), and the game swaps those exact colors per spawn (a pool of 6 looks per type).
   If you add a patient, give it `**gown` and `**socks`, and add it to `PATIENTS` in `make_art.py`.
 - `python3 tools/make_art.py` rewrites `art/*.png`, `art/atlas.json`, the font and the icons.
-  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
+  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art, and `tools/v06_art.py` the v0.6 art (pizza, SNAP STIX, Ativan syringe, skeleton, fire-alarm station; the `yeller` patient is in chars.py) (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
   - It uses vendored copies of Master Builder's Gravewake `sprite_writer`/`pixel_writer` and brileta-sprites (plants, via node).
   - Never edit `/workspace/gravewake` itself. It belongs to another bot.
-- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared).
+- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, snap, defib, crackle, clear, alarm, yell, sprinkler, stink).
 - `python3 tools/make_audio.py` rewrites `audio/music/*.mp3` (with loop points in `music.json`) and `audio/sfx/*.wav`, using the N64 suite in `/workspace/n64-suite` (music.compose with the chiptune fallback, sfx.make, babble).
 - All art is original. There are no copyrighted characters or sprites.
 
@@ -156,12 +164,13 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/data.js` | heroes, attacks, weapons, items, enemies, difficulty, `LEVEL1`/`LEVEL2`/`LEVEL3` layouts + zones/waves, `LEVELS` |
 | `src/world.js` | world state `W`, background pre-render (per-level tiles), doors/elevators, props/items/shots/fx, camera (no scrolling back), v0.5 lights + `drawLighting()` |
 | `src/actor.js`, `src/hero.js`, `src/enemy.js`, `src/boss.js` | actor base + `strike()` hit logic, hero state machine, patient AI, Turbo Tilly |
+| `src/alarm.js` | v0.6 Fire Alarm Yeller event: stations, caps, pull, sprinklers/wet floor, enrage, extra wave, strobe / reduced pulse |
 | `src/mri.js` | v0.5 Floor 4 bosses: `MRI` (MAGNA-SCAN 3000) and `Lou` (mini-boss) |
 | `src/stage.js` | Director: zone triggers, camera locks, wave queue with cap, GO arrow, boss start/backup, projectiles |
 | `src/hud.js` | portraits, HP/meter (half-meter team tick), lives, score, combo, last-hit foe bar, boss bar, toasts, continue prompts |
 | `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
 | `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
-| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v8: **bump N on every release**) |
+| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v9: **bump N on every release**) |
 
 ## Bill's standing preferences
 - Brief, plain replies, with times in ET. He often uses voice-to-text, so read his messages generously.
@@ -177,7 +186,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 - Tested on emulated phones (Chromium, Pixel-size landscape) and desktop Chromium with a mocked gamepad. It has not been tested on real iPhone or Android hardware yet.
 - The heroes' skin tones and hair styles were guessed from Bill's short descriptions (they may be real coworkers). They are easy to change in `tools/chars.py` `bodies()`, followed by `python3 tools/make_art.py`.
 - Three floors exist (Med-Surg, Radiology, Night Shift) plus the Breakroom Bonus. The ending says "SEE YOU NEXT SHIFT...".
-- Turbo Tilly (Level 1 boss, from before Bill's size rule) is about 1.6x a nurse's height (3.3x area); she was not resized in v0.5.
+- Turbo Tilly was resized in v0.6: 6x a nurse's width, about 10x her area, 2.8x her height (the 224 px screen limits height).
 - The MRI meets the 5x rule by area/width, not height (the screen is only 224 px tall). Lou is 2.2x height.
 - Balance is first-pass: Tilly has 420 HP, the MRI 560, Lou 300 (x1.35 in 2P) and patient damage scales by difficulty in `DIFF`. The elite waves make zones 2–4 noticeably harder.
 - The gown check pattern is drawn on a fixed pixel grid, so it doesn't move with the body. It shimmers very slightly during animation.
@@ -185,7 +194,6 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 
 ## Next steps
 1. Bill plays on his phone and gives feedback on feel, difficulty and hero looks.
-2. **Size rule from Bill:** bosses **at least 5x the player's size**, mini-bosses **2–3x** (applied to the v0.5 MRI and Lou).
-   Turbo Tilly could be scaled up to match.
+2. **Size rule from Bill:** bosses **at least 5x the player's size**, mini-bosses **2–3x** (applied to Tilly, the MRI and Lou).
 3. Character voice barks, plus an attract-mode demo on the title screen using the bot.
 4. More stages per the spec: lobby/ER, ICU, cafeteria, roof helipad.

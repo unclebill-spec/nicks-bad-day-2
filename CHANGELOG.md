@@ -2,6 +2,33 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-03: v0.6 "Hands Full" (Bill's v0.6 list: throwable props, a bigger Tilly, meter tiers, new food, the Fire Alarm Yeller)
+- **Pick up and throw props (Golden Axe / TMNT style).**
+  - GRAB (or ATK when no patient is in reach) lifts small and medium props overhead: chairs, trash cans, plants, IV stands, wheelchairs, O2 tanks, linen and med carts, apron racks, film viewers, wet-floor signs and new loose meal trays.
+  - Carrying is slower (0.74x, no running). ATK throws forward, up/down + ATK throws on a diagonal, ATK+JUMP throws backward, and you can jump-throw.
+  - A thrown prop bowls over every patient in its path and breaks on impact. Getting hit makes you drop it, and the MRI magnet yanks carried metal props away.
+  - Crash carts, supply carts, gurneys and vending machines stay kick-only.
+  - The touch GRAB button relabels itself: GRAB / RIDE / PICK UP / THROW. Works on keyboard, gamepad and 2P.
+- **Turbo Tilly is now a real boss (Bill's 5x rule):** redrawn at 1.8x (6x a nurse's width, about 10x her area, 2.8x her height).
+  - Bigger, readable charge lane (flashes, then goes solid 0.4 s before she goes; red in phase 2), scaled hitboxes and honk ring, and a "HIT THE BATTERY!" hint.
+- **Code Blue meter tiers** (notches at 1/3 and 2/3 on the HUD meter; the touch SP button reads SP / ATIVAN / CODE BLUE):
+  - **1/3 meter: "IT'S TIME FOR SOME ATIVAN!"** Speech bubble, voice and a syringe jab on the nearest patient in front. Heavy damage, and the patient falls asleep (zzz), then wakes up woozy. Bosses and mini-bosses take damage plus a short stagger ("WOOZY...").
+  - **Full meter: defib paddles.** CLEAR!, then crackling lightning bolts down the hall in the direction you face only. Patients get the electrified skeleton-flash knockdown; bosses take a chunk of damage plus a stagger.
+  - Under 1/3 meter SP is still the regular special (costs a little health). The 2P Charge Nurse team-up is unchanged.
+- **New food:**
+  - **Three-day-old pizza:** a slightly green slice with stink lines. Mid heal (45).
+  - **SNAP STIX meat stick:** a parody wrapper (like the ZYNN tin). Small-to-mid heal (30), with a "snap" pickup sound.
+  - Both are in the prop drop tables (carts, linen, trash, small props; SNAP STIX in vending) and the new patient KO drop table.
+- **Fire Alarm Yeller (any floor: Med-Surg, Radiology, Night Shift and future floors).**
+  - Red pull stations hang on the walls. Now and then a yelling patient ("FIRE! FIRE!") sprints to one and reaches up for 1.6 s with a big flashing "!" and a progress bar. Knock him down to stop it; knocked down, he has to start over.
+  - **If he pulls it:** the alarm blares, the screen strobes red/white (2.5 flashes/s), the sprinklers rain on everything, the floor gets a wet sheen and slippery puddles, every patient on screen gets ENRAGED (red tint, steam, faster, 1.35x harder hits) for 14 s, and an extra wave of 4 pours out of the doors and elevators.
+  - Afterwards the sprinklers stop and the floor stays wet for about 12 s.
+  - **Limits:** at most 2 alarms per floor, at least 60 s apart, never in boss or mini-boss zones (it shuts off if a boss starts), and the zone can't clear until the extra wave is in, so camera locks can't softlock.
+  - **Settings > FLASHING: FULL / REDUCED** (photosensitivity). REDUCED swaps the strobe for a soft red edge pulse and also tones down the other screen flashes.
+- How-to-play page updated (lifting, meter tiers, the Yeller). New SFX: ativan, snap, defib, crackle, clear, alarm, yell, sprinkler, stink.
+- Tests: new `tests/v06.py` (A carry/throw, B priorities, C directions/trays/magnet, D touch/pad/2P, E Tilly, F meter tiers, G food, H fire alarm). Every suite passes with no console errors.
+- PWA cache bumped to `nbd2-app-v9`.
+
 ## 2026-10-03: v0.5 "Hold Still, Please" (Bill's last suggestions: Radiology, the MRI boss, the night shift)
 - **A whole shift is now playable from start to finish.** Floor 3 Med-Surg (Turbo Tilly) → Breakroom Bonus → comic cutscene → **Floor 4: Radiology** → cutscene → **Night Shift** → ending cutscene → **THE END** → high scores.
   - Score, lives, meter, continues used and 2P all carry from floor to floor. Each floor's tally total becomes your score, and the ON TIME bonus is now measured from that floor's own clock.

@@ -4,12 +4,15 @@
 // (both hold SP near each other with half a meter each: a screen-clearing combined move).
 // v0.6: lift small / medium props overhead (GRAB, or ATK when no patient is in reach) and throw them (ATK or GRAB; hold
 // up / down to throw along the floor's depth, ATK+JUMP throws backward, jump + ATK is a jump-throw). Getting hit drops it.
+// v0.6 meter tiers: SP with 1/3 meter = "It's time for some Ativan!" (syringe jab: sleepy knockdown, heavy damage), SP with a
+// full meter = Code Blue defib paddles (CLEAR!, then lightning bolts forward in the facing direction only).
 import { G, frame, spr, sprSize, ellipse, text, rect, ring } from './gfx.js';
 import { HEROES, ATTACKS, WEAPONS, Y_MIN, Y_MAX } from './data.js';
 import { W, offY, dropItem, addShot, addFx, word, floatText, shake, spark, addScore, smashProp, hitProp, bumpProps, THROW, propSprite } from './world.js';
 import { Actor, strike, clampY } from './actor.js';
 import { sfx } from './sound.js';
 
+export const TIER = 100 / 3;  // v0.6 Code Blue meter tiers: 1/3 = Ativan jab, full = defib super
 const CARRY_OK = new Set(['idle', 'walk', 'jump', 'land', 'lift', 'toss']);  // states a nurse can hold a prop overhead in
 
 export class Hero extends Actor {
@@ -20,7 +23,7 @@ export class Hero extends Actor {
     this.weapon = null; this.held = null; this.step = 0; this.gap = 9; this.buf = null; this.bufT = 0; this.speedT = 0; this.mash = 0; this.respawnT = 0; this.ctl = null;
     this.h = id === 'kim' || id === 'will' ? 48 : 54; this.w = id === 'will' ? 18 : 14;
   }
-  hittable() { return this.inv <= 0 && !['fall', 'down', 'getup', 'dead', 'super', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup'].includes(this.st); }
+  hittable() { return this.inv <= 0 && !['fall', 'down', 'getup', 'dead', 'super', 'ativan', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup'].includes(this.st); }
   canAct() { return ['idle', 'walk', 'run'].includes(this.st); }
   set(st) { super.set(st); if (this.carry && !CARRY_OK.has(st)) this.releaseProp(false, st === 'win' || st === 'enter' || st === 'teamup'); }  // any hit / grab / KO drops the prop
   get spd() { return this.speedT > 0 ? 1.4 : 1; }
@@ -30,7 +33,7 @@ export class Hero extends Actor {
     if (this.held) this.release();
     if (this.carry) this.releaseProp(false);
     if (this.grabber) this.grabber = null;
-    const d = dmg * W.diff.dmg;
+    const d = dmg * W.diff.dmg * (from && from.rageT > W.t ? 1.35 : 1);  // enraged patients (fire alarm) hit harder
     this.hp -= d; this.flash = 0.12; this.meter = Math.min(100, this.meter + d * 0.35); this.combo = 0;
     sfx('hurt', { vol: 0.55 });
     if (this.hp <= 0) { this.hp = 0; this.knock(dir, 150, 220); floatText(['OUCH!', 'MY BACK!', 'NOT TODAY!'][Math.floor(W.rnd() * 3)], this.x, this.y, 64, '#ff8ac0'); return; }
@@ -301,7 +304,7 @@ export class Hero extends Actor {
         if (d.heal) this.hp = Math.min(this.maxHp, this.hp + d.heal);
         if (d.speed) this.speedT = d.speed;
         if (d.life) this.lives += d.life;
-        this.score += d.score; floatText(d.msg, this.x, this.y, 60, d.heal ? '#8ae87a' : '#ffe84a'); sfx(d.life ? 'powerup' : 'coin');
+        this.score += d.score; floatText(d.msg, this.x, this.y, 60, d.heal ? '#8ae87a' : '#ffe84a'); sfx(d.sfx || (d.life ? 'powerup' : 'coin'), { vol: d.sfx ? 0.9 : 1 }); if (d.sfx) sfx('coin', { vol: 0.4 });
       }
     }
   }
@@ -410,6 +413,7 @@ export class Hero extends Actor {
   }
   soloSpecial() {
     if (this.meter >= 100) return this.codeBlue();
+    if (this.meter >= TIER - 0.01) return this.ativan();
     if (this.hp <= 1) { floatText('TOO TIRED!', this.x, this.y, 60, '#ff8ac0'); return; }
     this.hp = Math.max(1, this.hp - 8); this.set('special'); this.spDone = false; this.hitSet = new Set(); this.inv = Math.max(this.inv, 0.4);
     floatText(this.d.special + '!', this.x, this.y, 70, '#8ad8ff');
@@ -435,19 +439,62 @@ export class Hero extends Actor {
       if (this.t > 0.5) this.set('idle');
     }
   }
+  // ---- v0.6 tier 1: the Ativan jab
+  jabTarget(range) {  // nearest patient (or boss) in front, within range
+    let best = null, bd = 1e9;
+    for (const e of [...W.enemies, ...(W.boss ? [W.boss] : [])]) {
+      if (!e.alive || e.st === 'dead' || !e.hittable || !e.hittable()) continue;
+      if (!e.depthAny && Math.abs(e.y - this.y) > 16 + (e.big ? 6 : 0)) continue;
+      const dx = (e.depthAny ? (e.front ?? e.x) - this.x : e.x - this.x) * this.face - (e.isBoss && !e.depthAny ? e.w / 2 : 0);
+      if (dx < -8 || dx > range) continue;
+      if (dx < bd) { bd = dx; best = e; }
+    }
+    return best;
+  }
+  ativan() {
+    this.meter = Math.max(0, this.meter - TIER); this.set('ativan'); this.spDone = false; this.inv = Math.max(this.inv, 0.5);
+    this.shoutT = W.t + 1.7; this.jabT = this.jabTarget(80);
+    sfx('ativan', { vol: 0.85 }); W.stats.ativan = (W.stats.ativan || 0) + 1;
+  }
+  s_ativan(dt) {
+    const e = this.jabT;
+    if (this.t > 0.16 && this.t < 0.42 && e && e.alive) {  // lunge in to reach the target
+      const gap = (e.depthAny ? (e.front ?? e.x) : e.x - this.face * (e.isBoss ? e.w / 2 : 0)) - this.x;
+      if (Math.abs(gap) > 22) this.x += Math.sign(gap) * Math.min(Math.abs(gap) - 22, 230 * dt);
+      if (!e.depthAny) this.y += Math.sign(e.y - this.y) * Math.min(Math.abs(e.y - this.y), 60 * dt);
+    }
+    if (!this.spDone && this.t > 0.42) {
+      this.spDone = true;
+      const t = this.jabTarget(40);
+      if (!t) { floatText('MISSED!', this.x, this.y, 60, '#8ad8ff'); sfx('whoosh', { vol: 0.4 }); }
+      else if (t.isBoss) {  // bosses / mini-bosses: damage + a short stagger
+        t.takeHit({ dmg: 34 * this.d.power, dir: this.face, kb: 0, from: this, force: true }); t.stagT = 0.8; t.flash = 0.3;
+        floatText('WOOZY...', t.x, t.y, 90, '#c8a0ff'); sfx('punch1'); spark(this.x + this.face * 22, this.y, 34, 'bigspark'); shake(4); W.stop = 0.08;
+      } else {
+        const big = 36 * this.d.power, dmg = t.hp > 16 ? Math.min(big, t.hp - 4) : big;  // heavy, but leaves most of them snoozing for free hits
+        t.takeHit({ dmg, dir: this.face, kb: 90, down: true, from: this, force: true });
+        if (t.alive && t.hp > 0) { t.sleepT = W.t + 2.6; t.zzzT = 0; }
+        floatText('NIGHTY NIGHT!', t.x, t.y, 70, '#c8a0ff'); sfx('punch1'); spark(t.x, t.y, 30, 'bigspark'); addFx({ type: 'zzz', x: t.x, y: t.y, z: 40, dur: 1.4 }); shake(3); W.stop = 0.07;
+        addScore(this, 400); this.combo = (this.combo || 0) + 1; this.comboT = 1.6; this.maxCombo = Math.max(this.maxCombo, this.combo);
+      }
+    }
+    if (this.t > 0.7) this.set('idle');
+  }
+  // ---- v0.6 full meter: Code Blue defib paddles. Charge .. CLEAR! .. lightning forward (facing direction only)
   codeBlue() {
-    this.meter = 0; this.set('super'); this.inv = 1.4; W.stop = 0.25; W.flash = 1; W.flashCol = '#3a7aff';
-    sfx('page'); word('w_codeblue', W.camX + G.VW / 2, 110, 40); floatText('CODE BLUE, FLOOR 3!', W.camX + G.VW / 2, 120, 30, '#c8f0ff');
-    W.codeBlue = { t: 0, by: this };
+    this.meter = 0; this.set('super'); this.inv = 1.6; W.stop = 0.2; W.flash = 0.8; W.flashCol = '#3a7aff'; this.spDone = false; this.cleared = false;
+    sfx('page'); sfx('defib', { vol: 0.9 }); word('w_codeblue', W.camX + G.VW / 2, 110, 40); floatText('CODE BLUE! PADDLES!', this.x, this.y, 132, '#c8f0ff');
+    W.codeBlue = { t: 0, by: this }; W.stats.supers = (W.stats.supers || 0) + 1;
   }
   s_super(dt) {
-    if (this.t > 0.55 && !this.spDone) {
-      this.spDone = true; shake(8); sfx('zap'); sfx('explosion');
-      for (const e of W.enemies) if (e.alive && e.x > W.camX - 10 && e.x < W.camX + G.VW + 10 && e.st !== 'dead') { e.takeHit({ dmg: 60, dir: Math.sign(e.x - this.x) || 1, kb: 160, down: true, from: this, force: true }); addFx({ type: 'spark', kind: 'bluespark', x: e.x, y: e.y, z: 30, dur: 0.3 }); }
-      if (W.boss && W.boss.alive) W.boss.takeHit({ dmg: W.boss.maxHp * 0.12, dir: 1, from: this, force: true });
-      addScore(this, 1000);
+    if (!this.cleared && this.t > 0.34) { this.cleared = true; word('w_clear', this.x + this.face * 10, this.y, 62); sfx('clear', { vol: 0.9 }); W.flash = Math.max(W.flash, 0.3); W.flashCol = '#c8f0ff'; }
+    if (Math.floor(this.t * 20) % 3 === 0 && this.t < 0.62) addFx({ type: 'spark', kind: 'bluespark', x: this.x + this.face * 12, y: this.y, z: 30 + W.rnd() * 14, dur: 0.12 });
+    if (this.t > 0.62 && !this.spDone) {
+      this.spDone = true; shake(8); sfx('crackle', { vol: 0.9 }); sfx('zap');
+      addShot({ kind: 'defib', x: this.x + this.face * 18, y: this.y, z: 30, dir: this.face, reach: 0, owner: this, life: 0.8, seed: Math.floor(W.rnd() * 999) });
+      addScore(this, 500);
     }
-    if (this.t > 1.0) { this.set('idle'); this.spDone = false; W.codeBlue = null; }
+    if (this.t > 1.25) { this.set('idle'); this.spDone = false; W.codeBlue = null; }
   }
   s_grabbed(dt, I) {
     const g = this.grabber; if (!g || g.st !== 'hug') { this.grabber = null; return this.set('idle'); }
@@ -483,7 +530,8 @@ export class Hero extends Actor {
       case 'swing': return ['swing', t < (this.weapon ? this.weapon.w.rate * 0.45 : 0.1) ? 0 : 1];
       case 'spray': return ['spray', 0];
       case 'win': return ['win', Math.floor(W.t * 3)];
-      case 'super': return ['win', 0];
+      case 'super': return ['defib', this.t < 0.34 ? 0 : this.t < 0.62 ? 1 : 2];
+      case 'ativan': return ['jab', this.t < 0.38 ? 0 : 1];
       case 'ride': return this.t < 0.22 ? ['jump', 0] : ['ride', Math.floor(W.t * 8)];
       case 'teamwait': return ['team', 0];
       case 'teamup': return ['team', 0];
@@ -495,6 +543,14 @@ export class Hero extends Actor {
       }
     }
     return ['idle', 0];
+  }
+  drawShout() {  // speech bubble: "It's time for some Ativan!"
+    const X = Math.round(this.x - W.camX), Y = Math.round(this.y + offY() - this.z - this.h - 40), w = 112, h = 22;
+    const bx = Math.max(2, Math.min(G.VW - w - 2, X - w / 2));
+    rect(bx - 1, Y - 1, w + 2, h + 2, '#1a1020'); rect(bx, Y, w, h, '#ffffff');
+    rect(X - 3, Y + h, 6, 3, '#ffffff'); rect(X - 1, Y + h + 3, 3, 3, '#ffffff');
+    text("IT'S TIME FOR", bx + w / 2, Y + 2, { col: '#1a1020', align: 'center', shadow: null });
+    text('SOME ATIVAN!', bx + w / 2, Y + 12, { col: '#7a3ab8', align: 'center', shadow: null });
   }
   drawCarry(name, i) {  // the prop rides on her hands, overhead (it swings up from the floor during the lift)
     const p = this.carry, h = this.handOf(name, i), sn = propSprite(p), [w, ph] = sprSize(sn);
@@ -525,6 +581,11 @@ export class Hero extends Actor {
       spr(w.spr, X, Y, { ax: w.grip[0], ay: w.grip[1], rot: f ? -rot : rot, flip: f });
     }
     if (this.carry && CARRY_OK.has(this.st)) this.drawCarry(name, i);
+    if (this.st === 'ativan') {  // the syringe in her jabbing hand
+      const h = this.handOf(name, i), a = (h[2] ?? 90) * Math.PI / 180, rot = Math.atan2(Math.cos(a), Math.sin(a)), f = this.face < 0;
+      spr('ativan', this.x - W.camX + this.face * h[0], this.y + offY() - this.z + h[1], { ax: 4, ay: 4, rot: f ? -rot : rot, flip: f });
+    }
+    if (this.shoutT > W.t) this.drawShout();
     if (this.st === 'dizzy') spr('dizzy' + (Math.floor(W.t * 8) % 3), this.x - W.camX, this.y + offY() - this.z - this.h - 4, { ax: 11 });
     if (this.st === 'teamwait' && Math.floor(W.t * 6) % 2) text('TEAM UP? HOLD SP!', this.x - W.camX, this.y + offY() - this.h - 26, { col: '#ffe84a', align: 'center' });
     if (this.slot !== undefined && W.heroes.length > 1 && this.st !== 'dead') text(`${this.slot + 1}P`, this.x - W.camX, this.y + offY() - this.z - this.h - 14, { col: this.slot ? '#8ad8ff' : '#ffe84a', align: 'center' });

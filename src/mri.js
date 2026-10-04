@@ -50,7 +50,7 @@ export class MRI extends Actor {
   update(dt) {
     this.t += dt; this.flash = Math.max(0, this.flash - dt); this.cd -= dt; this.callCd -= dt; this.hurtT = Math.max(0, (this.hurtT || 0) - dt);
     this.shown = Math.min(1, this.shown + dt * 0.7);
-    const fn = this['s_' + this.st]; if (fn) fn.call(this, dt);
+    const fn = this['s_' + this.st]; if (this.stagT > 0 && this.st !== 'defeat') { this.stagT -= dt; if (Math.floor(this.stagT * 20) % 3 === 0) addFx({ type: 'spark', kind: 'bluespark', x: this.x + (W.rnd() - 0.5) * (this.w || 40), y: this.y, z: 20 + W.rnd() * 60, dur: 0.12 }); } else if (fn) fn.call(this, dt);  // v0.6: Ativan / defib stagger
     for (const s of W.shots) if (s.kind === 'yank' && s.x >= this.front - 4) { s.life = 0; sfx('clunk', { vol: 0.7 }); word('w_clunk', this.front, s.y, 40); }
     // the machine is solid across the whole floor depth
     for (const h of W.heroes) if (h.alive && h.x > this.front - 10) h.x = this.front - 10;
@@ -227,7 +227,7 @@ export class Lou extends Actor {
   target() { const hs = liveHeroes(); return hs.length ? hs.reduce((a, b) => (Math.abs(a.x - this.x) < Math.abs(b.x - this.x) ? a : b)) : null; }
   update(dt) {
     this.t += dt; this.flash = Math.max(0, this.flash - dt); this.cd -= dt; this.stompCd -= dt; this.shown = Math.min(1, this.shown + dt * 0.8);
-    const fn = this['s_' + this.st]; if (fn) fn.call(this, dt);
+    const fn = this['s_' + this.st]; if (this.stagT > 0 && this.st !== 'defeat') { this.stagT -= dt; if (Math.floor(this.stagT * 20) % 3 === 0) addFx({ type: 'spark', kind: 'bluespark', x: this.x + (W.rnd() - 0.5) * (this.w || 40), y: this.y, z: 20 + W.rnd() * 60, dur: 0.12 }); } else if (fn) fn.call(this, dt);  // v0.6: Ativan / defib stagger
     this.y = clampY(this.y); this.x = Math.max(W.camX + 24, Math.min(W.camX + G.VW - 24, this.x));
     if (!['defeat', 'charge'].includes(this.st)) for (const h of W.heroes) {  // he's big and solid
       if (!h.alive || h.z > 30 || ['dead', 'out', 'fall', 'down'].includes(h.st)) continue;

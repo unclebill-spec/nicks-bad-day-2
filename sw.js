@@ -1,7 +1,7 @@
 // Home-screen app support (n64-suite games). Network first, always: online play never sees a stale file. The small
 // code / data files (html, js, css, json, webmanifest) are kept in a cache only so the app can still open offline.
 // It also gives Chrome the fetch handler it wants before it offers "Install app" (beforeinstallprompt).
-const CACHE = 'nbd2-app-v8';
+const CACHE = 'nbd2-app-v9';
 const SMALL = /\.(?:html|js|css|json|webmanifest)$|\/$/;
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));

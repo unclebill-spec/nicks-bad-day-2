@@ -43,3 +43,6 @@ html[data-res=retro] #stage::after{content:"";position:absolute;inset:0;pointer-
 #n64-tip{background:rgba(8,12,32,.88)!important}
 #n64-tip .card{background:#e8f0ff!important;color:#1a2450!important;border-color:#3a4c92!important}
 #n64-rotate button,#n64-tip button{border-color:#1a2450!important;background:#3a6ad8!important;color:#fff!important}
+#b_sp{white-space:pre-line;line-height:.95}
+#b_sp.ctx{background:#3a7aff;border-color:#c8f0ff}
+#b_sp.full{background:#e8e8ff;color:#0a1430;border-color:#ffe84a;animation:ctxpulse .4s ease-in-out infinite alternate}

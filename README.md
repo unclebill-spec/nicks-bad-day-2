@@ -11,8 +11,8 @@ in her electric wheelchair.
 | Move | WASD / Arrows | Stick or D-pad | Left thumb (floating joystick) |
 | Attack | J / , | X | HIT |
 | Jump | K or Space / . | A | JUMP |
-| Special | L / / | Y | SP |
-| Grab / pick up | H / M | B | GRAB |
+| Special (1/3 meter = Ativan jab, full = defib paddles) | L / / | Y | SP (shows ATIVAN / CODE BLUE) |
+| Grab / lift a prop | H / M | B | GRAB (shows RIDE / PICK UP / THROW) |
 | Run | double-tap or Shift | double-tap or RB | double-flick |
 | Pause | Enter or Esc | Start | Pause button |
 
@@ -20,6 +20,10 @@ Plain HTML5 Canvas, with no build step: serve the folder (`python3 -m http.serve
 and `CHANGELOG.md` for history.
 
 ![screenshots](docs/screenshots.png)
+
+v0.6: carry and throw props, a full-size Turbo Tilly, Ativan / defib meter tiers, and the Fire Alarm Yeller:
+
+![fire alarm](docs/v06_fire_alarm.gif)
 
 ## Credits and licenses
 All characters, art, music and sound in this game are original. Third-party pieces:

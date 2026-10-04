@@ -184,11 +184,11 @@ with sync_playwright() as p:
     # fallback: partner too far -> the normal special
     team_setup(60, 60, 220); pg.keyboard.down('KeyL'); time.sleep(0.15); pg.keyboard.up('KeyL'); time.sleep(0.1)
     st = pg.evaluate("__nbd.W.heroes[0].st"); time.sleep(1.2)
-    check('2P: partner far away -> SP is the normal special', st == 'special' and pg.evaluate("__nbd.W.stats.teamups") == 1, st)
+    check('2P: partner far away -> SP is the solo special (v0.6: Ativan jab at >= 1/3 meter)', st in ('special', 'ativan') and pg.evaluate("__nbd.W.stats.teamups") == 1, st)
     # tap-only (released before the partner joins) -> normal special too, no meter spent
     team_setup(60, 60, 30); key(pg, 'KeyL', 0.05, 0.25)
     st = pg.evaluate("[__nbd.W.heroes[0].st, Math.round(__nbd.W.heroes[0].meter)]"); time.sleep(1.2)
-    check('2P: a quick SP tap near the partner is still the normal special', st[0] == 'special' and st[1] >= 50 and pg.evaluate("__nbd.W.stats.teamups") == 1, st)
+    check('2P: a quick SP tap near the partner is still the solo special (v0.6: Ativan, one third of the meter)', st[0] in ('special', 'ativan') and st[1] >= 50 - 34 and pg.evaluate("__nbd.W.stats.teamups") == 1, st)
     pg.close()
     # ================================================================ F: boss cutscene, then the floor -> lunch -> bonus -> next -> teaser
     pg = b.new_page(viewport={'width': 1280, 'height': 720}); watch(pg)

@@ -1,6 +1,8 @@
 # v0.6: nurses pick up small / medium props and throw them (golden-axe style), with keyboard / gamepad / touch / 2P,
 # priorities vs grab-a-patient / weapons / gurney rides, jump-throws, depth + back throws, hits drop it, loose meal
 # trays; and Turbo Tilly scaled to boss size (>= 5x a nurse) with a fair, readable charge-lane fight.
+# v0.6 (part 2): Code Blue meter tiers (Ativan jab at 1/3, defib paddles at full), three-day-old pizza + SNAP STIX,
+# and the Fire Alarm Yeller event (any floor, capped, never in boss fights, REDUCED FLASHING setting).
 # Screenshots -> tests/out/v06_*.png
 import time, sys
 from playwright.sync_api import sync_playwright
@@ -35,7 +37,7 @@ MOCK = """(() => { const pad = { id: 'Xbox Wireless Controller (STANDARD GAMEPAD
   window.__pad = pad; navigator.getGamepads = () => [window.__padOn ? pad : null, null, null, null];
   window.__padSet = (i, on) => { pad.buttons[i].pressed = on; pad.buttons[i].value = on ? 1 : 0; pad.timestamp++; };
   window.__padConnect = () => { window.__padOn = true; const e = new Event('gamepadconnected'); e.gamepad = pad; dispatchEvent(e); }; })();"""
-ONLY = sys.argv[1:] or list('ABCDE')
+ONLY = sys.argv[1:] or list('ABCDEFGH')
 
 with sync_playwright() as p:
     b = p.chromium.launch()
@@ -262,6 +264,149 @@ with sync_playwright() as p:
         pg.wait_for_function(f"{SC}==='tally'", timeout=20000)
         check('defeating big Tilly still ends the floor (tally)', True)
         pg.close()
+    # ================================================================ F: Code Blue meter tiers (Ativan jab at 1/3, defib paddles at full)
+    if 'F' in ONLY:
+        pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
+        pg.goto(U + '?level=1&hero=nick&god=1&nocut=1&noalarm=1'); ready(pg); pg.evaluate(FREEZE); time.sleep(0.2)
+        pg.evaluate("window.F=[]")
+        e = foe(pg, 'wanderer', 34)
+        pg.evaluate("__nbd.W.heroes[0].meter=40"); hp0 = pg.evaluate(f"F[{e}].hp"); time.sleep(0.15)
+        sp = pg.evaluate("document.getElementById('b_sp').textContent")
+        key(pg, 'KeyL', after=0.05); s1 = hs(pg)
+        time.sleep(0.6); pg.screenshot(path='tests/out/v06_ativan.png')
+        r = pg.evaluate(f"(()=>{{const e=F[{e}],h=__nbd.W.heroes[0]; return {{st:e.st, hp:e.hp, sleep:(e.sleepT||0)-__nbd.W.t, meter:h.meter, shout:(h.shoutT||0)>__nbd.W.t}};}})()")
+        check('1/3 meter: SP = the Ativan jab (not the desperation special)', s1['st'] == 'ativan', s1)
+        check('"IT\'S TIME FOR SOME ATIVAN!" speech bubble is up', r['shout'], r)
+        check('the jab costs exactly one third of the meter', abs(r['meter'] - (40 - 100 / 3)) < 0.5, r['meter'])
+        check('the jabbed patient is knocked down hard and falls asleep', r['hp'] <= hp0 - 20 and r['st'] in ('fall', 'down') and r['sleep'] > 1.2, [hp0, r])
+        time.sleep(1.2); st1 = pg.evaluate(f"F[{e}].st")
+        check('...and stays down while asleep (zzz)', st1 == 'down', st1)
+        pg.wait_for_function(f"F[{e}].st==='dizzy' || F[{e}].st==='getup'", timeout=8000); st2 = pg.evaluate(f"F[{e}].st")
+        check('...then wakes up woozy', st2 in ('dizzy', 'getup'), st2)
+        pg.evaluate("__nbd.W.heroes[0].meter=10"); key(pg, 'KeyL', after=0.1)
+        check('under 1/3 meter SP is still the regular special', hs(pg)['st'] == 'special', hs(pg))
+        time.sleep(0.8)
+        # defib: facing direction only
+        pg.evaluate(FREEZE); pg.evaluate("window.F=[]")
+        fa, fb, fc = foe(pg, 'wanderer', 70), foe(pg, 'wanderer', -60), foe(pg, 'wanderer', 210)
+        pg.evaluate("__nbd.W.heroes[0].meter=100; __nbd.W.heroes[0].face=1"); time.sleep(0.15)
+        sp2 = pg.evaluate("document.getElementById('b_sp').textContent")
+        key(pg, 'KeyL', after=0.05); s2 = hs(pg); time.sleep(0.62)
+        z = pg.evaluate(f"F.map(e=>e.st)"); pg.screenshot(path='tests/out/v06_defib.png')
+        time.sleep(1.0)
+        r = pg.evaluate("F.map(e=>({st:e.st, hp:e.hp}))")
+        check('full meter: SP = Code Blue defib paddles', s2['st'] == 'super', s2)
+        check('the lightning zaps patients in front (electrified skeleton state)', z[fa] == 'zapped' or r[fa]['hp'] < 38, [z, r])
+        check('it reaches far down the hall in the facing direction', r[fc]['hp'] < 38, r)
+        check('a patient BEHIND the nurse is untouched (facing direction only)', r[fb]['hp'] == pg.evaluate(f"F[{fb}].maxHp||38") or r[fb]['st'] not in ('fall', 'down', 'zapped', 'dead'), r)
+        check('touch SP button shows ATIVAN / CODE BLUE by meter', sp == 'ATIVAN' or 'ATIVAN' in sp, [sp, sp2])
+        check('touch SP button shows CODE BLUE at full meter', 'CODE' in sp2, sp2)
+        pg.close()
+        # boss stagger (Tilly)
+        pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
+        pg.goto(U + '?level=1&zone=5&hero=nick&god=1&nocut=1'); pg.wait_for_function('window.__loaded === true', timeout=30000)
+        pg.wait_for_function("window.__nbd && __nbd.W.boss && __nbd.W.boss.st!=='intro' && __nbd.game.scene==='play'", timeout=40000); time.sleep(1.0)
+        pg.evaluate("(()=>{const W=__nbd.W,B=W.boss,h=W.heroes[0]; B.set('idle'); B.t=0; h.x=B.x-60; h.y=B.y; h.face=1; h.set('idle'); h.meter=40;})()"); time.sleep(0.05)
+        hp0 = pg.evaluate("__nbd.W.boss.hp"); key(pg, 'KeyL', after=0.5)
+        r = pg.evaluate("({hp:__nbd.W.boss.hp, stag:__nbd.W.boss.stagT, x:__nbd.W.boss.x, st:__nbd.W.boss.st})")
+        time.sleep(0.25); x2 = pg.evaluate("__nbd.W.boss.x")
+        check('Ativan on a boss: damage + a short stagger (no sleep)', r['hp'] < hp0 and r['stag'] > 0.1, [hp0, r])
+        check('a staggered boss is frozen', abs(x2 - r['x']) < 2, [r['x'], x2])
+        pg.close()
+    # ================================================================ G: three-day-old pizza + SNAP STIX
+    if 'G' in ONLY:
+        pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
+        pg.goto(U + '?level=1&hero=nick&nocut=1&noalarm=1'); ready(pg); pg.evaluate(FREEZE); time.sleep(0.2)
+        for k, heal in (('pizza', 45), ('snapstix', 30)):
+            pg.evaluate(f"(()=>{{const h=__nbd.W.heroes[0]; h.hp=30; h.x=__nbd.W.camX+90; const it=__nbd.drop('{k}'); it.x=h.x+40; it.y=h.y; }})()"); time.sleep(0.2)
+            if k == 'pizza': pg.screenshot(path='tests/out/v06_food.png')
+            pg.keyboard.down('KeyD'); time.sleep(0.6); pg.keyboard.up('KeyD'); time.sleep(0.2)
+            hp = pg.evaluate("__nbd.W.heroes[0].hp"); left = pg.evaluate(f"__nbd.W.items.filter(i=>i.k==='{k}').length")
+            check(f'{k} heals {heal}', hp == 30 + heal and left == 0, [hp, left])
+        t = pg.evaluate("""(async()=>{const D=await import('./src/data.js'); const has=(t,k)=>(D.LOOT[t]||[]).some(r=>r[0]===k);
+          return {pc:['cart','linen','trash','small'].every(t=>has(t,'pizza')&&has(t,'snapstix')), vend:has('vending','snapstix'), pat:has('patient','pizza')&&has('patient','snapstix'), spr:!!(__nbd.G.atlas.sprites||__nbd.G.atlas).pizza||true};})()""")
+        check('both foods are in the prop drop tables (carts, linen, trash, small props, vending)', t['pc'] and t['vend'], t)
+        check('...and in the patient KO drop table', t['pat'], t)
+        n = pg.evaluate("(()=>{let p=0,s=0; for(let i=0;i<4000;i++){const k=__nbd.rollLoot('trash'); if(k==='pizza')p++; if(k==='snapstix')s++;} return [p,s];})()")
+        check('rolling trash-can loot actually produces pizza and SNAP STIX', n[0] > 0 and n[1] > 0, n)
+        pg.close()
+    # ================================================================ H: Fire Alarm Yeller
+    if 'H' in ONLY:
+        YS = "(()=>{const W=__nbd.W, y=W.enemies.find(e=>e.kind==='yeller'&&e.alive); return {y:y?y.st:null, alarm:!!W.alarm, uses:W.alarmUses||0, wet:W.wet||0, rage:W.enemies.filter(e=>e.alive&&e.rageT>W.t).length, pend:W.alarm?W.alarm.pend.length:0, zoneOn:W.zoneOn, alive:W.enemies.filter(e=>e.alive).length};})()"
+        def toZone(pg):
+            pg.keyboard.down('KeyD'); pg.wait_for_function("__nbd.W.zoneOn", timeout=40000); pg.keyboard.up('KeyD')
+            pg.evaluate("__nbd.W.heroes[0].x=__nbd.W.camX+40")
+        # H1: knock him down during the wind-up = no alarm; KO him = never
+        pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
+        pg.goto(U + '?level=1&hero=nick&god=1&nocut=1&yeller=1'); ready(pg); toZone(pg)
+        pg.wait_for_function("__nbd.W.enemies.some(e=>e.kind==='yeller'&&e.st==='reach')", timeout=30000)
+        pg.screenshot(path='tests/out/v06_yeller_reach.png')
+        pg.evaluate("(()=>{const y=__nbd.W.enemies.find(e=>e.kind==='yeller'); window.Y=y; y.takeHit({dmg:4, dir:-1, kb:60, down:true, from:__nbd.W.heroes[0], force:true});})()")
+        time.sleep(1.2); r = pg.evaluate(YS)
+        check('knocking the Yeller down during the wind-up stops the pull', not r['alarm'] and r['uses'] == 0, r)
+        pg.evaluate("Y.takeHit({dmg:999, dir:-1, kb:60, down:true, from:__nbd.W.heroes[0], force:true})"); time.sleep(3.0); r = pg.evaluate(YS)
+        check('a KO\'d Yeller never pulls it', not r['alarm'] and r['uses'] == 0, r)
+        pg.close()
+        # H2: he pulls it: alarm, strobe, rain, wet floor, enraged, extra wave, zone can't clear early
+        pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
+        pg.goto(U + '?level=1&hero=nick&god=1&nocut=1&yeller=1'); ready(pg); toZone(pg)
+        pg.wait_for_function("!!__nbd.W.alarm", timeout=40000); time.sleep(0.6)
+        r = pg.evaluate(YS); pg.screenshot(path='tests/out/v06_alarm.png')
+        check('the Yeller pulls the alarm if nobody stops him', r['alarm'] and r['uses'] == 1, r)
+        check('patients on screen get ENRAGED', r['rage'] >= 1, r)
+        rg = pg.evaluate("(()=>{const W=__nbd.W,e=W.enemies.find(e=>e.alive&&e.rageT>W.t&&e.kind!=='yeller'); return e?{sp:e.spd?e.spd():0, k:e.kind}:null;})()")
+        check('an extra wave is queued from the doors / elevators', r['pend'] >= 2, r)
+        KILL = "(()=>{const W=__nbd.W; W.enemies.forEach(e=>{e.alive=false}); W.enemies.length=0; W.queue.length=0;})()"
+        for i in range(8): pg.evaluate(KILL); time.sleep(0.15)
+        r = pg.evaluate(YS)
+        check('the zone can NOT clear while the alarm wave is still coming', r['zoneOn'] and r['pend'] >= 1 and r['alive'] == 0, r)
+        time.sleep(1.5); r = pg.evaluate(YS); shots = pg.evaluate("__nbd.W.shots.filter(s=>s.kind==='puddle'&&s.wet).length")
+        check('sprinklers soak the floor (wet sheen + slippery puddles)', r['wet'] > 0.8 and shots >= 1, [r, shots])
+        pg.screenshot(path='tests/out/v06_alarm_rain.png')
+        pg.wait_for_function("!__nbd.W.alarm", timeout=30000); r = pg.evaluate(YS)
+        check('afterwards the sprinklers stop but the floor stays wet a while', r['wet'] > 0.3 and not r['alarm'], r)
+        cleared = False
+        for i in range(160):
+            pg.evaluate(KILL); time.sleep(0.25)
+            if not pg.evaluate("__nbd.W.zoneOn"): cleared = True; break
+        check('...and the zone then clears normally (no softlock)', cleared, pg.evaluate(YS))
+        # cap: once per wave-gap, max 2 per floor
+        r = pg.evaluate("(()=>{const W=__nbd.W; W.zoneOn=true; const a=__nbd.maybeYeller(true); W.alarmUses=2; W.yellers=0; const b=__nbd.alarmAllowed(); W.alarmUses=1; W.zoneOn=false; return [a,b];})()")
+        check('capped: no second yeller while one is pending this gap, and none after 2 alarms per floor', r[1] is False, r)
+        pg.close()
+        # H3: reduced flashing (Settings) vs full strobe: frame-to-frame brightness swing
+        LUM = "(()=>{const c=document.querySelector('canvas'); const x=document.createElement('canvas'); x.width=48; x.height=27; const g=x.getContext('2d'); g.drawImage(c,0,0,48,27); const d=g.getImageData(0,0,48,27).data; let s=0; for(let i=0;i<d.length;i+=4) s+=d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11; return s/(d.length/4);})()"
+        swing = {}
+        for mode in ('full', 'reduced'):
+            pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
+            pg.goto(U + '?level=1&hero=nick&god=1&nocut=1&noalarm=1'); ready(pg); pg.evaluate(FREEZE)
+            pg.evaluate(f"(()=>{{__nbd.save.settings.flash='{mode}'; __nbd.applySettings(); const W=__nbd.W; W.zone=0; W.zoneOn=true; W.bossOn=false; W.noAlarm=false; const st=__nbd.stationFor(W.heroes[0]); __nbd.pullAlarm(st,null); W.alarm.pend=[];}})()")
+            time.sleep(0.5); ls = []
+            for i in range(24): ls.append(pg.evaluate(LUM)); time.sleep(0.04)
+            swing[mode] = max(abs(a - b0) for a, b0 in zip(ls, ls[1:]))
+            if mode == 'reduced':
+                m = pg.evaluate("(()=>{const m=__nbd.settingsMenu(()=>{}); const it=m.items.find(i=>i.label==='FLASHING'); const v0=it.value(); it.right(); const v1=it.value(); it.left(); return [v0,v1,__nbd.save.settings.flash];})()")
+                check('Settings has FLASHING: FULL / REDUCED', m[0] == 'REDUCED' and m[1] == 'FULL' and m[2] == 'reduced', m)
+                pg.screenshot(path='tests/out/v06_alarm_reduced.png')
+            pg.evaluate("__nbd.save.settings.flash='full'; __nbd.applySettings()")
+            pg.close()
+        check('REDUCED flashing swaps the strobe for a soft pulse (much smaller brightness swings)', swing['reduced'] < swing['full'] * 0.5, swing)
+        # H4: never during boss fights, and it shuts off if a boss starts
+        pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
+        pg.goto(U + '?level=1&zone=5&hero=nick&god=1&nocut=1&yeller=1'); pg.wait_for_function('window.__loaded === true', timeout=30000)
+        pg.wait_for_function("window.__nbd && __nbd.W.boss && __nbd.game.scene==='play'", timeout=40000); time.sleep(0.5)
+        r = pg.evaluate("[__nbd.alarmAllowed(), __nbd.maybeYeller(true), __nbd.W.enemies.some(e=>e.kind==='yeller'), (__nbd.W.queue||[]).some(q=>q.kind==='yeller')]")
+        check('no Fire Alarm Yeller in a boss fight', r == [False, False, False, False], r)
+        pg.close()
+        # H5: works on every floor (Radiology, Night Shift): stations on the wall and a yeller joins
+        for lv in (2, 3):
+            pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
+            pg.goto(U + f'?level={lv}&hero=nick&god=1&nocut=1&yeller=1'); ready(pg); toZone(pg); time.sleep(0.4)
+            r = pg.evaluate("({n:__nbd.W.alarms.length, y:__nbd.W.enemies.some(e=>e.kind==='yeller')||__nbd.W.queue.some(q=>q.kind==='yeller')})")
+            check(f'floor {lv}: pull stations on the wall and a Yeller shows up', r['n'] >= 2 and r['y'], r)
+            pg.wait_for_function("!!__nbd.W.alarm", timeout=40000); time.sleep(1.0); pg.screenshot(path=f'tests/out/v06_alarm_l{lv}.png')
+            check(f'floor {lv}: the alarm goes off there too', True)
+            pg.close()
     b.close()
 print('console errors:', errs[:8] if errs else 'none')
 if not errs: print('no console errors')

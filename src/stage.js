@@ -7,6 +7,7 @@ import { Enemy } from './enemy.js';
 import { Tilly } from './boss.js';
 import { MRI, Lou } from './mri.js';
 import { sfx, playMusic } from './sound.js';
+import { resetAlarm, maybeYeller, updateAlarm, alarmPending } from './alarm.js';
 
 const rr = (a, b) => a + W.rnd() * (b - a);
 
@@ -57,7 +58,7 @@ function splashAt(s, h) {
   addShot({ kind: 'puddle', spr: 'puddle_y', x: s.x + (h ? -Math.sign(s.vx) * 6 : 0), y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
 }
 export const Director = {
-  reset() { W.zone = -1; W.zoneOn = false; W.wave = 0; W.queue = []; W.go = 0; W.lockX = null; W.camMin = 0; W.camMax = W.lv.zones[0].lock; W.bossOn = false; W.cleared = false; W.endT = 0; },
+  reset() { resetAlarm(W.lv); W.zone = -1; W.zoneOn = false; W.wave = 0; W.queue = []; W.go = 0; W.lockX = null; W.camMin = 0; W.camMax = W.lv.zones[0].lock; W.bossOn = false; W.cleared = false; W.endT = 0; },
   alive() { return W.enemies.filter((e) => e.alive && e.st !== 'dead').length; },
   update(dt) {
     const L = W.lv, zs = L.zones;
@@ -74,7 +75,8 @@ export const Director = {
     W.queue = W.queue.filter((q) => !q.done);
     // v0.5 mini-boss down: he naps where he fell (as scenery) and the zone opens up
     if (W.bossOn && W.boss && W.boss.mini && W.boss.st === 'defeat' && W.boss.t > 2.2) { W.decor.push(W.boss); W.boss = null; W.bossOn = false; playMusic(L.music || 'stage'); }
-    if (W.zoneOn && !W.bossOn && !W.queue.length && this.alive() === 0 && Math.abs(W.camX - W.lockX) < 4) {
+    updateAlarm(dt, spawn);
+    if (W.zoneOn && !W.bossOn && !W.queue.length && !alarmPending() && this.alive() === 0 && Math.abs(W.camX - W.lockX) < 4) {
       const z = zs[W.zone];
       if (W.wave + 1 < z.waves.length) { W.wave++; this.startWave(); }
       else if (z.final && !W.finalT) { W.finalT = 0.001; }  // night shift's last wave: the lights come back on (main.js), then the tally
@@ -89,6 +91,7 @@ export const Director = {
   startWave() {
     const z = W.lv.zones[W.zone], wave = z.waves[W.wave]; if (!wave) return;
     for (const [kind, where, delay] of wave) W.queue.push({ kind, where, t: delay });
+    maybeYeller(!!W.forceYeller);  // v0.6: now and then a Fire Alarm Yeller joins the wave
     if (W.wave === 0 && z.title) floatText(z.title, W.lockX + G.VW / 2, 150, 60, '#8ad8ff');
   },
   startBoss(z = W.lv.zones[W.zone]) {
@@ -120,6 +123,20 @@ export const Director = {
         }
         if (!s.hostile) for (const p of W.props) { if (s.hit.has(p) || p.st >= 2) continue; const dx = (p.x - s.x) / s.r, dy = (p.y - s.y) / (s.r * 0.36); if (dx * dx + dy * dy <= 1) { s.hit.add(p); hitProp(p, 20, { dir: Math.sign(p.x - s.x) || 1, kb: 220, from: s.owner }); } }
         if (s.r >= (s.rmax || 200)) s.life = Math.min(s.life, 0.08);
+        continue;
+      }
+      if (s.kind === 'defib') {  // v0.6 Code Blue: two crackling bolts racing forward (facing direction only)
+        s.reach = Math.min(G.VW + 40, s.reach + 1100 * dt);
+        for (const t of [...W.enemies, ...(W.boss ? [W.boss] : [])]) {
+          if (s.hit.has(t) || !t.alive || t.st === 'dead') continue;
+          const tx = t.depthAny ? (t.front ?? t.x) : t.x, dx = (tx - s.x) * s.dir;
+          if (dx < -10 || dx > s.reach || (!t.depthAny && Math.abs(t.y - s.y) > 28 + (t.big ? 6 : 0))) continue;
+          s.hit.add(t);
+          if (t.isBoss) { if (t.hittable && !t.hittable()) continue; t.takeHit({ dmg: t.maxHp * 0.12, dir: s.dir, from: s.owner, force: true }); t.flash = 0.6; t.stagT = Math.max(t.stagT || 0, 0.5); }
+          else if (t.zap) t.zap(60 * ((s.owner && s.owner.d && s.owner.d.power) || 1), s.dir, s.owner);
+          addFx({ type: 'spark', kind: 'bluespark', x: t.x, y: t.y, z: 30, dur: 0.35 }); addScore(s.owner, 200);
+        }
+        for (const p of W.props) { if (s.hit.has(p) || p.st >= 2 || p.rider) continue; const dx = (p.x - s.x) * s.dir; if (dx > -6 && dx < s.reach && Math.abs(p.y - s.y) < 28) { s.hit.add(p); hitProp(p, 30, { dir: s.dir, kb: 240, from: s.owner }); } }
         continue;
       }
       if (s.kind === 'puddle') {

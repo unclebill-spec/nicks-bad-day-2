@@ -50,11 +50,12 @@ export function spr(name, x, y, { flip = false, alpha = 1, ax = 0, ay = 0, rot =
 export const sprSize = (name) => { const r = G.atlas.sprites.rects[name]; return r ? [r[2], r[3]] : [0, 0]; };
 
 // ---- character frames: sheet + global frame index
-export function frame(sheet, idx, x, y, { flip = false, white = false, alpha = 1, scale = 1 } = {}) {
+G.red = {};  // v0.6: red silhouettes (enraged patients), made on first use
+export function frame(sheet, idx, x, y, { flip = false, white = false, red = false, alpha = 1, scale = 1 } = {}) {
   const A = G.atlas.chars[sheet]; if (!A) return;
   const [cw, ch] = A.cell, [ax, ay] = A.anchor, cols = A.cols;
   const sx = (idx % cols) * cw, sy = Math.floor(idx / cols) * ch;
-  const im = white ? G.white[sheet] : G.img[sheet];
+  const im = red ? (G.red[sheet] || (G.red[sheet] = silhouette(G.img[sheet], '#ff2a2a'))) : white ? G.white[sheet] : G.img[sheet];
   const c = G.ctx;
   c.save(); c.globalAlpha = alpha; c.translate(Math.round(x), Math.round(y)); if (flip) c.scale(-1, 1); if (scale !== 1) c.scale(scale, scale);
   c.drawImage(im, sx, sy, cw, ch, -ax, -ay, cw, ch); c.restore();

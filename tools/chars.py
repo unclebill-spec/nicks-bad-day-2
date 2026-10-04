@@ -292,6 +292,10 @@ def bodies():
     B["apron"] = hero_body(thigh=10.5, shin=10, torso=17, torso_w=13, belly=1.5, skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#6b4a2a", hair_s="#4a3018",
                            hair=hair_cap(top=-0.25, back=0.3, grow=0.7, seed=13), beard="#6b4a2a",
                            **{**gown, "shirt": "#3a6ad8", "shirt_s": "#2a4aa8", "gown_len": 12}, pants=sk["light"][0], pants_s=sk["light"][1], **socks)
+    # v0.6 Fire Alarm Yeller: wild white hair, red face from all the yelling, runs for the pull station
+    B["yeller"] = hero_body(thigh=10, shin=10.5, torso=15, torso_w=10, skin="#f0a890", skin_s="#c87a64", hair_c="#f4f4f8", hair_s="#b8bcc8",
+                            hair=hair_cap(top=-0.35, back=0.35, grow=1.6, spikes=6, seed=21), mouth="#a01c28",
+                            **{**gown, "gown_len": 8}, pants="#f0a890", pants_s="#c87a64", **socks)
     # v0.5 mini-boss LEAD-APRON LOU: a gentle giant ex-linebacker wearing three lead aprons like shoulder pads, ~2.2x a nurse's height
     B["lou"] = hero_body(thigh=24, shin=23, torso=46, head=15.4, uarm=19, farm=18, arm_w=12.6, leg_w=16, torso_w=50, fist=6.2, foot=4.8, foot_len=9, belly=8.4,
                          skin=sk["brown"][0], skin_s=sk["brown"][1], hair_c="#2a1a12", hair_s="#140c08", hair=hair_cap(top=-0.35, back=0.2, grow=0.5, seed=14),
@@ -374,6 +378,13 @@ def hero_anims(name):
     A["ride"] = [P(lean=22, hy=6, th_f=56, sh_f=-34, th_b=-34, sh_b=-76, ua_f=84, fa_f=96, ua_b=-70, fa_b=-30, face="yell"),
                  P(lean=18, hy=5, th_f=50, sh_f=-30, th_b=-30, sh_b=-72, ua_f=96, fa_f=110, ua_b=-80, fa_b=-40, face="grin")]
     A["team"] = [P(lean=-6, ua_f=176, fa_f=178, ua_b=150, fa_b=160, th_f=20, th_b=-20, face="yell")]
+    # v0.6 meter moves: the Ativan jab (pull the syringe, jab forward) and the Code Blue defib paddles (charge, CLEAR!, fire)
+    pad = holder("paddles")
+    A["jab"] = [P(lean=-6, ua_f=-30, fa_f=40, ua_b=-10, fa_b=120, th_f=10, th_b=-14, face="yell"),
+                P(lean=18, ua_f=92, fa_f=92, ua_b=-30, fa_b=20, th_f=34, sh_f=10, th_b=-28, sh_b=-20, face="yell")]
+    A["defib"] = [P(lean=4, ua_f=50, fa_f=120, ua_b=40, fa_b=130, hold=pad, hold_b=pad),
+                  P(lean=-10, ua_f=150, fa_f=160, ua_b=140, fa_b=150, hold=pad, hold_b=pad, face="yell"),
+                  P(lean=20, ua_f=92, fa_f=90, ua_b=86, fa_b=86, th_f=30, sh_f=10, th_b=-30, sh_b=-20, hold=pad, hold_b=pad, face="yell")]
     # v0.6: carrying a prop overhead (golden-axe style) and walking with it
     up = dict(ua_f=146, fa_f=186, ua_b=140, fa_b=182)
     A["lift"] = [P(lean=-2, th_f=12, th_b=-12, **up), P(lean=-2, th_f=12, th_b=-12, hy=1, **{**up, "fa_f": 180})]
@@ -498,6 +509,15 @@ def enemy_anims(kind):
         A["lob"] = A["atk"]
     elif kind == "apron":
         return {**enemy_anims("wanderer")}
+    elif kind == "yeller":  # v0.6 Fire Alarm Yeller: flails and yells, sprints for the pull station, reaches up and PULLS
+        A["idle"] = [P(lean=-4, ua_f=160, fa_f=176, ua_b=140, fa_b=170, face="yell"), P(lean=-2, ua_f=140, fa_f=170, ua_b=162, fa_b=178, face="yell", hy=1)]
+        A["walk"] = walk_cycle(swing=40, arm=0, lean=14, bob=2)
+        for i, f in enumerate(A["walk"]):
+            f.update(ua_f=150 + (i % 2) * 20, fa_f=172, ua_b=170 - (i % 2) * 20, fa_b=178, face="yell")
+        A["atk"] = [P(lean=-6, ua_f=170, fa_f=176, ua_b=-20, fa_b=30, face="yell"), P(lean=16, ua_f=86, fa_f=70, ua_b=-30, fa_b=20, th_f=20, th_b=-20, face="yell")]
+        A["reach"] = [P(lean=-8, ua_f=168, fa_f=178, ua_b=150, fa_b=170, th_f=6, th_b=-6, face="yell", lift=2),
+                      P(lean=-10, ua_f=172, fa_f=180, ua_b=156, fa_b=174, th_f=6, th_b=-6, face="grin", lift=3)]
+        A["pull"] = [P(lean=10, ua_f=120, fa_f=80, ua_b=110, fa_b=70, th_f=14, th_b=-14, face="grin", hy=2)]
     elif kind == "lou":  # mini-boss: stance, lumbering walk, linebacker charge, stomp, film throw, winded
         A["idle"] = [P(lean=10, ua_f=40, fa_f=110, ua_b=30, fa_b=100, th_f=18, th_b=-16, face="grin"), P(lean=10, ua_f=40, fa_f=114, ua_b=30, fa_b=104, th_f=18, th_b=-16, hy=1, face="grin")]
         A["walk"] = walk_cycle(swing=18, arm=14, lean=10)

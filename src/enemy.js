@@ -6,8 +6,11 @@
 // v0.4: the Bed-Alarm Runner flees beeping (catch it for a good drop, or it gets away), the Food-Tray Thrower hurls trays
 // and lobs jello (slippery green splat), and the O2 Wanderer swings its tank cart until a hard hit knocks the tank loose
 // (it becomes a kickable prop, and the patient is perfectly fine without it).
-import { G, text, spr, rect, tintSheet } from './gfx.js';
-import { ENEMIES, VARIANTS, Y_MIN, Y_MAX } from './data.js';
+// v0.6: the Fire Alarm Yeller (src/alarm.js) runs for the pull station; ENRAGED patients (fire alarm) move and swing
+// faster and steam; an Ativan jab puts a patient to sleep (then dizzy); the defib super zaps them (skeleton flash).
+import { G, text, spr, rect, tintSheet, frame, ellipse } from './gfx.js';
+import { ENEMIES, VARIANTS, Y_MIN, Y_MAX, LOOT } from './data.js';
+import { stationFor, pullAlarm, alarmAllowed, ALARM } from './alarm.js';
 import { W, offY, addShot, addFx, floatText, shake, spark, addScore, word, breakProp, propBox, dropItem, bumpProps, makeProp } from './world.js';
 import { Actor, strike, clampY } from './actor.js';
 import { sfx } from './sound.js';
@@ -40,7 +43,17 @@ export class Enemy extends Actor {
     this.side = W.rnd() < 0.5 ? -1 : 1; this.wob = W.rnd() * 6; this.target = null; this.tx = x; this.ty = y; this.speechT = 2 + W.rnd() * 6;
     this.tank = this.kind === 'o2'; this.runT = 0; this.beepT = 0;
   }
-  hittable() { return !['dead', 'thrown', 'enter_door'].includes(this.st) && !(this.st === 'down' || this.st === 'getup'); }
+  hittable() { return !['dead', 'thrown', 'enter_door', 'zapped'].includes(this.st) && !(this.st === 'down' || this.st === 'getup'); }
+  zap(dmg, dir, from) {  // v0.6 defib super: an electrified skeleton flash, then a knockdown
+    if (!this.alive || ['dead', 'thrown'].includes(this.st)) return false;
+    if (this.holder) { this.holder.held = null; this.holder = null; }
+    if (this.victim) { const v = this.victim; this.victim = null; if (v.st === 'grabbed') v.set('idle'); v.grabber = null; }
+    this.hp -= dmg; this.flash = 0.12; if (from && from.isHero) this.lastHitBy = from; if (from) addScore(from, dmg * 8);
+    if (this.tank) this.loseTank(dir, from);
+    if (this.hp <= 0) { this.hp = 0; this.koBy = from; }
+    this.zapDir = dir; this.zapT = W.t + 0.55; this.z = 0; this.set('zapped'); this.vx = 0;
+    return true;
+  }
   grabbable() { return ['idle', 'walk', 'hurt', 'dizzy', 'flee'].includes(this.st) && this.z === 0; }
   attacking() { return ['windup', 'atk', 'hug', 'charge', 'recover'].includes(this.st); }
 
@@ -89,6 +102,13 @@ export class Enemy extends Actor {
     this.t += dt; this.flash = Math.max(0, this.flash - dt); this.inv = Math.max(0, this.inv - dt); this.cd -= dt;
     if (this.armorT > 0 && (this.armorT -= dt) <= 0) this.armor = this.d.armor || 0;
     if (this.st === 'dead') { if (this.t > 1.6) this.alive = false; if (this.t < dt * 1.5) this.onKO(); return; }
+    if (this.st === 'zapped') { if (W.t > this.zapT) this.knock(this.zapDir, 170, 210); return; }  // defib: frozen in the zap, then down
+    if (this.st === 'down' && this.sleepT > W.t) {  // Ativan: out cold for a bit
+      this.t = Math.min(this.t, 0.2); if ((this.zzzT = (this.zzzT || 0) - dt) <= 0) { this.zzzT = 0.7; addFx({ type: 'zzz', x: this.x + 6, y: this.y, z: 14, dur: 1.4 }); }
+      return;
+    }
+    if (this.sleepT && this.st === 'idle' && W.t >= this.sleepT) { this.sleepT = 0; this.set('dizzy'); this.stun = 1.3; }  // ...wakes up woozy
+    if (this.rageT > W.t) { this.cd -= dt * 0.6; if ((this.steamT = (this.steamT || 0) - dt) <= 0) { this.steamT = 0.28; addFx({ type: 'steam', x: this.x + (W.rnd() - 0.5) * 10, y: this.y, z: this.h + 2, dur: 0.6 }); } }
     if (this.fallStep(dt, 0.7)) return;
     const fn = this['s_' + this.st]; if (fn) fn.call(this, dt);
     if (!['enter', 'enter_door', 'thrown', 'charge', 'flee'].includes(this.st)) this.y = clampY(this.y);
@@ -102,6 +122,7 @@ export class Enemy extends Actor {
     addFx({ type: 'zzz', x: this.x + 4, y: this.y, z: 20, dur: 1.5 });
     sfx(this.d.voice, { vol: 0.35, rate: 0.8 });
     if (this.d.drop && W.rnd() < this.d.drop[1]) dropItem(this.d.drop[0], this.x, this.y);
+    else if (this.type !== 'thief') { let r = W.rnd(); for (const [k, pr] of LOOT.patient) { if (r < pr) { dropItem(k, this.x, this.y); break; } r -= pr; } }  // v0.6: old pizza / SNAP STIX
     if (this.d.runner) {  // caught the runner: a good drop and a bonus
       word('w_caught', this.x, this.y, 20); sfx('powerup', { vol: 0.5 }); W.stats.caught = (W.stats.caught || 0) + 1;
       if (k && k.isHero) { addScore(k, 1000); floatText('+1000', this.x, this.y, 70, '#ffe84a'); }
@@ -155,6 +176,7 @@ export class Enemy extends Actor {
       const L2 = d.lines || L;
       if (L2) { floatText(L2[Math.floor(W.rnd() * L2.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 }); } }
     if (K === 'runner') return this.runAway(dt, h);
+    if (K === 'yeller') return this.yell(dt, h);
     let gx, gy = h.y, want = d.reach * 0.85;
     const busy = this.tokens(h) >= (W.diff.cap >= 5 ? 3 : 2) && !this.attacking();
     if (K === 'spammer' || K === 'tray' || (K === 'elite' && this.cd > 0.3)) { want = d.keep; this.side = Math.sign(this.x - h.x) || this.side; }
@@ -164,7 +186,7 @@ export class Enemy extends Actor {
     // keep on screen
     gx = Math.max(W.camX + 12, Math.min(W.camX + G.VW - 12, gx));
     const mx = gx - this.x, my = gy - this.y, ml = Math.hypot(mx, my);
-    const sp = d.speed * (K === 'escape' ? 0.9 : K === 'o2' && !this.tank ? 1.5 : 1);
+    const sp = d.speed * (K === 'escape' ? 0.9 : K === 'o2' && !this.tank ? 1.5 : 1) * (this.rageT > W.t ? 1.4 : 1);
     if (ml > 4) { this.x += mx / ml * sp * dt; this.y += my / ml * sp * 0.8 * dt; this.st = 'walk'; } else this.st = 'idle';
     if (K === 'sundowner' && this.cd <= 0 && Math.abs(dy) < 6 && adx > 40 && adx < 220) return this.begin('windup');
     if (K === 'elite' && this.cd <= 0 && !busy && Math.abs(dy) < 10) {  // cane up close, otherwise throw something
@@ -180,6 +202,25 @@ export class Enemy extends Actor {
       if (K === 'sundowner' && adx < 30) return this.begin('windup');
     }
   }
+  // v0.6 Fire Alarm Yeller: sprint to the nearest pull station, reach up (the warning), PULL. Knock him down to stop it.
+  yell(dt, h) {
+    if (!alarmAllowed() || this.pulled) { this.kind = 'escape'; return; }  // nothing to pull: he's just a jittery escapee
+    const st = this.station || (this.station = stationFor(this));
+    const gx = st.x + 10, gy = Y_MIN + 1, mx = gx - this.x, my = gy - this.y, ml = Math.hypot(mx, my);
+    if ((this.yellT = (this.yellT || 0) - dt) <= 0) { this.yellT = 2.2; floatText(['FIRE! FIRE!', 'I SMELL SMOKE!', 'EVERYBODY OUT!'][Math.floor(W.rnd() * 3)], this.x, this.y, 66, '#ff8a6a'); sfx('yell', { vol: 0.55 }); }
+    if (ml > 3) { const sp = this.d.speed; this.x += mx / ml * sp * dt; this.y += my / ml * sp * 0.9 * dt; this.st = 'walk'; this.face = Math.sign(mx) || this.face; return; }
+    this.set('reach'); this.face = 1; st.shake = 0.3; floatText('STOP HIM!', this.x, this.y, 84, '#ffe84a'); sfx('yell', { vol: 0.7, rate: 1.1 });
+  }
+  s_reach(dt) {
+    const st = this.station;
+    if (!st || !alarmAllowed()) { this.kind = 'escape'; return this.set('idle'); }
+    st.shake = Math.max(st.shake, 0.1);
+    if (this.t > ALARM.windup) {
+      this.set('pull'); this.pulled = true;
+      if (pullAlarm(st, this)) floatText('HA! FIRE DRILL!', this.x, this.y, 70, '#ffffff');
+    }
+  }
+  s_pull(dt) { if (this.t > 0.5) { this.kind = 'escape'; this.set('flee'); this.fleeDir = 1; this.face = 1; } }
   begin(st) { this.set(st); this.face = this.target ? Math.sign(this.target.x - this.x) || this.face : this.face; this.hitDone = false; }
   s_windup(dt) {
     const K = this.kind;
@@ -302,8 +343,11 @@ export class Enemy extends Actor {
       case 'dizzy': return ['dizzy', Math.floor(W.t * 4)];
       case 'held': return ['held', 0];
       case 'thrown': case 'fall': return ['fall', 0];
-      case 'down': return ['down', 0];
+      case 'down': return this.sleepT > W.t ? ['sleep', 0] : ['down', 0];
       case 'dead': return ['sleep', 0];
+      case 'zapped': return ['hurt', Math.floor(W.t * 20)];
+      case 'reach': return ['reach', Math.floor(W.t * 6)];
+      case 'pull': return ['pull', 0];
       case 'getup': return ['getup', 0];
     }
     return ['idle', 0];
@@ -311,9 +355,22 @@ export class Enemy extends Actor {
   draw() {
     if (this.st === 'dead' && this.t > 1.0 && Math.floor(this.t * 16) % 2) return;
     const [n, i] = this.pose();
-    const dx = this.st === 'windup' && this.kind !== 'sundowner' ? 0 : 0;
-    this.drawSprite(n, i, { dx });
     const X = this.x - W.camX, Y = this.y + offY() - this.z;
+    const rage = this.rageT > W.t && this.st !== 'dead';
+    if (rage) ellipse(X, this.y + offY(), 15 + Math.sin(W.t * 18) * 2, 4, '#ff2a2a', 0.45);
+    if (this.st === 'zapped') {  // electrified: white flash and an X-ray skeleton, alternating
+      const ph = Math.floor(W.t * 16) % 3, jx = (W.rnd() - 0.5) * 3;
+      if (ph === 0) this.drawSprite(n, i, { dx: jx });
+      else if (ph === 1) frame(this.sheet, this.frameOf(n, i), X + jx, Y, { flip: this.face < 0, white: true });
+      else { rect(X - 13, Y - this.h - 4, 26, this.h + 6, '#1a3a8a', 0.55); spr('skel', X + jx, Y + 1, { ax: 11, ay: 52, scale: this.h / 52 }); }
+      return;
+    }
+    this.drawSprite(n, i, { dx: rage ? (Math.floor(W.t * 30) % 2 ? 0.5 : -0.5) : 0 });
+    if (rage) frame(this.sheet, this.frameOf(n, i), X, Y, { flip: this.face < 0, red: true, alpha: 0.28 + Math.sin(W.t * 10) * 0.08 });
+    if (this.st === 'reach') {  // the pull-station warning: big, blinking, readable on a phone
+      const on = Math.floor(this.t * 8) % 2, wy = Y - this.h - 50; rect(X - 10, wy - 1, 20, 22, '#1a1020'); rect(X - 9, wy, 18, 20, on ? '#ffe84a' : '#e82a2a'); text('!', X + 1, wy + 3, { col: on ? '#c81a1a' : '#ffffff', align: 'center', scale: 2 });
+      const k = Math.min(1, this.t / ALARM.windup); rect(X - 14, Y - this.h - 8, 28, 4, '#1a1020'); rect(X - 13, Y - this.h - 7, Math.round(26 * k), 2, '#ff3a3a');
+    } else if (this.kind === 'yeller' && Math.floor(W.t * 4) % 2) text('!', X, Y - this.h - 10, { col: '#ff8a3a', align: 'center' });
     if (this.st === 'dizzy') spr('dizzy' + (Math.floor(W.t * 8) % 3), X, Y - this.h - 2, { ax: 11 });
     if (this.st === 'windup' && Math.floor(this.t * 12) % 2) text('!', X + this.face * 6, Y - this.h - 12, { col: '#ff5a3a', align: 'center' });
     if (this.d.runner && this.st !== 'dead' && this.st !== 'down' && Math.floor(W.t * 5) % 2) { rect(X - 2, Y - this.h - 5, 5, 4, '#1a1020'); rect(X - 1, Y - this.h - 4, 3, 2, '#ff3a3a'); }

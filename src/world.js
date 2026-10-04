@@ -354,15 +354,28 @@ export function drawItem(it) {
   const bob = !it.weapon && it.z === 0 ? Math.round(Math.sin(it.t * 4) * 1) : 0;
   spr(name, X - w / 2, Y - h - it.z + bob - (it.weapon ? 0 : 1), { rot: it.weapon && it.z === 0 && it.w.spr === 'w_extinguisher' ? Math.PI / 2 : 0, ax: 0, ay: 0 });
   if (!it.weapon && Math.floor(it.t * 3) % 4 === 0) rect(X + w / 2 - 2, Y - h - it.z + bob - 2, 1, 1, '#fff');
+  if (it.def && it.def.stink) for (let k = 0; k < 3; k++) for (let j = 0; j < 4; j++) rect(Math.round(X - 5 + k * 5 + Math.sin(W.t * 6 + j + k * 2) * 1.5), Math.round(Y - h - it.z - 3 - j * 2 - ((W.t * 8 + k * 3) % 4)), 1, 1, '#8ae87a', 0.8 - j * 0.15);  // stink lines
 }
 export function drawShot(s) {
   const X = s.x - W.camX, Y = s.y + OFF();
-  if (s.kind !== 'puddle') ellipse(X, Y, 5, 2, '#000', 0.3);
+  if (s.kind !== 'puddle' && s.kind !== 'defib') ellipse(X, Y, 5, 2, '#000', 0.3);
   if (s.kind === 'puddle') { spr(s.spr || 'puddle', X - 14, Y - 4, { alpha: Math.min(1, s.life) }); return; }
   if (s.kind === 'shock') {  // Nick's crash-cart ring / Will's slam ring
     const r = s.r;
     ring(X, Y, r, r * 0.32, s.col || '#8ad8ff', 3, 0.85); ring(X, Y, r * 0.8, r * 0.26, '#ffffff', 1, 0.7);
     if (s.col !== '#ffe84a') for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + W.t * 3; bolt(X, Y - 20, X + Math.cos(a) * r, Y + Math.sin(a) * r * 0.32, '#c8f0ff', (i + 1) * 977 + Math.floor(W.t * 20)); }
+    return;
+  }
+  if (s.kind === 'defib') {  // two jagged bolts from the paddles to the reach front, flickering, fading out
+    const k = Math.max(0, Math.min(1, s.life / 0.3)), x0 = X, x1 = X + s.dir * s.reach, seed = s.seed + Math.floor(W.t * 30);
+    for (const [dy, col] of [[-12, '#8ad8ff'], [10, '#c8f0ff']]) {
+      G.ctx.save(); G.ctx.globalAlpha = k;
+      const ya = Y - s.z + dy * 0.4, yb = Y - 26 + dy;
+      for (let j = 0; j < 5; j++) { const ax = x0 + (x1 - x0) * j / 5, bx = x0 + (x1 - x0) * (j + 1) / 5, ay = ya + (yb - ya) * j / 5, by = ya + (yb - ya) * (j + 1) / 5; bolt(ax, ay, bx, by, col, 101 + seed * 7 + j * 31 + dy * 3, 3); bolt(ax, ay, bx, by, '#ffffff', 211 + seed * 5 + j * 17 + dy, 1); }
+      G.ctx.restore();
+      ellipse(x1, Y - 26 + dy, 8 + Math.sin(W.t * 50) * 3, 6, '#c8f0ff', 0.5 * k);
+    }
+    ellipse(x0, Y - s.z, 10, 8, '#ffffff', 0.6 * k);
     return;
   }
   if (s.kind === 'spray') return;
@@ -385,6 +398,7 @@ export function drawFx(f) {
   else if (f.type === 'smoke') { const i = Math.min(2, Math.floor(k * 3)); spr('smoke' + i, X, Y - k * 10, { ax: 8, ay: 8 }); }
   else if (f.type === 'word') { const [w, h] = sprSize(f.name); const s = k < 0.15 ? 0.6 + k / 0.15 * 0.6 : k < 0.25 ? 1.2 - (k - 0.15) * 2 : 1; spr(f.name, X, Y - k * 6, { ax: w / 2, ay: h / 2, scale: s, alpha: k > 0.8 ? (1 - k) * 5 : 1 }); }
   else if (f.type === 'txt') text(f.s, Math.max(textW(f.s) / 2 + 2, Math.min(G.VW - textW(f.s) / 2 - 2, X)), Y - k * 16, { col: f.col, align: 'center', alpha: k > 0.75 ? (1 - k) * 4 : 1 });
+  else if (f.type === 'steam') { ellipse(X, Y - k * 16, 3 + k * 6, 2 + k * 4, '#f4f0ee', 0.55 * (1 - k)); ellipse(X + 2, Y - k * 16 - 1, 1 + k * 3, 1 + k * 2, '#ffffff', 0.5 * (1 - k)); }
   else if (f.type === 'zzz') spr('zzz', X, Y - k * 8, { alpha: 1 - k * 0.5 });
   else if (f.type === 'heart') spr('heart', X, Y - k * 14, { alpha: 1 - k });
   else if (f.type === 'splash') spr('splash' + Math.min(2, Math.floor(k * 3)), X, Y, { ax: 13, ay: 18 });

@@ -42,7 +42,7 @@ export class Tilly extends Actor {
   update(dt) {
     this.t += dt; this.flash = Math.max(0, this.flash - dt); this.cd -= dt; this.honkCd -= dt; this.callCd -= dt; this.hurtT = Math.max(0, (this.hurtT || 0) - dt);
     this.shown = Math.min(1, this.shown + dt * 0.8);
-    const fn = this['s_' + this.st]; if (fn) fn.call(this, dt);
+    const fn = this['s_' + this.st]; if (this.stagT > 0 && this.st !== 'defeat') { this.stagT -= dt; if (Math.floor(this.stagT * 20) % 3 === 0) addFx({ type: 'spark', kind: 'bluespark', x: this.x + (W.rnd() - 0.5) * (this.w || 40), y: this.y, z: 20 + W.rnd() * 60, dur: 0.12 }); } else if (fn) fn.call(this, dt);  // v0.6: Ativan / defib stagger
     this.y = clampY(this.y);
     // the chair is solid: nudge heroes out of it
     if (!['defeat'].includes(this.st)) for (const h of W.heroes) {
