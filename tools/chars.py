@@ -67,8 +67,8 @@ def stripes(S, T, hip, neck, lean, b):
 
 
 WILL_BLUE = ("#2f86f6", "#1c5ec4")
-FLANNEL = ("#4a7a6a", "#33584c")                                   # visitor's flannel shirt: muted green/teal
-FLANNEL_CHECK = ("#2e4a6a", "#22384e", "#c8d4c0", "#8a9a88")       # dark blue lines, light crossings   # Will: plain bright blue shirt (Bill, 2026-10-03)
+FLANNEL = ("#c03a30", "#8e2620")                                   # visitor's flannel shirt: red buffalo plaid (v0.7.1; was teal, read as a onesie with the jeans)
+FLANNEL_CHECK = ("#5a1a1a", "#3e1010", "#2a0c0c", "#1e0808")       # dark lines, near-black crossings   # Will: plain bright blue shirt (Bill, 2026-10-03)
 
 
 def bald_shine(S, hc, r, b, pose):
@@ -228,6 +228,92 @@ def hero_body(**kw):
     return base
 
 
+LEAD = ("#3c4658", "#2a3242", "#5a6880")   # lead apron: slate face, shade, edge highlight (not in any runtime palette)
+
+
+def lou_apron(S, T, hip, neck, lean, b):
+    """v0.7.1 Lead-Apron Lou: a fitted lead apron over the front of his gown (pose space, follows the lean)."""
+    up, fwd = vec(180 - lean, 1), vec(90 - lean, 1)
+    tw, L = b["torso_w"], b["thigh"] * 0.62
+    def at(base, u, f):
+        return T((base[0] + up[0] * u + fwd[0] * f, base[1] + up[1] * u + fwd[1] * f))
+    # shoulder strap over the near shoulder, running back (drawn first so the panel edge sits on top of it)
+    S.capsule(at(neck, -1.0, tw * 0.05), at(neck, -6.5, -tw * 0.42), 2.6, LEAD[1], LEAD[1])
+    # waist strap round to the back
+    S.capsule(at(hip, 7, -tw * 0.05), at(hip, 6, -tw * 0.5), 2.0, LEAD[1], LEAD[1])
+    # the panel: flat, straight-edged, covering the chest and belly and hanging to mid-thigh
+    panel = [at(neck, -2.0, -tw * 0.12), at(neck, -2.0, tw * 0.5 + 0.6), at(hip, -L, tw * 0.5 + 1.6), at(hip, -L, -tw * 0.16)]
+    S.poly(panel, LEAD[0])
+    # shading: a darker back third, a light front edge and a hem line
+    S.poly([panel[0], at(neck, -2.0, tw * 0.06), at(hip, -L, tw * 0.04), panel[3]], LEAD[1], rim=False)
+    S.line(at(neck, -3.0, tw * 0.5 - 0.6), at(hip, -L + 1.2, tw * 0.5 + 0.4), LEAD[2])
+    S.line(at(hip, -L + 1.2, -tw * 0.12), at(hip, -L + 1.2, tw * 0.5 + 0.6), LEAD[1])
+    # thyroid collar wrapped round the neck
+    S.capsule(at(neck, 0.6, -tw * 0.18), at(neck, 0.6, tw * 0.34), 4.2, LEAD[0], LEAD[1])
+    S.line(at(neck, 1.6, -tw * 0.1), at(neck, 1.6, tw * 0.3), LEAD[2])
+    # dosimeter badge clipped to the collar
+    bx, by = at(neck, -4.0, tw * 0.3)
+    S.rect(int(bx), int(by), 2, 3, "#f6d63a"); S.set(int(bx), int(by), "#ffffff")
+
+
+COAT = ("#f2f4f8", "#c4cad6", "#ffffff")   # lab coat white, shade, highlight
+COAT_SHIRT = ("#e8dc9a", "#c0b070")         # the shirt under the coat (pale yellow, so nothing reads as a blue gown)
+JEANS = ("#3a5a9a", "#26407a", "#5a7ab8")   # visitor's jeans: denim, shade, seam highlight
+
+
+def _frame(up, fwd, T):
+    def at(base, u, f):
+        return T((base[0] + up[0] * u + fwd[0] * f, base[1] + up[1] * u + fwd[1] * f))
+    def hang(base, u, f, d):  # a point d px straight below (coat tails hang vertically, whatever the lean)
+        return T((base[0] + up[0] * u + fwd[0] * f, base[1] + up[1] * u + fwd[1] * f + d))
+    return at, hang
+
+
+def lab_coat(S, T, hip, neck, lean, b):
+    """v0.7.1 Lab-Coat Hugger: an open white lab coat (lapels, pockets, tails below the waist) over a shirt and tie."""
+    up, fwd = vec(180 - lean, 1), vec(90 - lean, 1)
+    at, hang = _frame(up, fwd, T)
+    tw, L = b["torso_w"], b["thigh"] * 0.9
+    # back tail of the coat, hanging open below the waist
+    S.poly([at(hip, 2, -tw / 2 - 1), at(hip, 2, tw * 0.14), hang(hip, 0, tw * 0.05, L), hang(hip, 0, -tw / 2 - 2.5, L)], COAT[1])
+    S.line(hang(hip, 0, -tw / 2 - 1.5, L - 1), hang(hip, 0, tw * 0.0, L - 1), "#a8aebc")
+    # coat body over the side of the torso (the front stays open, showing the shirt)
+    S.poly([at(neck, -0.5, -tw / 2 - 1), at(neck, -0.5, tw * 0.2), at(hip, 2, tw * 0.16), at(hip, 2, -tw / 2 - 1)], COAT[0])
+    S.line(at(neck, -1.5, -tw / 2), at(hip, 3, -tw / 2), COAT[2])
+    # tie down the open front
+    S.line(at(neck, -1.0, tw * 0.34), at(hip, 4, tw * 0.36), "#a8323a"); S.line(at(neck, -1.0, tw * 0.3), at(neck, -3, tw * 0.3), "#a8323a")
+    # front edge of the coat + its front tail, hanging open
+    S.poly([at(neck, -4, tw * 0.42), at(neck, -4, tw / 2 + 0.8), at(hip, 2, tw / 2 + 0.8), at(hip, 2, tw * 0.44)], COAT[0])
+    S.poly([at(hip, 2, tw * 0.3), at(hip, 2, tw / 2 + 0.8), hang(hip, 0, tw / 2 + 2, L - 1), hang(hip, 0, tw * 0.28, L - 1)], COAT[0])
+    # lapels: a white notch collar folding open from the neck
+    S.poly([at(neck, 0.5, tw * 0.0), at(neck, 0.5, tw / 2 + 0.8), at(neck, -5.5, tw * 0.44)], COAT[0])
+    S.line(at(neck, -0.5, tw * 0.2), at(neck, -4.5, tw * 0.42), COAT[1])
+    # pockets: chest pocket with a pen, hip pocket on the tail
+    px, py = at(neck, -5, -tw * 0.18)
+    S.rect(int(px) - 1, int(py), 4, 3, COAT[1]); S.rect(int(px), int(py) - 2, 1, 2, "#2a5ad8")
+    qx, qy = hang(hip, 0, -tw * 0.32, 2)
+    S.rect(int(qx) - 2, int(qy), 5, 3, COAT[1]); S.rect(int(qx) - 2, int(qy), 5, 1, "#a8aebc")
+
+
+def flannel_and_jeans(S, T, hip, neck, lean, b):
+    """v0.7.1 Belligerent Visitor: the shirt stops at the hips (hem), then a belt, then jeans: no one-piece look."""
+    up, fwd = vec(180 - lean, 1), vec(90 - lean, 1)
+    at, hang = _frame(up, fwd, T)
+    tw = b["torso_w"]
+    w0, w1 = -tw / 2 - 0.6, tw / 2 + 0.6
+    # jeans seat over the bottom of the torso capsule (clean straight top edge, ink sides)
+    S.poly([at(hip, 3.2, w0), at(hip, 3.2, w1), at(hip, -5, w1 - 0.6), at(hip, -5, w0 + 0.6)], JEANS[0], rim=False)
+    S.line(at(hip, 3.2, w0 - 0.8), at(hip, -4, w0 - 0.2), INK); S.line(at(hip, 3.2, w1 + 0.8), at(hip, -4, w1 + 0.2), INK)
+    S.line(at(hip, 1.0, tw * 0.15), at(hip, -4, tw * 0.15), JEANS[2])            # fly seam
+    # belt with a buckle
+    S.poly([at(hip, 4.4, w0), at(hip, 4.4, w1), at(hip, 2.8, w1), at(hip, 2.8, w0)], "#3a2a1a", rim=False)
+    bx, by = at(hip, 4.0, tw * 0.28)
+    S.rect(int(bx), int(by), 2, 2, "#d8c060")
+    # the flannel's hem: an untucked edge just over the belt
+    S.line(at(hip, 5.2, w0 - 0.6), at(hip, 5.2, w1 + 0.6), INK)
+    S.line(at(hip, 5.9, w0), at(hip, 5.9, w1), "#6a1a18")
+
+
 def bodies():
     sk = SKIN
     B = {}
@@ -276,7 +362,7 @@ def bodies():
     B["visitor"] = hero_body(thigh=12, shin=12, torso=20, head=7.6, uarm=9.5, farm=9, arm_w=4.6, leg_w=5.8, torso_w=16, belly=1.5,
                              skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#5a3a20", hair_s="#3a2410", hair=hair_cap(top=-0.4, back=0.25, grow=0.4, spikes=2, seed=4),
                              shirt=FLANNEL[0], shirt_s=FLANNEL[1], sleeve=FLANNEL[0], sleeve_s=FLANNEL[1], sleeve_len=0.62, plaid=(FLANNEL, FLANNEL_CHECK),
-                             pants="#4a6a9a", pants_s="#344e78", belt="#3a2a1a", vneck=True, steth=False, badge="#f2d24a", shoe="#f4f4f4", shoe_s="#b0b8c4",
+                             pants=JEANS[0], pants_s=JEANS[1], pattern=flannel_and_jeans, vneck=True, steth=False, badge="#f2d24a", shoe="#f4f4f4", shoe_s="#b0b8c4",
                              beard="#5a3a20", fist=2.2, foot_len=4.4, foot_w=3.0)
     # v0.4 patients (gown + grip socks, random hair at runtime)
     B["runner"] = hero_body(thigh=10.5, shin=10.5, torso=15, torso_w=9, skin=sk["fair"][0], skin_s=sk["fair"][1], hair_c="#f0d070", hair_s="#c0a040",
@@ -286,22 +372,30 @@ def bodies():
                           **gown, pants=sk["light"][0], pants_s=sk["light"][1], **socks)
     B["o2"] = hero_body(thigh=10, shin=10, torso=15, torso_w=10.5, skin=sk["old"][0], skin_s=sk["old"][1], hair_c="#eef0f4", hair_s="#b8bcc8",
                         hair=bald_ring, **{**gown, "gown_len": 10}, **sock)
-    # v0.5 Radiology patients: the Contrast Chugger (barium cup + bendy straw) and the Lead-Apron Hugger (heavy apron)
+    # v0.5 Radiology patients: the Contrast Chugger (barium cup + bendy straw) and the Lead-Apron Hugger (v0.7.1: Lab-Coat Hugger)
     B["barium"] = hero_body(thigh=10, shin=10, torso=15, torso_w=11, belly=1.5, skin=sk["tan"][0], skin_s=sk["tan"][1], hair_c="#2a1a12", hair_s="#140c08",
                             hair=hair_cap(top=-0.1, back=0.35, grow=1.2, spikes=2, seed=12), mouth="#f4f6fa", **gown, pants=sk["tan"][0], pants_s=sk["tan"][1], **socks)
-    B["apron"] = hero_body(thigh=10.5, shin=10, torso=17, torso_w=13, belly=1.5, skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#6b4a2a", hair_s="#4a3018",
-                           hair=hair_cap(top=-0.25, back=0.3, grow=0.7, seed=13), beard="#6b4a2a",
-                           **{**gown, "shirt": "#3a6ad8", "shirt_s": "#2a4aa8", "gown_len": 12}, pants=sk["light"][0], pants_s=sk["light"][1], **socks)
+    # v0.7.1 (Bill): the Radiology "apron" patient now wears an open WHITE LAB COAT (lapels, pockets, tails below the waist,
+    # long sleeves) over a pale-yellow shirt, red tie and charcoal slacks: he "borrowed" it. The starchy coat soaks up two jabs.
+    B["apron"] = hero_body(thigh=10.5, shin=10, torso=17, torso_w=13, belly=1.0, skin=sk["light"][0], skin_s=sk["light"][1], hair_c="#6b4a2a", hair_s="#4a3018",
+                           hair=hair_cap(top=-0.25, back=0.3, grow=0.7, seed=13), beard="#6b4a2a", eye_white=True,
+                           shirt=COAT_SHIRT[0], shirt_s=COAT_SHIRT[1], sleeve=COAT[0], sleeve_s=COAT[1], sleeve_len=1.75, vneck=False, steth=False, badge=None,
+                           pants="#4a4a56", pants_s="#34343e", shoe="#5a3a26", shoe_s="#3a2416", foot_len=3.8)
+    B["apron"]["pattern"] = lab_coat
     # v0.6 Fire Alarm Yeller: wild white hair, red face from all the yelling, runs for the pull station
     B["yeller"] = hero_body(thigh=10, shin=10.5, torso=15, torso_w=10, skin="#f0a890", skin_s="#c87a64", hair_c="#f4f4f8", hair_s="#b8bcc8",
                             hair=hair_cap(top=-0.35, back=0.35, grow=1.6, spikes=6, seed=21), mouth="#a01c28",
                             **{**gown, "gown_len": 8}, pants="#f0a890", pants_s="#c87a64", **socks)
-    # v0.5 mini-boss LEAD-APRON LOU: a gentle giant ex-linebacker wearing three lead aprons like shoulder pads.
-    # v0.7 (Bill's boss-size override for this game): ~1.4x a nurse's height, still twice as broad as anyone else.
-    B["lou"] = hero_body(thigh=14, shin=13.5, torso=27, head=9.4, uarm=11.5, farm=11, arm_w=7.8, leg_w=10, torso_w=31, fist=3.8, foot=3, foot_len=6, belly=5,
+    # v0.5 mini-boss LEAD-APRON LOU: a gentle-giant ex-linebacker.
+    # v0.7 (Bill's boss-size override for this game): ~1.4x a nurse's height and broad-shouldered.
+    # v0.7.1 (Bill: the old puffy blue body "looked weird"): a normal patient build scaled up, in the standard checked gown and
+    # yellow grip socks, with a FITTED radiology lead apron over the front of the gown (flat slate panel, thyroid collar,
+    # shoulder strap, waist strap, dosimeter badge), drawn by lou_apron() below. Bare arms and legs show like everyone else's.
+    B["lou"] = hero_body(thigh=14, shin=13.5, torso=27, head=9.4, uarm=11.5, farm=11, arm_w=5.4, leg_w=7, torso_w=22, fist=3.0, foot=3, foot_len=5, belly=1.5,
                          skin=sk["brown"][0], skin_s=sk["brown"][1], hair_c="#2a1a12", hair_s="#140c08", hair=hair_cap(top=-0.35, back=0.2, grow=0.5, seed=14),
-                         **{**gown, "shirt": "#2a6a9a", "shirt_s": "#1c4c74", "gown_len": 7}, pants=sk["brown"][0], pants_s=sk["brown"][1],
+                         **{**gown, "gown_len": 12, "sleeve_len": 0.5}, pants=sk["brown"][0], pants_s=sk["brown"][1],
                          shoe=SOCK[0], shoe_s=SOCK[1], sock=SOCK[0])
+    B["lou"]["pattern"] = lou_apron
     # v0.7 (Bill): patients are the SAME size as the staff. Every patient type, elite and variant gets the nurses' average
     # height and build (only hair, props and a little belly differ). The Belligerent Visitor matches Nick's height with
     # slightly broader shoulders. The mini-boss Lou is sized separately (boss rule: ~1.2-1.5x a nurse).

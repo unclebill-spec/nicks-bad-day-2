@@ -1,4 +1,4 @@
-# v0.5: Floor 4 Radiology (dark floor + neon-blue lightboxes, radiology props, Contrast Chugger + Lead-Apron Hugger),
+# v0.5: Floor 4 Radiology (dark floor + neon-blue lightboxes, radiology props, Contrast Chugger + Lab-Coat Hugger, v0.5's Lead-Apron Hugger),
 # Lead-Apron Lou (mini-boss), MAGNA-SCAN 3000 (MRI magnet boss: pull / quench weak point / knock waves / table, 2 phases),
 # the Night Shift (lights out, flashlights, glowing eyes, lights back on at the end), and the full flow
 # L1 -> bonus -> Radiology -> Night -> ending -> scores with 2P / continues / pad / touch, plus bot playthroughs of the new floors.
@@ -55,10 +55,10 @@ with sync_playwright() as p:
         s2 = pg.evaluate("__nbd.W.shots.map(s=>s.kind+':'+(s.spr||''))")
         check('Contrast Chugger: barium cup -> white puddle', 'p_cup' in s1 and 'puddle:puddle_w' in s2, [s1, s2])
         pg.screenshot(path='tests/out/v05_barium.png'); pg.evaluate(CLEAR)
-        # Lead-Apron Hugger shrugs off jabs (armor), then goes down to a kick
+        # Lab-Coat Hugger (v0.7.1; was the Lead-Apron Hugger) shrugs off jabs (armor), then goes down to a kick
         i = foe(pg, 'apron', 26)
         r = pg.evaluate(f"(()=>{{const e=F[{i}], h=__nbd.W.heroes[0]; const a0=e.armor; e.takeHit({{dmg:4, dir:1, kb:20, from:h}}); const st1=e.st, a1=e.armor; e.takeHit({{dmg:8, dir:1, kb:150, down:true, from:h}}); return [a0, a1, st1, e.st, e.type, e.kind];}})()")
-        check('Lead-Apron Hugger: lead apron absorbs jabs, kick knocks it down', r[0] == 2 and r[1] == 1 and r[2] != 'hurt' and r[3] == 'fall' and r[4] == 'apron', r)
+        check('Lab-Coat Hugger: the starchy coat absorbs jabs, kick knocks him down', r[0] == 2 and r[1] == 1 and r[2] != 'hurt' and r[3] == 'fall' and r[4] == 'apron', r)
         pg.evaluate(CLEAR)
         # radiology props break into their own debris; the viewer glows; metal flag set
         r = pg.evaluate("""(()=>{const W=__nbd.W, h=W.heroes[0], out={}; for (const k of ['apronrack','contrastcart','viewer']) { const i=__nbd.prop(k, 40, 0); const p=W.props[i]; let n=0; while (p.st<2 && n<12) { __nbd.hitProp(p, 20, {dir:1, kb:20, from:h}); n++; } out[k]=[p.st, n, !!p.def.metal, p.def.glow||'']; } return out;})()""")

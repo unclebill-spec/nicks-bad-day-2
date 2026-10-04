@@ -65,6 +65,8 @@ for e in PATIENTS:
     b = B[e]
     atlas["chars"][e]["pal"] = {"hair": [b["hair_c"], b["hair_s"]], "skin": [b["skin"], b["skin_s"]],
                                 "gown": [chars.GOWN[0], chars.GOWN[1], *chars.GOWN_CHECK], "sock": [b["shoe"], b["shoe_s"]]}
+    if e == "apron":  # v0.7.1: lab coat + brown shoes, no gown or grip socks to recolour
+        atlas["chars"][e]["pal"]["gown"] = []; atlas["chars"][e]["pal"]["sock"] = []
 atlas["palettes"] = {"hair": chars.HAIRS, "skin": [list(v) for v in chars.SKIN.values()],
                      "gown": [[chars.GOWN[0], chars.GOWN[1], *chars.GOWN_CHECK], list(chars.GOWN_OLIVE)],
                      "sock": [list(chars.SOCK)], "sock_elite": [list(chars.SOCK_ELITE), ["#4a7ae8", "#2a4aa8"]]}
@@ -284,9 +286,9 @@ SPR["logo2"] = word("TERRIBLE BAD DAY", 34, "#ffe84a", "#ff8a1e", stroke=3)
 SPR["logo3"] = word("PART II", 26, "#8ad8ff", "#3a7aff", stroke=3)
 
 # ---- HUD portraits: the same bodies at 2x detail, head crop
-def portrait(body, pose_face="norm"):
-    big = {k: (v * 2 if isinstance(v, (int, float)) and k not in ("belly",) else v) for k, v in body.items()}
-    big["belly"] = body.get("belly", 0) * 2 if body.get("belly") else 0
+def portrait(body, pose_face="norm", k=2):
+    big = {n: (v * k if isinstance(v, (int, float)) and not isinstance(v, bool) and n not in ("belly",) else v) for n, v in body.items()}
+    big["belly"] = body.get("belly", 0) * k if body.get("belly") else 0
     from rig import P
     img, m = figure(big, P(lean=0, head=0, face=pose_face, ua_f=-5, fa_f=-5, ua_b=5, fa_b=5), W=176, H=170, ax=88, ay=166)
     hx = 88 + m["head"][0]
@@ -299,7 +301,7 @@ for h in ("nick", "kim", "will", "jackie"):
     SPR[f"face_{h}"] = portrait(B[h])
     SPR[f"face_{h}_hurt"] = portrait(B[h], "hurt")
 SPR["face_tilly"] = portrait(boss.tilly_body(), "grin")
-SPR["face_lou"] = portrait(B["apron"], "grin")
+SPR["face_lou"] = portrait(B["lou"], "grin", k=1.4)  # v0.7.1: Lou himself (bigger head, so drawn at 1.4x not 2x)
 
 # ---- bitmap font (Press Start 2P, OFL) 8x8, ASCII 32..126, 16 per row
 f = ImageFont.truetype(str(PS), 8)

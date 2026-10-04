@@ -8,7 +8,7 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-04, v0.7)
+## Current state (2026-10-04, v0.7.1)
 - **v0.7 additions:**
   - **Dedicated GRAB:** walking into a patient no longer grabs (`autoGrab()` in hero.js is kept but unused). GRAB (H / M, pad B, touch `#b_grab`)
     calls `grab()`. While holding (`s_grab`): direction toward facing (|stick| > 0.55, alone once re-armed by a neutral stick or held 0.4 s,
@@ -21,9 +21,13 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
     `bodies()` in tools/chars.py (visitor: Nick height, broader). Runtime hitbox in enemy.js: h 52 / w 14 (visitor h 56 / w 16).
     Don't make patients bigger or smaller than the nurses again.
   - **BOSS-SIZE OVERRIDE (Bill, v0.7, this game only):** bosses are only modestly bigger than the nurses, **~1.2-1.5x a nurse's height**
-    (Tilly 82 px, MRI 83 px, Lou 80 px vs the nurses' 56 px average). This replaces the older "bosses >= 5x, mini-bosses 2-3x" rule for
+    (Tilly 82 px, MRI 83 px, Lou 78 px vs the nurses' 56 px average). This replaces the older "bosses >= 5x, mini-bosses 2-3x" rule for
     Nick's Very Bad, Terrible Bad Day Part II. Knobs: `SC` in tools/boss.py, `MS` in tools/radiology.py (mirrored by `BORE`/drawFace in
     src/mri.js), `B["lou"]` in tools/chars.py; hitboxes/FX in src/boss.js (`SOLID`, `LANE`, `TOP`) and src/mri.js. `docs/v07_sizes.png` shows the lineup.
+  - **v0.7.1 outfits (Bill):** Lou = gown + fitted lead apron painted by `lou_apron()` (body `pattern` hook in tools/rig.py `figure()`,
+    drawn over the torso, under the head and front arm; colours `LEAD`). Apron patient = Lab-Coat Hugger, `lab_coat()` (`COAT`, `COAT_SHIRT`);
+    his runtime palette skips gown/sock recolouring (make_art.py). Visitor = red flannel + hem + belt + jeans via `flannel_and_jeans()` (`JEANS`).
+    Lou's HUD face is `portrait(B["lou"], k=1.4)`. Never go back to the puffy blue Lou or the one-piece Visitor. Before/after: docs/v071_before_after.png.
   - Tests: `tests/v07.py` (A keyboard grab/toss/slam/knee + help pages, B priority/pad/2P/touch layout, C jerky, D sizes).
 - **v0.6 additions:**
   - **Carry/throw props:** `carry: true` in `BREAKABLES` (data.js). Hero `lift`/`carry`/`toss` states in hero.js, flight physics `flyProp`/`landProp` and `THROW` in world.js. Priority: patient grab > gurney > weapon > lift > throw weapon.
@@ -40,9 +44,9 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
     blinking red "IN USE" warning lamps, violet MRI sign. The lights come from wall pieces (`GLOW` table in world.js) plus glowing props and the MRI bore.
   - **Props:** lead-apron racks (`apronrack`), contrast carts (`contrastcart`, glow amber, zap), film viewers (`viewer`, glow blue), wheelchairs, gurneys,
     IV stands, crash carts. All use the v0.3 kick/break system. `metal: true` marks what the MRI magnet pulls (props and weapons).
-  - **Patients:** Contrast Chugger (`barium`, `ai:'tray'`, lobs barium cups `p_cup` → white chalky puddle `puddle_w`), Lead-Apron Hugger
+  - **Patients:** Contrast Chugger (`barium`, `ai:'tray'`, lobs barium cups `p_cup` → white chalky puddle `puddle_w`), Lead-Apron Hugger (v0.7.1: Lab-Coat Hugger, white lab coat)
     (`apron`, `ai:'wanderer'`, armor 2: shrugs off two jabs). `d.ai` lets a new patient reuse an AI; `e.kind` is the AI, `e.type` the patient id.
-  - **Mini-boss: LEAD-APRON LOU** (`Lou` in `src/mri.js`), ~80 px tall = **1.43x a nurse** (v0.7; was 133 px). Telegraphed three-point stance → linebacker charge →
+  - **Mini-boss: LEAD-APRON LOU** (`Lou` in `src/mri.js`), ~78 px tall = **1.4x a nurse** (v0.7; was 133 px; v0.7.1 gown + fitted lead apron). Telegraphed three-point stance → linebacker charge →
     winded (`tired`, the weak point: full damage; 40% otherwise, no flinch). Stomp shock ring, X-ray film frisbees (`p_film`). Phase 2 at half HP
     ("FOURTH QUARTER! HIKE!") calls 2 helpers. Zone has `mini:true` (no cutscene); when beaten he is moved to `W.decor` (naps as scenery) and the zone opens.
   - **Boss: MAGNA-SCAN 3000** (`MRI` in `src/mri.js`), a front-view MRI machine with a live LCD face. **Size (v0.7): 83 px = 1.48x a nurse's height,

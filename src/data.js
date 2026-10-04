@@ -73,8 +73,9 @@ export const ENEMIES = {
   // v0.5 Radiology patients. ai = which patient brain they borrow (src/enemy.js); lines = their own chatter.
   barium: { name: 'CONTRAST CHUGGER', sheet: 'barium', ai: 'tray', proj: 'barium', hp: 34, speed: 34, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.6, 2.6], keep: 118, drop: ['energy', 0.3],
     ko: ['Tastes like... chalk... zzz', 'Banana flavor, my foot... zzz'], voice: 'voice1', lines: ['BANANA FLAVOR?!', 'Drink it ALL, they said!', 'Bottoms up!'] },
-  apron: { name: 'LEAD-APRON HUGGER', sheet: 'apron', ai: 'wanderer', hp: 56, speed: 26, depth: 22, reach: 24, score: 450, atk: 'hug', cd: [1.8, 2.8], armor: 2,
-    ko: ['So... heavy... zzz', 'Is the scan over? ...zzz'], voice: 'voice0', lines: ['They said keep it ON!', 'Hug for the X-ray tech?'] },
+  // v0.7.1: wears a borrowed white lab coat now (Bill); the starchy coat soaks up two jabs (armor)
+  apron: { name: 'LAB-COAT HUGGER', sheet: 'apron', ai: 'wanderer', hp: 56, speed: 26, depth: 22, reach: 24, score: 450, atk: 'hug', cd: [1.8, 2.8], armor: 2,
+    ko: ['Paging... Dr. Nap... zzz', 'Is the scan over? ...zzz'], voice: 'voice0', lines: ['I\'m a doctor now!', 'Doctor\'s orders: HUG!'] },
   // v0.6 Fire Alarm Yeller (any floor, src/alarm.js): sprints for a pull station; knock him down before he pulls it
   yeller: { name: 'FIRE ALARM YELLER', sheet: 'yeller', ai: 'yeller', hp: 30, speed: 72, depth: 40, reach: 22, score: 600, atk: 'slap', cd: [1.3, 2.1],
     ko: ['Was it... not a fire? ...zzz', 'I smelled TOAST! ...zzz', 'False alarm... zzz'], voice: 'voice5', lines: ['FIRE! FIIIRE!', 'I SMELL SMOKE!'] },

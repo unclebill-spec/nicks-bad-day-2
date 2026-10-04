@@ -2,6 +2,21 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-04: v0.7.1 "Dress Code" (Bill's art fixes: Lou, the apron patient, the Visitor)
+- **Lead-Apron Lou redrawn** (Bill: the puffy blue body "looked weird"). Same height (~78-80 px, ~1.4x a nurse) and still broad, but now a
+  natural patient build in the standard checked gown (random green/olive like everyone else) and yellow grip socks, with visible arms,
+  hands and legs. Over the front of the gown he wears a FITTED radiology lead apron: a flat slate panel with a clean ink outline and edge
+  highlight, a thyroid collar, a shoulder strap, a waist strap and a little dosimeter badge. Every frame (idle, walk, charge, stomp, throw,
+  winded, hurt, falls) plus his HUD portrait, which now shows Lou himself instead of reusing the apron patient's face. (Lou has no
+  cutscene panel; the HUD portrait is his only other art.)
+- **The Radiology "apron" patient is now the LAB-COAT HUGGER:** an open white lab coat (lapels, chest pocket with a pen, hip pocket,
+  long sleeves, tails hanging below the waist) over a pale-yellow shirt, red tie, charcoal slacks and brown shoes. No blue gown. His
+  jab-absorbing gimmick now comes from the starchy coat; new lines ("I'm a doctor now!", "Doctor's orders: HUG!").
+- **The Belligerent Visitor's top and bottom are clearly separate:** a red buffalo-plaid flannel that stops at the hips with a visible
+  hem, a brown belt with a buckle, then denim jeans (different colour, shading and a fly seam) and white sneakers. No onesie look.
+- Hitboxes, stats and the Lou fight are unchanged. Before/after: `docs/v071_before_after.png`; `docs/v07_sizes.png` refreshed.
+  Service worker cache `nbd2-app-v12`.
+
 ## 2026-10-04: v0.7 "Body Slam" (Bill's v0.7 list: a real GRAB, smaller bosses, staff-sized patients, BEEF JERKY)
 - **Dedicated GRAB (touch, gamepad, keyboard; P1 and P2).** Walking into a patient no longer grabs him; press GRAB (H / M, pad B, touch GRAB).
   - Holding a patient: direction toward where you FACE (alone, or with ATK) **tosses him forward**, bowling over and damaging anyone he hits.

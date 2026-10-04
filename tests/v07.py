@@ -61,7 +61,7 @@ with sync_playwright() as p:
         check('FORWARD (just the direction) tosses him forward', r1['st'] == 'throw' and r['tosses'] == 1 and r['foes'][0]['dx'] > 60, [r1['st'], r])
         check('the tossed patient knocks down + damages the patient he hits', r['foes'][1]['hp'] < 42 and r['foes'][1]['st'] in DOWN, r['foes'])
         # 2) the direction AWAY from where you face = over-the-shoulder body slam behind you
-        pg.evaluate(FREEZE); pg.evaluate("window.F=[]"); foe(pg, 'wanderer', 14); foe(pg, 'bell', -44)
+        pg.evaluate(FREEZE); pg.evaluate("window.F=[]"); foe(pg, 'wanderer', 14); foe(pg, 'bell', -44, st='dizzy')  # dizzy: stays put under load
         key(pg, 'KeyH', after=0.15); hp0 = pg.evaluate("F[0].hp")
         key(pg, 'KeyA', 0.12, 0.0); time.sleep(0.12); mid = pg.evaluate("({st:__nbd.W.heroes[0].st, z:F[0].z, rot:F[0].rot||0, face:__nbd.W.heroes[0].face})")
         pg.screenshot(path='tests/out/v07_slam_mid.png'); time.sleep(0.8); r = gs(pg)
