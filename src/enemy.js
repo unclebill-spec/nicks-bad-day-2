@@ -39,7 +39,7 @@ export class Enemy extends Actor {
     super(VARIANTS[kind] ? VARIANTS[kind][variant % VARIANTS[kind].length] : lookFor(kind, variant), x, y);
     // v0.5: radiology variants reuse another patient's AI (d.ai); this.type keeps the patient's own id
     this.kind = d.ai || kind; this.type = kind; this.d = d; this.maxHp = this.hp = Math.round(d.hp * W.diff.hp * (W.heroes.length > 1 ? 1.25 : 1));
-    this.cd = 0.8 + W.rnd() * 1.2; this.armor = d.armor || 0; this.armorT = 0; this.big = !!d.big; this.h = d.big ? 62 : 50; this.w = d.big ? 20 : 14;
+    this.cd = 0.8 + W.rnd() * 1.2; this.armor = d.armor || 0; this.armorT = 0; this.big = !!d.big; this.h = d.big ? 56 : 52; this.w = d.big ? 16 : 14;  // v0.7: patients are staff-sized (nurse hitbox h 48-54)
     this.side = W.rnd() < 0.5 ? -1 : 1; this.wob = W.rnd() * 6; this.target = null; this.tx = x; this.ty = y; this.speechT = 2 + W.rnd() * 6;
     this.tank = this.kind === 'o2'; this.runT = 0; this.beepT = 0;
   }

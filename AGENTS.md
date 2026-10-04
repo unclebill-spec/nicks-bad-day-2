@@ -17,6 +17,9 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
     `grabContext()` in main.js: THROW (carrying) > TOSS (holding) > GRAB (patient in reach, no weapon) > RIDE > PICK UP. Stats: `W.stats.grabs/tosses/slams`.
   - **How to play:** `drawHelp()` in main.js is two pages (CONTROLS / MOVES), max 44 chars a line, panel height `min(VH - 34, 190)` so it clears the phone pause row.
   - **BEEF JERKY** replaces SNAP STIX (`jerky` item, `V6.jerky()` art in tools/v06_art.py, sounds in tools/v07_audio.py: jerky, toss, slam).
+  - **Patients = staff size (Bill's v0.7 rule for this game):** `NURSE_BUILD` is applied to every kind in `PATIENT_KINDS` at the end of
+    `bodies()` in tools/chars.py (visitor: Nick height, broader). Runtime hitbox in enemy.js: h 52 / w 14 (visitor h 56 / w 16).
+    Don't make patients bigger or smaller than the nurses again.
   - Tests: `tests/v07.py` (A keyboard grab/toss/slam/knee + help pages, B priority/pad/2P/touch layout, C jerky, D sizes).
 - **v0.6 additions:**
   - **Carry/throw props:** `carry: true` in `BREAKABLES` (data.js). Hero `lift`/`carry`/`toss` states in hero.js, flight physics `flyProp`/`landProp` and `THROW` in world.js. Priority: patient grab > gurney > weapon > lift > throw weapon.

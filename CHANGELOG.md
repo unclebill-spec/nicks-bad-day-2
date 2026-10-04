@@ -11,6 +11,10 @@ All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are Amer
   - Context priority for the one button: throw a carried prop > toss a held patient > grab a patient > ride a gurney > pick up a weapon or prop.
     The touch button relabels itself GRAB / TOSS / RIDE / PICK UP / THROW, and a small <SLAM TOSS> hint shows on your first grabs each floor.
   - New sounds: toss whoosh and slam thud.
+- **Patients are the same size as the staff** (Bill: unlike most games). Every patient type, elite and variant now uses the nurses'
+  build (`NURSE_BUILD` in tools/chars.py): bodies stand ~57 px like the nurses (56 px average). Only hair, hats, props and a little belly
+  differ; the elite's beehive was lowered. The Belligerent Visitor matches Nick's height with slightly broader shoulders. Hitboxes match
+  too (patients h 52, visitor 56, nurses 48-54).
 - **How to play** is now two pages (CONTROLS and MOVES) that fit on a phone screen above the pause button; flip with PAGE or left/right.
 - **SNAP STIX is now BEEF JERKY** everywhere: a made-up kraft-bag wrapper with a red BEEF JERKY label (no real brand), "BEEF JERKY!"
   pickup text, its own crunchy-chew sound, docs and tests.

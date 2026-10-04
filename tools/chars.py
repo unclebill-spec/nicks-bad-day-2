@@ -113,9 +113,9 @@ def bald_ring(S, hc, r, b, pose):
 def beehive(S, hc, r, b, pose):
     """Tall beehive with pink curlers (elite patients)."""
     c, sh = b["hair_c"], b["hair_s"]
-    S.ellipse((hc[0] - 1.5, hc[1] - r * 1.25), r * 0.95, r * 1.05, c, sh)
-    S.ellipse((hc[0] - 0.5, hc[1] - r * 2.05), r * 0.6, r * 0.55, c, sh)
-    for dx, dy in ((-r * 0.7, -r * 1.2), (r * 0.3, -r * 1.6), (-r * 0.2, -r * 2.2)):
+    S.ellipse((hc[0] - 1.5, hc[1] - r * 1.0), r * 0.95, r * 0.85, c, sh)      # v0.7: a lower 'hive so she stands nurse height
+    S.ellipse((hc[0] - 0.5, hc[1] - r * 1.6), r * 0.6, r * 0.45, c, sh)
+    for dx, dy in ((-r * 0.7, -r * 1.0), (r * 0.3, -r * 1.3), (-r * 0.2, -r * 1.75)):
         x, y = int(hc[0] + dx), int(hc[1] + dy)
         S.set(x, y, "#ff8ac0"); S.set(x + 1, y, "#ff8ac0"); S.set(x, y + 1, "#c8508a"); S.set(x + 1, y + 1, "#c8508a")
 
@@ -301,7 +301,17 @@ def bodies():
                          skin=sk["brown"][0], skin_s=sk["brown"][1], hair_c="#2a1a12", hair_s="#140c08", hair=hair_cap(top=-0.35, back=0.2, grow=0.5, seed=14),
                          **{**gown, "shirt": "#2a6a9a", "shirt_s": "#1c4c74", "gown_len": 10}, pants=sk["brown"][0], pants_s=sk["brown"][1],
                          shoe=SOCK[0], shoe_s=SOCK[1], sock=SOCK[0])
+    # v0.7 (Bill): patients are the SAME size as the staff. Every patient type, elite and variant gets the nurses' average
+    # height and build (only hair, props and a little belly differ). The Belligerent Visitor matches Nick's height with
+    # slightly broader shoulders. The mini-boss Lou is sized separately (boss rule: ~1.2-1.5x a nurse).
+    NURSE_BUILD = dict(thigh=10.5, shin=10.5, torso=16.5, head=6.6, uarm=8, farm=8, arm_w=3.6, leg_w=5.0, torso_w=12, fist=2.0, foot=2)
+    for k in PATIENT_KINDS:
+        B[k].update(NURSE_BUILD); B[k]["belly"] = min(1.0, B[k].get("belly", 0))
+    B["visitor"].update(thigh=11, shin=11, torso=17, head=6.8, uarm=8.4, farm=8.2, arm_w=4.2, leg_w=5.4, torso_w=14, belly=1.0)
     return B
+
+
+PATIENT_KINDS = ["wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite", "runner", "tray", "o2", "barium", "apron", "yeller"]
 
 
 # ---------------- animations

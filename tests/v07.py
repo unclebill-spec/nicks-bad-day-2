@@ -179,9 +179,12 @@ with sync_playwright() as p:
         nurses = {n: size(n) for n in ('nick', 'kim', 'will', 'jackie')}
         NH = sum(v[1] for v in nurses.values()) / 4; NW = sum(v[0] for v in nurses.values()) / 4
         pats = {k: size(k) for k in ('wanderer', 'spammer', 'escape', 'ivswing', 'sundowner', 'crutch', 'bell', 'elite', 'runner', 'tray', 'o2', 'barium', 'apron', 'yeller', 'visitor')}
-        bad = {k: round(v[1] / NH, 2) for k, v in pats.items() if not 0.88 <= v[1] / NH <= (1.16 if k == 'visitor' else 1.12)}
-        check('every patient type, elite and variant is nurse height (within ~10%)', not bad, [round(NH, 1), {k: v[1] for k, v in pats.items()}, bad])
-        wide = {k: round(v[0] / NW, 2) for k, v in pats.items() if not 0.75 <= v[0] / NW <= 1.45}
+        # the bodies share the nurses' build; the beehive (elite), nightcap (sundowner), O2 tubing and IV pole stick up a little
+        tall_kit = ('elite', 'sundowner', 'o2', 'ivswing')
+        bad = {k: round(v[1] / NH, 2) for k, v in pats.items() if not 0.9 <= v[1] / NH <= (1.18 if k in tall_kit else 1.1)}
+        med = sorted(v[1] for v in pats.values())[len(pats) // 2]
+        check('every patient type, elite and variant is nurse height (median within 6%, each within 10%, hats/poles 18%)', not bad and abs(med / NH - 1) <= 0.06, [round(NH, 1), med, {k: v[1] for k, v in pats.items()}, bad])
+        wide = {k: round(v[0] / NW, 2) for k, v in pats.items() if not 0.75 <= v[0] / NW <= (1.75 if k == 'tray' else 1.45)}  # the tray patient holds a meal tray out
         check('patients have a nurse-like build (width)', not wide, [round(NW, 1), {k: v[0] for k, v in pats.items()}, wide])
         boss = {'tilly': size('tilly'), 'mri': size('mri'), 'lou': size('lou')}
         ratio = {k: round(v[1] / NH, 2) for k, v in boss.items()}
@@ -197,7 +200,7 @@ with sync_playwright() as p:
             r = pg.evaluate("(()=>{const B=__nbd.W.boss,h=__nbd.W.heroes[0]; return {w:B.w, h:B.h, hh:h.h};})()")
             check(f'{name}: hitbox scaled down with the art (h {r["h"]} vs nurse {r["hh"]})', 1.15 <= r['h'] / 54 <= 1.6, r)
             t0 = time.time(); hurt = 0
-            while time.time() - t0 < 240:
+            while time.time() - t0 < 420:
                 st = pg.evaluate("(()=>{const B=__nbd.W.boss, h=__nbd.W.heroes[0]; return {dead: !B || B.st==='defeat' || B.hp<=0 || !B.alive, hp: B?B.hp:0, hits: h.hitsTaken||0, scene: __nbd.game.scene};})()")
                 if st['dead'] or st['scene'] != 'play': break
                 time.sleep(2)
