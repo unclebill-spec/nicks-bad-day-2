@@ -1,6 +1,6 @@
 # v0.10.1: GINGER NERVOUS NICK, KILLER KIM, CHARGE JACKIE, WONDERFUL WILL. Names + personality roles, Bill's lines verbatim, ~30+ bubbles each
 # on the Nate / Heather triggers (+ drop / throw, Jackie's team-up line), lines fit a phone bubble, Nick's copper hair is not
-# Kim's red, Kim talks to the patient she just dropped, and the select / HUD / cutscene show the new names.
+# Kim's red, Kim talks to the patient she just dropped, Will's red + green sweater (v0.10.2: clean stomach), and the select / HUD / cutscene show the new names.
 # Screenshots -> tests/out/v101_*.png
 import time, sys, json
 from playwright.sync_api import sync_playwright
@@ -63,12 +63,25 @@ with sync_playwright() as p:
     check("kim: still her own red (not Nick's copper)", K['#d8462a'] > 10 and K['#e8842e'] == 0, K)
     dist = sum((int('e8842e'[i:i + 2], 16) - int('d8462a'[i:i + 2], 16)) ** 2 for i in (0, 2, 4)) ** 0.5
     check(f'nick vs kim hair colour distance {dist:.0f} (> 50)', dist > 50)
-    Wc = pg.evaluate(f"({COUNT})('will', 'idle', ['#2f86f6', '#1c5ec4', '#e0303a', '#a81e28', '#2fae4a', '#1e7e34', '#f4f6fa', '#c8d0dc', '#ffe84a', '#2a3658', '#1c2440', '#ff8a1e', '#e87a1a'])")
-    check('will: Christmas sweater (blue knit + red band/hem/cuffs + green tree + white snowflakes)', Wc['#2f86f6'] + Wc['#1c5ec4'] > 40 and Wc['#e0303a'] + Wc['#a81e28'] > 8 and Wc['#2fae4a'] + Wc['#1e7e34'] >= 3 and Wc['#f4f6fa'] + Wc['#c8d0dc'] >= 4, Wc)
-    check('will: navy pants kept, no pumpkin orange', Wc['#2a3658'] + Wc['#1c2440'] > 40 and Wc['#ff8a1e'] + Wc['#e87a1a'] == 0, Wc)
+    # v0.10.2 (Bill): classic red + green sweater, clean solid stomach (no tree / knit dots), green hem band over navy pants
+    Wc = pg.evaluate(f"({COUNT})('will', 'idle', ['#d81e34', '#a01426', '#1f9a48', '#136a30', '#f4f6fa', '#c8d0dc', '#2f86f6', '#1c5ec4', '#ffe84a', '#7a4a22', '#2a3658', '#1c2440', '#ff8a1e', '#e87a1a', '#c03a30', '#8e2620'])")
+    check('will: red + green Christmas sweater (red knit, green band / cuffs / hem)', Wc['#d81e34'] + Wc['#a01426'] > 60 and Wc['#1f9a48'] + Wc['#136a30'] >= 8, Wc)
+    check('will: clean front: no tree / star, no blue knit, only a few snowflake pixels', Wc['#ffe84a'] + Wc['#7a4a22'] + Wc['#2f86f6'] + Wc['#1c5ec4'] == 0 and Wc['#f4f6fa'] + Wc['#c8d0dc'] <= 8, Wc)
+    check("will: navy pants kept, no pumpkin orange, not the visitor's flannel red", Wc['#2a3658'] + Wc['#1c2440'] > 40 and Wc['#ff8a1e'] + Wc['#e87a1a'] == 0 and Wc['#c03a30'] + Wc['#8e2620'] == 0, Wc)
+    BEL = """(() => { const G = __nbd.G, A = G.atlas.chars.will, [cw, ch] = A.cell, i = A.anims.idle.s, sx = (i % A.cols) * cw, sy = Math.floor(i / A.cols) * ch;
+      const c = document.createElement('canvas'); c.width = cw; c.height = ch; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(G.img.will, sx, sy, cw, ch, 0, 0, cw, ch);
+      const d = x.getImageData(0, 0, cw, ch).data, hx = (j) => '#' + [d[j], d[j + 1], d[j + 2]].map(v => v.toString(16).padStart(2, '0')).join('');
+      let y0 = ch, y1 = -1; for (let y = 0; y < ch; y++) for (let q = 0; q < cw; q++) { const h = hx((y * cw + q) * 4); if (h === '#d81e34' || h === '#a01426') { y0 = Math.min(y0, y); y1 = Math.max(y1, y); } }
+      const m0 = Math.round(y0 + (y1 - y0) * 0.45), m1 = Math.round(y0 + (y1 - y0) * 0.8); const odd = {};
+      for (let y = m0; y <= m1; y++) for (let q = 0; q < cw; q++) { const j = (y * cw + q) * 4; if (d[j + 3] < 200) continue; const h = hx(j); if (!['#1f9a48', '#136a30', '#f4f6fa', '#c8d0dc'].includes(h)) continue;
+        let cuff = false; for (let dy = -3; dy <= 3; dy++) for (let dx = -4; dx <= 4; dx++) { const yy = y + dy, xx = q + dx; if (yy < 0 || yy >= ch || xx < 0 || xx >= cw) continue; const k = hx((yy * cw + xx) * 4); if (k === '#f2c8a2' || k === '#d29a76') cuff = true; }
+        if (!cuff) odd[h] = (odd[h] || 0) + 1; }  // a green cuff next to his fist is the sleeve, not the stomach
+      return { y0, y1, m0, m1, odd }; })()"""
+    bel = pg.evaluate(BEL)
+    check('will: the stomach band of the sweater is plain red (no pattern pixels)', not bel['odd'], bel)
     Wf = pg.evaluate("""(() => { const G = __nbd.G, r = G.atlas.sprites.rects.face_will, c = document.createElement('canvas'); c.width = r[2]; c.height = r[3]; const x = c.getContext('2d'); x.drawImage(G.img.sprites, r[0], r[1], r[2], r[3], 0, 0, r[2], r[3]);
-      const d = x.getImageData(0, 0, r[2], r[3]).data; let n = 0; for (let j = 0; j < d.length; j += 4) if (d[j] === 0xe0 && d[j + 1] === 0x30 && d[j + 2] === 0x3a) n++; return n; })()""")
-    check('will: HUD face shows the sweater collar', Wf > 4, Wf)
+      const d = x.getImageData(0, 0, r[2], r[3]).data; let n = 0, g = 0; for (let j = 0; j < d.length; j += 4) { if (d[j] === 0xd8 && d[j + 1] === 0x1e && d[j + 2] === 0x34) n++; if (d[j] === 0x1f && d[j + 1] === 0x9a && d[j + 2] === 0x48) g++; } return [n, g]; })()""")
+    check('will: HUD face shows the red sweater with green trim', Wf[0] > 10 and Wf[1] > 4, Wf)
     key(pg, 'Enter', after=0.8); pg.screenshot(path='tests/out/v101_select.png'); pg.close()
     # ---------------------------------------------------------------- B: bubbles in play (desktop + phone width)
     for vw, tag in ((960, 'desk'), (740, 'phone')):

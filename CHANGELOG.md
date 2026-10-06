@@ -2,6 +2,20 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-06: v0.10.2 "Red and Green" (Bill: "Just do a red and green sweater, the belly looks weird.")
+- **Wonderful Will's sweater is now a classic red and green Christmas sweater:** a red knit body and long sleeves, a green Fair Isle
+  band across the chest and shoulders (two solid green rows with a green zigzag between them and a white snowflake pixel in each
+  gap), a few white snowflakes on the shoulders, a green crew collar and green cuffs.
+- **Clean belly:** the little tree, the star and the all-over snowflake dots are gone. The stomach is one solid red area, and the
+  sweater ends in a plain straight green hem band at the hips over his belt and navy pants, so there's a clear waist and no
+  bulge, diaper or onesie look. Same stocky build and front silhouette as his old plain shirt.
+- His brighter, cooler Christmas red (#d81e34) plus the green trim keep him apart from the red buffalo-plaid Visitor (#c03a30,
+  jeans, beard). His select-card / HUD colour stays blue.
+- Regenerated every Will frame (walk, attacks, Body Slam, scooter rider and the rest), his HUD face and hurt face; the select card,
+  title line-up, cutscenes, tallies and THE END all draw from these. The HUD portrait shows the chest band (it only shows the shoulders).
+- Service worker cache `nbd2-app-v18`. tests/v10_1.py checks the red + green sweater, a pattern-free stomach and the portrait.
+  Docs: `docs/v10_2_will_sweater.png` (v0.10.1 vs v0.10.2: HUD face + hurt face, idle, walk, punch, scooter).
+
 ## 2026-10-06: v0.10.1 "Nicknames" (Bill: ginger Nick, then a nickname + personality for four nurses, and Will's Christmas sweater)
 All six nurses now have a nickname and a personality on the select card: **Nervous Nick** (Pessimist), **Killer Kim** (Cheerful),
 **Wonderful Will** (Top Dog), **Charge Jackie** (Helpful), **Nasty Nate** (Lazy) and **Heather** (Tough). Stats and moves are unchanged.

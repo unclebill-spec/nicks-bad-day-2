@@ -69,7 +69,7 @@ def stripes(S, T, hip, neck, lean, b):
 
 WILL_BLUE = ("#2f86f6", "#1c5ec4")
 FLANNEL = ("#c03a30", "#8e2620")                                   # visitor's flannel shirt: red buffalo plaid (v0.7.1; was teal, read as a onesie with the jeans)
-FLANNEL_CHECK = ("#5a1a1a", "#3e1010", "#2a0c0c", "#1e0808")       # dark lines, near-black crossings   # Will: bright blue (v0.10.1: now an ugly Christmas sweater, xmas_sweater)
+FLANNEL_CHECK = ("#5a1a1a", "#3e1010", "#2a0c0c", "#1e0808")       # dark lines, near-black crossings   # Will: v0.10.2 red + green Christmas sweater (xmas_sweater); WILL_BLUE stays his select / HUD colour family
 
 
 def bald_shine(S, hc, r, b, pose):
@@ -350,37 +350,37 @@ def flannel_and_jeans(S, T, hip, neck, lean, b):
     S.line(at(hip, 5.9, w0), at(hip, 5.9, w1), "#6a1a18")
 
 
-# v0.10.1 (Bill): WONDERFUL WILL wears an ugly Christmas sweater ("Do you like my festive shirt?"). Bright blue knit (his colour,
-# and it keeps him apart from the red-flannel visitor) with a red rib hem, a red band with a white zigzag across the chest,
-# snowflake dots, and a little tree with a star on the belly. Christmas, not Halloween. Ends at the hips over his belt + navy pants.
-XMAS = {"red": ("#e0303a", "#a81e28"), "white": ("#f4f6fa", "#c8d0dc"), "green": ("#2fae4a", "#1e7e34"), "star": ("#ffe84a", "#d8b828"), "trunk": ("#7a4a22", "#5a3416")}
+# v0.10.2 (Bill: "Just do a red and green sweater, the belly looks weird."): WONDERFUL WILL's classic red + green Christmas
+# sweater. Red knit body and long sleeves, a green Fair Isle band (solid rows + a zigzag with white snowflake pixels) across the
+# chest and shoulders only, a few snowflakes on the shoulders, green crew collar, green cuffs and a plain straight green hem band
+# at the hips over his belt + navy pants. The stomach is a clean solid red area (no tree, no knit dots). The green trim and the
+# brighter, cooler Christmas red keep him apart from the red-flannel visitor (#c03a30 buffalo plaid + jeans).
+XMAS = {"red": ("#d81e34", "#a01426"), "green": ("#1f9a48", "#136a30"), "white": ("#f4f6fa", "#c8d0dc")}
+XMAS_RED = XMAS["red"]
 
 
 def xmas_sweater(S, T, hip, neck, lean, b):
-    """Torso design, in units of a 16 px torso (so the 2x HUD portrait gets the same sweater). f < 0 is the side that shows
-    past the front arm, so the tree sits there."""
+    """Chest / shoulder band + hem band + collar, in units of a 16 px torso (so the 2x HUD portrait gets the same sweater)."""
     up, fwd = vec(180 - lean, 1), vec(90 - lean, 1)
     at, _ = _frame(up, fwd, T)
     hw, top = b["torso_w"] / 2, b["torso"]
     k = top / 16.0
     sc, ss = b["shirt"], b["shirt_s"]
     def design(ui, fi):
-        if ui <= 0 or ui >= 16:                       # ribbed hem band at the hips + a red crew collar
-            return "red"
-        if ui in (12, 15):                            # chest band across the shoulders (shows in the HUD face too): red rows ...
-            return "red"
-        if ui == 14:                                  # ... with a white zigzag between them
-            return "white" if fi % 4 == 2 else "red"
-        if ui == 13:
-            return "white" if fi % 4 in (1, 3) else "red"
-        t = fi + 3                                    # the little tree, centred on the visible side
-        if ui == 6 and t == 0:
-            return "star"
-        if (ui == 5 and t == 0) or (ui in (3, 4) and abs(t) <= 1) or (ui == 2 and abs(t) <= 2):
-            return "red" if (ui, t) == (2, 1) else "white" if (ui, t) == (4, -1) else "green"
-        if ui == 1 and t == 0:
-            return "trunk"
+        if ui <= 0:                                   # plain straight hem band at the hips
+            return "green"
+        if ui <= 9:                                   # clean, solid red stomach
+            return None
+        if ui in (10, 13):                            # band edges
+            return "green"
+        if ui == 11:                                  # zigzag (lower points) with a snowflake between them
+            return "green" if fi % 4 == 0 else "white" if fi % 4 == 2 else None
+        if ui == 12:                                  # zigzag (upper points)
+            return "green" if fi % 4 in (1, 3) else None
+        if ui == 15:                                  # a few snowflakes on the shoulders
+            return "white" if fi % 4 == 1 else None
         return None
+    off = 3 if k > 1.5 else 0                         # the 2x HUD portrait only shows the shoulders: raise the band there
     seen = set()
     u = -1.6 * k
     while u < top + 1.0:
@@ -390,28 +390,12 @@ def xmas_sweater(S, T, hip, neck, lean, b):
             ix, iy = int(x), int(y)
             if (ix, iy) not in seen and 0 <= iy < S.h and 0 <= ix < S.w and S.p[iy][ix] in (sc, ss):
                 seen.add((ix, iy))
-                c = design(math.floor(u / k), math.floor(f / k))
+                ui = math.floor(u / k)
+                c = "green" if ui >= 16 else design(ui - off, math.floor(f / k))   # green crew collar
                 if c:
                     S.set(ix, iy, XMAS[c][1 if S.p[iy][ix] == ss else 0])
             f += 0.5
         u += 0.5
-
-
-def xmas_knit(img):
-    """Post-process a Will frame: white snowflake dots on a fixed grid over the blue knit (torso and sleeves), never on an edge."""
-    hx = lambda c: tuple(int(c[i:i + 2], 16) for i in (1, 3, 5))
-    b0, b1 = hx(WILL_BLUE[0]), hx(WILL_BLUE[1])
-    w0, w1 = hx(XMAS["white"][0]), hx(XMAS["white"][1])
-    px = img.load()
-    for y in range(1, img.height - 1):
-        for x in range(1, img.width - 1):
-            q = px[x, y][:3]
-            if q not in (b0, b1) or (x + (y // 4) * 2) % 4 or y % 4 != 1:
-                continue
-            if all(px[x + dx, y + dy][:3] in (b0, b1) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-                px[x, y] = (w0 if q == b0 else w1) + (255,)
-    return img
-
 
 def bodies():
     sk = SKIN
@@ -423,12 +407,12 @@ def bodies():
     B["kim"] = hero_body(thigh=9, shin=9, torso=15, head=6.6, uarm=7, farm=7, torso_w=11, arm_w=3.3, leg_w=4.6, skin=sk["fair"][0], skin_s=sk["fair"][1],
                          hair_c="#d8462a", hair_s="#9c2c1a", hair=hair_cap(top=-0.1, back=0.4), hair_back=ponytail,
                          freckles="#d08a6a", shoe="#ffffff", shoe_s="#b8c2d0", mouth="#c0505e")
-    # Will (v0.2.2): regular guy proportions, belt, navy pants. v0.10.1 (Bill): WONDERFUL WILL's ugly Christmas sweater (xmas_sweater):
-    # bright blue knit with long sleeves, red rib hem at the hips, zigzag chest band, snowflakes and a little tree.
+    # Will (v0.2.2): regular guy proportions, belt, navy pants. v0.10.2 (Bill): a classic red + green Christmas sweater
+    # (xmas_sweater): red knit with long sleeves, green Fair Isle band on the chest / shoulders, green collar, cuffs and hem band.
     B["will"] = hero_body(thigh=9, shin=8.5, torso=16, head=7, uarm=7, farm=7, arm_w=3.8, leg_w=5.2, torso_w=13, belly=1, fist=2.1,
-                          skin=sk["light"][0], skin_s=sk["light"][1], hair=bald_shine, shirt=WILL_BLUE[0], shirt_s=WILL_BLUE[1], sleeve=WILL_BLUE[0], sleeve_s=WILL_BLUE[1],
-                          vneck=False, crew="#1c5ec4", steth=True, belt="#4a3220", pants="#2a3658", pants_s="#1c2440", hem_c=XMAS["red"][1],
-                          shoe="#3a2a22", shoe_s="#22160e", badge=None, sleeve_len=1.8, pattern=xmas_sweater, cuff=XMAS["red"], post=xmas_knit)
+                          skin=sk["light"][0], skin_s=sk["light"][1], hair=bald_shine, shirt=XMAS_RED[0], shirt_s=XMAS_RED[1], sleeve=XMAS_RED[0], sleeve_s=XMAS_RED[1],
+                          vneck=False, crew="#136a30", steth=True, belt="#4a3220", pants="#2a3658", pants_s="#1c2440", hem_c=XMAS["green"][1],
+                          shoe="#3a2a22", shoe_s="#22160e", badge=None, sleeve_len=1.8, pattern=xmas_sweater, cuff=XMAS["green"])
     B["jackie"] = hero_body(thigh=12, shin=11.5, torso=17.5, head=6.4, uarm=8.5, farm=8.5, torso_w=11, arm_w=3.3, leg_w=4.7, skin=sk["tan"][0], skin_s=sk["tan"][1],
                             hair_c="#4a2a18", hair_s="#2e180c", hair=hair_cap(top=0.05, back=0.2, grow=2.2, bumps=1.3, fringe=0, seed=2),
                             shoe="#9a5ae0", shoe_s="#6a34a8", mouth="#b04a5a")

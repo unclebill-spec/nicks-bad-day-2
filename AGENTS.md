@@ -8,7 +8,7 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-06, v0.10.1)
+## Current state (2026-10-06, v0.10.2)
 - **v0.10.1 nicknames + personalities (Bill).** `HEROES[id].name` is the nickname, `.short` the plain name (HUD / END fall back to it
   when space is tight), `.role` the personality shown on the select card: NERVOUS NICK (Pessimist), KILLER KIM (Cheerful), WONDERFUL
   WILL (Top Dog), CHARGE JACKIE (Helpful), NASTY NATE (Lazy), HEATHER (Tough). Don't rename them back.
@@ -23,10 +23,13 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
     `fit()` uses 8 px, else the narrow font (PESSIMIST, WONDERFUL, CHEERFUL on 62 px cards). THE END line reads "NERVOUS NICK AND THE CREW SURVIVED THE SHIFT." (2 rows if narrow).
   - **Nick is a ginger:** `B["nick"]` hair `NICK_GINGER` (#e8842e copper-orange, shade #b0581c) + light freckles (#e2aa88), deliberately
     more orange than Kim's red (#d8462a / #9c2c1a, ponytail). Glasses, build, navy scrubs, orange shoes unchanged. Don't make him blond.
-  - **Will's ugly Christmas sweater:** `B["will"]`: bright blue knit (`WILL_BLUE`), long sleeves (`sleeve_len` 1.8) with red ribbed
-    cuffs (new rig `cuff` option), `pattern=xmas_sweater` (red rib hem at the hips + collar, red chest band with a white zigzag, a
-    little tree with a star on the visible side; designed on a 16 px torso so the 2x portrait matches) and `post=xmas_knit` (white
-    snowflake dots on the blue; make_art.py now honours a body's `post`). Belt + navy pants show under the hem. Christmas only, no pumpkins.
+  - **Will's red + green Christmas sweater (v0.10.2, Bill: "the belly looks weird"):** `B["will"]`: red knit (`XMAS["red"]` #d81e34 /
+    #a01426), long sleeves (`sleeve_len` 1.8) with green cuffs (rig `cuff` option), `pattern=xmas_sweater`: a green Fair Isle band on
+    the chest / shoulders only (rows 10-13 of a 16 px torso: solid green, zigzag + white snowflake, zigzag, solid green), shoulder
+    snowflakes, green collar, and a plain straight green hem band at the hips over the belt + navy pants. **Keep the stomach solid
+    red** (no tree, no knit dots; tests/v10_1.py checks it). The 2x HUD portrait raises the band 3 rows so it shows. `xmas_knit` and
+    the tree are gone; make_art.py still honours a body's `post`. Christmas only, no pumpkins; card / HUD colour stays blue.
+    Before/after: docs/v10_2_will_sweater.png.
   - Docs: docs/v10_1_nick_ginger.png, docs/v10_1_select_nick.png, docs/v10_1_select_phone.png, docs/v10_1_will_sweater.png, docs/v10_1_bubbles.png, docs/v10_1_crew.gif. Tests: tests/v10_1.py.
 - **v0.10 HEATHER (6th playable nurse, `HEROES.heather`, last in `HERO_ORDER`):**
   - **Look:** `B["heather"]` in tools/chars.py: blonde (`HEATHER_HAIR`), long hair worn down (`long_hair()` hair_back), royal blue
@@ -157,7 +160,7 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
 - **6 heroes:**
   - Nervous Nick (Pessimist): balanced, Crash Cart special. Ginger (v0.10.1: copper-orange hair, light freckles), glasses, navy scrubs, orange shoes.
   - Killer Kim (Cheerful): fast, Whirlwind Kick. Red hair in a ponytail. Sweet as pie while she flattens people.
-  - Wonderful Will (Top Dog): power, Body Slam, big throws. Bald (skin-tone head with a shine). v0.10.1: an ugly Christmas sweater (bright blue knit, red cuffs / band / hem, white zigzag + snowflakes, a little tree) ending at the hips over a belt and dark navy pants. His stat color is blue. Christmas only: no orange/Halloween look, no padded suit/armor look.
+  - Wonderful Will (Top Dog): power, Body Slam, big throws. Bald (skin-tone head with a shine). v0.10.2: a classic red and green Christmas sweater (red knit, green chest/shoulder Fair Isle band with white snowflakes, green collar, cuffs and a straight green hem band at the hips; plain red stomach) over a belt and dark navy pants. His stat color is blue. Christmas only: no orange/Halloween look, no padded suit/armor look.
   - Charge Jackie (Helpful): reach, Clipboard Spin, strong jump and dash. Always offering to pitch in.
   - Nasty Nate (v0.8): lazy; longest reach, slowest, Rolling Chair special, speech bubbles. Tall, glasses, ponytail, teal scrubs.
   - Heather (v0.10): fast and tough, mid power; Running Clothesline special, snarky speech bubbles. Blonde, long hair, royal blue scrubs.
@@ -291,7 +294,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
 | `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
 | `src/scooter.js` | v0.9 Scooter Run driving level: course, riders, hazards, patients, Motorcart Marv, parallax drawing, HUD, tally rows, test bot |
-| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v17: **bump N on every release**) |
+| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v18: **bump N on every release**) |
 
 ## Bill's standing preferences
 - **Outfit style rule (Bill, v0.8.1):** every character's clothes read as a **separate top and bottom with a visible waist**
