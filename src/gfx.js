@@ -88,15 +88,15 @@ function tinted(col) {
   if (G.fontCache[col]) return G.fontCache[col];
   return (G.fontCache[col] = silhouette(G.font, col));
 }
-export function text(s, x, y, { col = '#fff', shadow = '#1a1020', align = 'left', scale = 1, alpha = 1 } = {}) {
-  s = String(s); const w = s.length * 8 * scale;
+export function text(s, x, y, { col = '#fff', shadow = '#1a1020', align = 'left', scale = 1, alpha = 1, adv = 8 } = {}) {
+  s = String(s); const w = s.length * adv * scale;  // adv: glyph advance (v0.10: 7 squeezes tight select-card names)
   let x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
   x0 = Math.round(x0); y = Math.round(y);
   const c = G.ctx; c.save(); c.globalAlpha = alpha;
   const draw = (img, dx, dy) => {
     for (let i = 0; i < s.length; i++) {
       const code = s.charCodeAt(i) - 32; if (code <= 0 || code > 94) continue;
-      c.drawImage(img, (code % 16) * 8, Math.floor(code / 16) * 8, 8, 8, x0 + i * 8 * scale + dx, y + dy, 8 * scale, 8 * scale);
+      c.drawImage(img, (code % 16) * 8, Math.floor(code / 16) * 8, 8, 8, x0 + i * adv * scale + dx, y + dy, 8 * scale, 8 * scale);
     }
   };
   if (shadow) draw(tinted(shadow), scale, scale);

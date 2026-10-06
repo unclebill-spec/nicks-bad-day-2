@@ -520,9 +520,9 @@ function drawTitle() {
   spr('logo1', VW / 2, 12 + bob, { ax: lw('logo1') / 2, scale: sc });
   spr('logo2', VW / 2, 42 + bob, { ax: lw('logo2') / 2, scale: sc });
   spr('logo3', VW / 2, 80 + bob, { ax: lw('logo3') / 2, scale: sc });
-  // the four nurses and Tilly
-  const xs = [24, 56, VW - 88, VW - 56, VW - 24];  // v0.8: five nurses, two left of the menu, three right (Nate on the end)
-  HERO_ORDER.forEach((id, i) => { const A = anim(id, 'idle'); frame(id, A.s + (Math.floor(game.t * 2 + i) % A.n), xs[i], 212, { flip: i > 1 }); });
+  // the six nurses and Tilly (v0.10: three left of the menu, three right; Heather on the far right)
+  const sp = Math.min(34, Math.floor((VW / 2 - 66) / 3)), xs = [18, 18 + sp, 18 + sp * 2, VW - 18 - sp * 2, VW - 18 - sp, VW - 18];
+  HERO_ORDER.forEach((id, i) => { const A = anim(id, 'idle'); frame(id, A.s + (Math.floor(game.t * 2 + i) % A.n), xs[i], 212, { flip: i > 2 }); });
   // Tilly cruises back and forth along the bottom, behind the menu
   const per = 14, ph = (game.t % per) / per, dir = ph < 0.5 ? 1 : -1, u = ph < 0.5 ? ph * 2 : (1 - ph) * 2;
   const T = anim('tilly', 'drive'); frame('tilly', T.s + (Math.floor(game.t * 8) % T.n), -90 + u * (VW + 180), 226, { flip: dir < 0, scale: 1.2 });
@@ -535,19 +535,39 @@ function drawSelect() {
   const VW = G.VW, VH = G.VH, S = game.sel;
   W.camX = 600; drawBackground(); rect(0, 0, VW, VH, '#0a1030', 0.72);
   text('CHOOSE YOUR NURSE', VW / 2, 8, { col: '#ffe84a', align: 'center', scale: 1 });
-  // v0.8: five cards. Fits 398 px (16:9 phones/desktop) up to wide phones; long names (NASTY NATE) wrap onto two lines
-  const n = HERO_ORDER.length, cw = Math.min(84, Math.floor((VW - 12) / n) - 4), ch = 176, x0 = Math.round((VW - (cw + 4) * n + 4) / 2), y0 = 20;
+  // v0.8: five cards; v0.10: six in a row. 62 px cards on a 398 px phone / 16:9 screen, up to 84 px on wide phones; long names wrap at
+  // the space (NASTY NATE) and tight ones squeeze to a 7 px advance (HEATHER). Narrow 4:3 / retro views (< 56 px cards) switch to a
+  // 3 x 2 grid of shorter cards (face + stats, no full-body sprite) so nothing overlaps.
+  const n = HERO_ORDER.length, gap = n > 5 ? 3 : 4, y0 = 20;
+  const grid = Math.floor((VW - 8) / n) - gap < 56, cols = grid ? Math.ceil(n / 2) : n;
+  const cw = grid ? Math.min(96, Math.floor((VW - 8) / cols) - gap) : Math.min(84, Math.floor((VW - 8) / n) - gap);
+  const ch = grid ? Math.floor((VH - y0 - 24) / 2) - 3 : 176, x0 = Math.round((VW - (cw + gap) * cols + gap) / 2);
+  const fit = (q, x, y, col) => { const adv = q.length * 8 <= cw - 4 ? 8 : 7; text(q, x - (q.length * adv) / 2, y, { col, adv }); };
   game.cardRects = [];
   HERO_ORDER.forEach((id, i) => {
-    const H = HEROES[id], x = x0 + i * (cw + 4), y = y0;
+    const H = HEROES[id], x = x0 + (i % cols) * (cw + gap), y = y0 + Math.floor(i / cols) * (ch + 3);
     const p1 = S.p[0] && S.p[0].cur === i, p2 = S.p[1] && S.p[1].cur === i;
     game.cardRects.push([x, y, cw, ch]);
     panel(x, y, cw, ch, p1 || p2 ? '#2a3a7a' : '#141c40', p1 && p2 ? '#ffffff' : p1 ? '#ffe84a' : p2 ? '#8ad8ff' : '#3a4c92');
+    const ok = (p1 && S.p[0].locked) || (p2 && S.p[1].locked);
+    if (grid) {  // face top-left, stat bars to its right, name + role underneath
+      spr(`face_${id}`, x + 3, y + 3);
+      const bw = Math.floor((cw - 56) / 5);
+      ['P', 'S', 'R', 'T'].forEach((lab, j) => {
+        const yy = y + 5 + j * 8; text(lab, x + 43, yy, { col: '#c8d4f0', shadow: null });
+        for (let k = 0; k < 5; k++) rect(x + 52 + k * bw, yy + 1, bw - 1, 5, k < H.stats[j] ? H.color : '#2a2e4a');
+      });
+      fit(H.name, x + cw / 2, y + 42, '#ffffff'); fit(H.role.toUpperCase(), x + cw / 2, y + 52, H.color);
+      if (p1) text('1P', x + 3, y + ch - 11, { col: '#ffe84a' });
+      if (p2) text('2P', x + cw - 3, y + ch - 11, { col: '#8ad8ff', align: 'right' });
+      if (ok) text('OK!', x + cw / 2, y + ch - 11, { col: p1 && S.p[0].locked ? '#ffe84a' : '#8ad8ff', align: 'center' });
+      return;
+    }
     spr(`face_${id}`, x + cw / 2 - 18, y + 3);
-    const nm = H.name.length * 8 > cw - 8 ? H.name.split(' ') : [H.name];
-    nm.forEach((q, k) => text(q, x + cw / 2, y + 41 + k * 9, { col: '#ffffff', align: 'center' }));
-    text(H.role.toUpperCase(), x + cw / 2, y + 41 + nm.length * 9, { col: H.color, align: 'center' });
-    const A = anim(id, (p1 && S.p[0].locked) || (p2 && S.p[1].locked) ? 'win' : 'idle');
+    const nm = H.name.length * 7 > cw - 4 ? H.name.split(' ') : [H.name];
+    nm.forEach((q, k) => fit(q, x + cw / 2, y + 41 + k * 9, '#ffffff'));
+    fit(H.role.toUpperCase(), x + cw / 2, y + 41 + nm.length * 9, H.color);
+    const A = anim(id, ok ? 'win' : 'idle');
     frame(id, A.s + (Math.floor(game.t * 3) % A.n), x + cw / 2, y + 131, {});
     const bw = Math.floor((cw - 34) / 5);
     ['POW', 'SPD', 'RCH', 'TUF'].forEach((lab, j) => {
@@ -556,13 +576,14 @@ function drawSelect() {
     });
     if (p1) text('1P', x + 2, y + 4, { col: '#ffe84a' });
     if (p2) text('2P', x + cw - 2, y + 4, { col: '#8ad8ff', align: 'right' });
-    const ok = (p1 && S.p[0].locked) || (p2 && S.p[1].locked);
     if (ok) text('OK!', x + cw / 2, y + ch - 9, { col: p1 && S.p[0].locked ? '#ffe84a' : '#8ad8ff', align: 'center' });
   });
   const P = S.p[0]; const H = HEROES[HERO_ORDER[P.cur]];
-  text(`SPECIAL: ${H.special}`, VW / 2, y0 + ch + 4, { col: '#8ad8ff', align: 'center' });
-  if (game.mode === 2 && S.p.length < 2 && Math.floor(game.t * 2) % 2) text('2P: PRESS ATTACK ON ANOTHER PAD OR ARROWS + , KEY', VW / 2, VH - 10, { col: '#ffffff', align: 'center', scale: 1 });
-  else text(P.locked ? (game.mode === 2 && S.p.length < 2 ? 'START = PLAY SOLO' : 'GET READY!') : 'LEFT/RIGHT, ATTACK TO PICK. TAP A CARD TWICE.', VW / 2, VH - 10, { col: '#c8d4f0', align: 'center' });
+  const yS = grid ? y0 + (ch + 3) * 2 + 1 : y0 + ch + 4;
+  text(`SPECIAL: ${H.special}`, VW / 2, yS, { col: '#8ad8ff', align: 'center' });
+  const hint = P.locked ? (game.mode === 2 && S.p.length < 2 ? 'START = PLAY SOLO' : 'GET READY!') : (VW < 380 ? 'ATTACK TO PICK. TAP A CARD TWICE.' : 'LEFT/RIGHT, ATTACK TO PICK. TAP A CARD TWICE.');
+  if (game.mode === 2 && S.p.length < 2 && Math.floor(game.t * 2) % 2) text(VW < 380 ? '2P: ATTACK ON ANOTHER PAD OR , KEY' : '2P: PRESS ATTACK ON ANOTHER PAD OR ARROWS + , KEY', VW / 2, VH - 10, { col: '#ffffff', align: 'center', scale: 1 });
+  else text(hint, VW / 2, VH - 10, { col: '#c8d4f0', align: 'center' });
   game.backRect = [2, 2, 40, 14]; text('< BACK', 4, 6, { col: '#8a94b4' });
 }
 function drawIntro() {
@@ -586,16 +607,27 @@ function drawTally() {
   rect(0, 0, VW, VH, '#05060c', Math.min(0.6, game.t));
   const [w] = sprSize('w_clear_stage'); spr('w_clear_stage', VW / 2, 18, { ax: w / 2, scale: Math.min(1, (VW - 20) / w) });
   const n = game.tally.length, pw = Math.min(200, (VW - 20) / n - 6);
+  let longQ = false;
   game.tally.forEach((T, i) => {
     const x = Math.round(VW / 2 - (n * (pw + 6)) / 2 + i * (pw + 6)), y = 56;
     panel(x, y, pw, 118);
     spr(`face_${T.h.id}`, x + 4, y + 4); text(T.h.d.name, x + 44, y + 10, { col: T.h.slot ? '#8ad8ff' : '#ffe84a' });
-    if (T.quote && game.t > 0.6) wrapText(`"${T.quote}"`, Math.floor((pw - 50) / 8)).slice(0, 2).forEach((q, k) => text(q, x + 44, y + 21 + k * 9, { col: '#c8f0e8', shadow: null }));  // v0.8 Nate's floor-clear line
+    if (T.quote && game.t > 0.6) {  // v0.8 Nate's floor-clear line next to the face; v0.10 long ones (Heather's) go full width under the card
+      const side = wrapText(`"${T.quote}"`, Math.floor((pw - 50) / 8));
+      if (side.length <= 2) side.forEach((q, k) => text(q, x + 44, y + 21 + k * 9, { col: '#c8f0e8', shadow: null }));
+      else {
+        longQ = true;
+        const qx = n === 1 ? 10 : x + 2, qw = n === 1 ? VW - 20 : pw - 4;
+        let adv = 8, L = wrapText(`"${T.quote}"`, Math.floor(qw / 8));
+        if (L.length > 4) { adv = 7; L = wrapText(`"${T.quote}"`, Math.floor(qw / 7)); }
+        L.slice(0, 4).forEach((q, k) => text(q, n === 1 ? VW / 2 - (q.length * adv) / 2 : qx, y + 122 + k * 9, { col: '#c8f0e8', shadow: null, adv }));
+      }
+    }
     const reveal = Math.min(T.rows.length, Math.floor(game.t * 2));
     T.rows.forEach((r, j) => { if (j >= reveal) return; text(r[0], x + 6, y + 44 + j * 14, { col: '#c8d4f0' }); text(String(r[1]), x + pw - 6, y + 44 + j * 14, { col: '#ffffff', align: 'right' }); });
     if (reveal >= T.rows.length) text(`TOTAL ${T.total}`, x + pw / 2, y + 104, { col: '#ffe84a', align: 'center' });
   });
-  if (game.t > 3) text(Math.floor(game.t * 2) % 2 ? 'PRESS ATTACK' : '', VW / 2, VH - 30, { col: '#ffffff', align: 'center' });
+  if (game.t > 3) text(Math.floor(game.t * 2) % 2 ? 'PRESS ATTACK' : '', VW / 2, longQ ? VH - 10 : VH - 30, { col: '#ffffff', align: 'center' });
 }
 function drawEnding() {  // v0.5: the end of the shift
   const VW = G.VW, VH = G.VH;

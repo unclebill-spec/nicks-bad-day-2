@@ -30,9 +30,41 @@ export const HEROES = {
       special: ["Don't make me get up.", 'Rolling chair. Best invention.'],
       zone: ['Ugh, call bells.', 'Is it time for my break yet?', "I'm not charting that."],
       clear: ['Is it time for my break yet?', 'Oh btw, your IVs are all blown.', 'Can I go home now?'],
-    } },
+    },
+    scoot: { start: ['Finally. A job I can do sitting down.'], crash: ['Ow. Rude.', "I'm not charting that."], snack: ['Snack break. Finally.'] } },
+  // v0.10 HEATHER: blonde, royal blue scrubs, fast and tough, mid power, zero patience for ridiculous demands.
+  // RUNNING CLOTHESLINE special (hero.js), combo hc1-hc3 (jab, elbow, hip check). Bill's four lines are verbatim (BILL_LINES).
+  heather: { name: 'HEATHER', role: 'Tough', blurb: "Fast, tough, and done with your nonsense.", hp: 115, walk: 84, depth: 56, run: 166, jump: 255,
+    power: 1.0, reach: 0.95, combo: ['hc1', 'hc2', 'hc3'], special: 'CLOTHESLINE', stats: [3, 4, 2, 4], color: '#4a6cff', comboGap: 0.85,
+    shout: ['NO MORE DILAUDID.', "HERE'S YOUR ATIVAN!"], ativanSfx: 'ativan_heather', idleSfx: 'huff',
+    lines: {
+      spawn: ["I'm your nurse, not your waitress.", 'Who keeps hitting the call bell?', 'Alright. Who wants their meds?'],
+      idle: ["This isn't a restaurant. I have sick patients to take care of, your sandwich can wait.", "Call bell's for emergencies, not ice chips.",
+        "Hospital food isn't room service.", 'The remote is right next to you.', 'Pressing it forty times will not make me faster.',
+        "No, the TV doesn't get HBO.", 'Yes, the gown opens in the back. That is how gowns work.'],
+      grab: ["Your hands aren't broke, you can wipe your own ass.", "You don't like being wet? Shouldn't have pissed in your gown.",
+        "Here's a rag, you can clean it up yourself.", "No, you can't have more Dilaudid.", 'Back to bed. Now.'],
+      lift: ['Lift with your legs, people.'],
+      food: ['Finally, a snack. Nobody tell 304.', 'Mine. Get your own.'],
+      coffee: ['Coffee. The only thing keeping this floor alive.'],
+      weapon: ["Don't make me use this.", 'Oh, this will do.'],
+      hurt: ["Really? That's going in my incident report.", 'Ow! Rude!', "I'm your nurse, not your punching bag."],
+      ko: ['Somebody call a rapid... on me.'],
+      revive: ["Break's over. Who rang?", "I'm back. Nobody touch the call bell."],
+      ativan: ["No, you can't have more Dilaudid.", 'Sweet dreams, sunshine.'],
+      codeblue: ['CODE BLUE! Everybody back in bed!', 'Clear! And stop pressing that call bell!'],
+      special: ["Here's a rag, you can clean it up yourself.", 'Visiting hours are OVER.', 'You want ice chips? Get in line.'],
+      zone: ["Call bell's for emergencies, not ice chips.", 'Next hall. More call lights.', "I'm your nurse, not your waitress.", "You're NPO. That means no cheeseburger."],
+      clear: ["This isn't a restaurant. I have sick patients to take care of, your sandwich can wait.", "Hospital food isn't room service.",
+        "Your hands aren't broke, you can wipe your own ass.", 'Floor done. Somebody bring me coffee.'],
+    },
+    scoot: { start: ['Beep beep. Move it, Marv.', "I'm your nurse, not your chauffeur."], crash: ["Who left that there? I'm charting it.", 'Ow! Incident report!'],
+      snack: ['Finally, a snack.'], hit: ['Sweet dreams, sunshine.', 'Back to bed!'] } },
 };
-export const HERO_ORDER = ['nick', 'kim', 'will', 'jackie', 'nate'];
+export const HERO_ORDER = ['nick', 'kim', 'will', 'jackie', 'nate', 'heather'];
+// v0.10: Bill's exact lines for Heather. They must stay verbatim (tests/v10.py checks HEROES.heather.lines against these).
+export const BILL_LINES = ["Your hands aren't broke, you can wipe your own ass.", "You don't like being wet? Shouldn't have pissed in your gown.",
+  "Here's a rag, you can clean it up yourself.", "This isn't a restaurant. I have sick patients to take care of, your sandwich can wait."];
 
 // hit = which frame lands; box = [x0, x1] forward reach, z band [z0, z1]
 export const ATTACKS = {
@@ -43,6 +75,10 @@ export const ATTACKS = {
   lz1: { t: [0.08, 0.12], dur: 0.24, dmg: 6, box: [6, 34], z: [24, 48], kb: 34, stun: 0.34, sfx: 'punch0' },
   lz2: { t: [0.09, 0.13], dur: 0.26, dmg: 8, box: [6, 36], z: [22, 48], kb: 40, stun: 0.36, sfx: 'punch1' },
   lz3: { t: [0.12, 0.2, 0.1], dur: 0.42, dmg: 13, box: [6, 42], z: [12, 46], kb: 150, stun: 0.5, down: true, sfx: 'heavy', word: 1 },
+  // v0.10 Heather's combo: a quick jab, a swinging elbow, then a turn-and-bump HIP CHECK that knocks them over
+  hc1: { t: [0.05, 0.09], dur: 0.19, dmg: 6, box: [6, 30], z: [26, 46], kb: 32, stun: 0.32, sfx: 'punch0' },
+  hc2: { t: [0.06, 0.1], dur: 0.22, dmg: 8, box: [6, 31], z: [24, 48], kb: 40, stun: 0.36, sfx: 'punch1' },
+  hc3: { t: [0.1, 0.18, 0.1], dur: 0.38, dmg: 13, box: [2, 34], z: [6, 40], kb: 175, stun: 0.5, down: true, sfx: 'heavy', word: 1 },
   atk4: { t: [0.14, 0.2], dur: 0.36, dmg: 13, box: [6, 38], z: [10, 52], kb: 150, stun: 0.5, down: true, sfx: 'heavy', word: 1 },
   jkick: { dmg: 12, box: [4, 36], z: [6, 40], kb: 150, stun: 0.5, down: true, sfx: 'punch2' },
   dash: { dur: 0.42, dmg: 14, box: [0, 34], z: [10, 46], kb: 170, stun: 0.5, down: true, sfx: 'heavy', word: 1 },

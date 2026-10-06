@@ -39,7 +39,7 @@ const FOE = {  // patients: look = whose sheet (randomly recoloured), hp = syrin
   wheel: { look: 'sundowner', an: 'wheel', hp: 2, score: 300, vx: -112, lines: ['WHEELCHAIR DERBY!', 'OUTTA MY WAY!', 'BEEP BEEP!'] },
 };
 const SLEEP = ['Nice scooter... zzz', 'Five more minutes... zzz', 'Wheee... zzz', 'Is it lunch? ...zzz', 'zzz...'];
-const NATE = { start: ['Finally. A job I can do sitting down.'], crash: ['Ow. Rude.', "I'm not charting that."], snack: ['Snack break. Finally.'] };
+// rider lines live in HEROES[id].scoot (v0.8 Nate, v0.10 Heather): start, crash, snack, hit
 
 // ---------------------------------------------------------------- the hallway (a 1536 px loop) and the course
 function buildHall() {
@@ -114,9 +114,11 @@ function syncHero(h) {  // keep the Hero's own x / y / z on its rider so speech 
   if (h.sayS && W.t > h.sayUntil) h.sayS = null;
 }
 function line(h, ev) {
-  if (h.id !== 'nate' || !NATE[ev]) return;
+  const L = h.d.scoot && h.d.scoot[ev];
+  if (!L || !L.length) return;
   if (ev !== 'start' && W.t < h.sayCd) return;
-  h.sayS = pick(NATE[ev]); h.sayUntil = W.t + 2.6; h.sayCd = W.t + 4.5;
+  h.sayS = pick(L); h.sayUntil = W.t + 2.6 + Math.max(0, h.sayS.length - 34) * 0.045; h.sayCd = h.sayUntil + 1.9 + (ev === 'hit' ? 4 : 0);
+  (W.said || (W.said = [])).push(h.sayS);
 }
 function crash(h, dmg, what, push = 14) {
   const r = h.sc;
@@ -169,8 +171,10 @@ export function updateScooter(dt, inputs) {
     syncHero(h);
   }
   // tips
-  while (SC.tips.length && SC.d + VW * 0.5 > SC.tips[0][0]) { SC.tip = { s: SC.tips.shift()[1], t: 0 }; }
-  if (SC.tip && (SC.tip.t += dt) > 2.8) SC.tip = null;
+  // v0.10: a rider's speech bubble (Nate / Heather) sits where the tip banner goes, so tips wait (and pause) while someone is talking
+  SC.talk = W.heroes.some((h) => h.sc && h.st !== 'out' && h.sayS && W.t < h.sayUntil);
+  if (!SC.talk) while (SC.tips.length && SC.d + VW * 0.5 > SC.tips[0][0]) { SC.tip = { s: SC.tips.shift()[1], t: 0 }; }
+  if (SC.tip && !SC.talk && (SC.tip.t += dt) > 2.8) SC.tip = null;
   // hallway things
   for (const o of SC.ob) {
     const sx = o.x - SC.d; if (sx > VW + 140) continue;
@@ -214,7 +218,7 @@ export function updateScooter(dt, inputs) {
   }
   SC.pr = SC.pr.filter((p) => !p.gone);
   // phases
-  if (SC.phase === 'intro' && SC.t > 2.4) { SC.phase = 'ride'; SC.t = 0; sfx('scoot'); word('w_go', VW / 2, 150, 40); for (const h of act) { line(h, 'start'); if (h.id !== 'nate') floatText(pick(["LET'S ROLL!", 'BEEP BEEP!', 'WHEEE!', 'AFTER HIM!']), h.sc.x, h.sc.y, 64, '#ffffff'); } }
+  if (SC.phase === 'intro' && SC.t > 2.4) { SC.phase = 'ride'; SC.t = 0; sfx('scoot'); word('w_go', VW / 2, 150, 40); for (const h of act) { line(h, 'start'); if (!h.d.scoot) floatText(pick(["LET'S ROLL!", 'BEEP BEEP!', 'WHEEE!', 'AFTER HIM!']), h.sc.x, h.sc.y, 64, '#ffffff'); } }
   if (SC.phase === 'ride' && SC.d > SCOOT.len && !SC.ob.some((o) => o.k === 'foe' && o.st === 'go' && o.x - SC.d < VW)) startBoss();
   if (SC.boss) updateBoss(dt, act);
   if (SC.phase === 'finish') { SC.endT += dt; if (SC.endT > 3.2) { SC.phase = 'off'; SC.done = true; } }
@@ -232,7 +236,7 @@ function collect(h, o) {
 function knock(o, by) {  // a sedated (or bowled-over) patient tumbles to the side of the hall and naps there
   if (o.st !== 'go') return;
   o.st = 'fly'; o.t = 0; o.vz = 150; o.ty = o.y < MID ? YT - 10 : YB + 6; o.vy0 = o.y;
-  if (by) { by.score += o.d.score; by.scKO++; SC.sedated++; floatText(pick(SLEEP), o.x - SC.d, o.y, 60, '#c8a0ff'); sfx('coin', { vol: 0.45 }); }
+  if (by) { line(by, 'hit'); by.score += o.d.score; by.scKO++; SC.sedated++; floatText(pick(SLEEP), o.x - SC.d, o.y, 60, '#c8a0ff'); sfx('coin', { vol: 0.45 }); }
   else sfx('punch1', { vol: 0.6 });
   if (o.foe === 'wheel') { SC.ob.push({ k: 'chair', x: o.x, y: o.y, vx: -40, vy: o.y < MID ? -30 : 30, t: 0, w: 0, dep: 0 }); }
 }
@@ -456,7 +460,7 @@ export function drawScooterHUD() {
     rect(x + Math.round(w * k) - 1, y - 3, 3, 9, '#ff5a3a');
     for (let i = 0; i < 3; i++) rect(x + w + 2 + i * 2, y - 3 + (i % 2) * 2, 2, 2, '#ffffff');
   }
-  if (SC.tip) { const s = SC.tip.s, a = SC.tip.t < 2.2 || Math.floor(SC.tip.t * 8) % 2; if (a) { const w = s.length * 8 + 12; panel((VW - w) / 2, 52, w, 15, '#1a2450', '#8ad8ff', 0.88); text(s, VW / 2, 56, { col: '#ffffff', align: 'center' }); } }
+  if (SC.tip && !SC.talk) { const s = SC.tip.s, a = SC.tip.t < 2.2 || Math.floor(SC.tip.t * 8) % 2; if (a) { const w = s.length * 8 + 12; panel((VW - w) / 2, 52, w, 15, '#1a2450', '#8ad8ff', 0.88); text(s, VW / 2, 56, { col: '#ffffff', align: 'center' }); } }
   if (SC.phase === 'finish' && SC.endT > 0.8) { const [w] = sprSize('w_clear'); spr('w_clear', VW / 2, 96, { ax: w / 2, scale: Math.min(1, (VW - 20) / w) }); }
 }
 export function scootRows(h) {

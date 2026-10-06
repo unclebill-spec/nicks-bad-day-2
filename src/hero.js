@@ -24,7 +24,7 @@ export class Hero extends Actor {
     this.h = id === 'kim' || id === 'will' ? 48 : id === 'nate' ? 57 : 54; this.w = id === 'will' ? 18 : 14;
     this.sayS = null; this.sayUntil = 0; this.sayCd = 0; this.sayLast = {}; this.idleT = 0; this.hiLv = null;  // v0.8 speech bubbles (heroes with d.lines)
   }
-  hittable() { return this.inv <= 0 && !(this.st === 'special' && this.id === 'nate') && !['fall', 'down', 'getup', 'dead', 'super', 'ativan', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup', 'slam'].includes(this.st); }
+  hittable() { return this.inv <= 0 && !(this.st === 'special' && (this.id === 'nate' || (this.id === 'heather' && this.t > 0.1 && this.t < 0.82))) && !['fall', 'down', 'getup', 'dead', 'super', 'ativan', 'respawn', 'enter', 'win', 'out', 'ride', 'teamup', 'slam'].includes(this.st); }
   canAct() { return ['idle', 'walk', 'run'].includes(this.st); }
   set(st) { super.set(st); if (this.carry && !CARRY_OK.has(st)) this.releaseProp(false, st === 'win' || st === 'enter' || st === 'teamup'); }  // any hit / grab / KO drops the prop
   get spd() { return this.speedT > 0 ? 1.4 : 1; }
@@ -461,10 +461,11 @@ export class Hero extends Actor {
     if (this.meter >= 100) return this.codeBlue();
     if (this.meter >= TIER - 0.01) return this.ativan();
     if (this.hp <= 1) { floatText('TOO TIRED!', this.x, this.y, 60, '#ff8ac0'); return; }
-    this.hp = Math.max(1, this.hp - 8); this.set('special'); this.spDone = false; this.hitSet = new Set(); this.inv = Math.max(this.inv, this.id === 'nate' ? 0 : 0.4);
+    this.hp = Math.max(1, this.hp - 8); this.set('special'); this.spDone = false; this.hitSet = new Set(); this.inv = Math.max(this.inv, this.id === 'nate' || this.id === 'heather' ? 0 : 0.4); this.lastTick = -1;
     floatText(this.d.special + '!', this.x, this.y, 70, '#8ad8ff');
     if (this.id === 'kim') sfx('whoosh');
     if (this.id === 'nate') sfx('clunk', { vol: 0.6 });
+    if (this.id === 'heather') sfx('charge', { vol: 0.5 });
   }
   s_special(dt) {
     const id = this.id;
@@ -490,6 +491,18 @@ export class Hero extends Actor {
         if (hits.length) addScore(this, 150 * hits.length);
       }
       if (this.t > 1.12) { this.set('idle'); addFx({ type: 'dust', x: this.x, y: this.y, dur: 0.35 }); this.say('special'); }
+    } else if (id === 'heather') {  // v0.10 RUNNING CLOTHESLINE: cock the arm, sprint forward with it out at neck height, flatten everyone in the way
+      if (this.t > 0.12 && this.t < 0.8) {
+        if (!this.spDone) { this.spDone = true; sfx('clothesline', { vol: 0.8 }); }
+        const v = 255 * Math.min(1, (this.t - 0.12) / 0.08) * (this.t > 0.66 ? (0.8 - this.t) / 0.14 : 1);
+        this.x += this.face * v * dt;  // (not hittable mid-dash: see hittable(); no inv blink)
+        const tick = Math.floor(this.t * 14);
+        if (tick !== this.lastTick) { this.lastTick = tick; addFx({ type: 'dust', x: this.x - this.face * 10, y: this.y, dur: 0.28 }); }
+        const hits = strike(this, { box: [-4, 28], z: [8, 52], depth: 15, dmg: 16 * this.d.power, kb: 200, stun: 0.55, down: true, once: this.hitSet, sfxName: 'heavy', wordName: 'w_wham' });
+        if (hits.length) { addScore(this, 150 * hits.length); shake(3); W.stats.clotheslined = (W.stats.clotheslined || 0) + hits.length; }
+      }
+      if (this.t > 0.8 && this.t < 0.84 && this.lastTick !== 99) { this.lastTick = 99; sfx('skid', { vol: 0.4 }); addFx({ type: 'dust', x: this.x + this.face * 6, y: this.y, dur: 0.35 }); }
+      if (this.t > 1.0) { this.set('idle'); this.say('special', true); }
     } else {  // jackie: spinning clipboard boomerang
       if (!this.spDone && this.t > 0.22) { this.spDone = true; addShot({ kind: 'boomerang', spr: 'w_clipboard', x: this.x + this.face * 14, y: this.y, z: 34, vx: this.face * 300, owner: this, dmg: 16 * this.d.power, spin: 18, life: 2.2, x0: this.x, dir: this.face }); sfx('whoosh'); }
       if (this.t > 0.5) this.set('idle');
@@ -531,7 +544,7 @@ export class Hero extends Actor {
         t.takeHit({ dmg, dir: this.face, kb: 90, down: true, from: this, force: true });
         if (t.alive && t.hp > 0) { t.sleepT = W.t + 2.6; t.zzzT = 0; }
         floatText('NIGHTY NIGHT!', t.x, t.y, 70, '#c8a0ff'); sfx('punch1'); spark(t.x, t.y, 30, 'bigspark'); addFx({ type: 'zzz', x: t.x, y: t.y, z: 40, dur: 1.4 }); shake(3); W.stop = 0.07;
-        addScore(this, 400); this.combo = (this.combo || 0) + 1; this.comboT = 1.6; this.maxCombo = Math.max(this.maxCombo, this.combo);
+        addScore(this, 400); this.say('ativan', true); this.combo = (this.combo || 0) + 1; this.comboT = 1.6; this.maxCombo = Math.max(this.maxCombo, this.combo);
       }
     }
     if (this.t > 0.7) this.set('idle');
@@ -597,6 +610,7 @@ export class Hero extends Actor {
         if (this.id === 'kim') return ['special', Math.floor(t * 18)];
         if (this.id === 'will') return ['special', t < 0.18 ? 0 : !this.spDone ? 1 : 2];
         if (this.id === 'nate') return t < 0.16 || t > 1.0 ? ['special', 0] : ['special', 1 + (Math.floor(t * 8) % 2)];
+        if (this.id === 'heather') return t < 0.12 ? ['special', 0] : t < 0.8 ? ['special', 1 + (Math.floor(t * 14) % 2)] : ['special', 3];
         return ['special', t < 0.22 ? 0 : t < 0.36 ? 1 : 2];
       }
     }
@@ -619,7 +633,8 @@ export class Hero extends Actor {
     if (!L || !L.length || (!force && W.t < this.sayCd)) return null;
     let i = Math.floor(W.rnd() * L.length);
     if (L.length > 1 && i === this.sayLast[ev]) i = (i + 1) % L.length;
-    this.sayLast[ev] = i; this.sayS = L[i]; this.sayUntil = W.t + 2.6; this.sayCd = W.t + 4.5;
+    const read = 2.6 + Math.max(0, L[i].length - 34) * 0.045;  // v0.10: long lines (Heather's) stay up long enough to read
+    this.sayLast[ev] = i; this.sayS = L[i]; this.sayUntil = Math.max(W.t, this.shoutT || 0) + read; this.sayCd = this.sayUntil + 1.9;
     W.stats.says = (W.stats.says || 0) + 1; (W.said || (W.said = [])).push(L[i]);
     return L[i];
   }
@@ -628,14 +643,15 @@ export class Hero extends Actor {
     if (this.hiLv !== W.lv && this.canAct()) { this.hiLv = W.lv; this.say('spawn', true); }
     const busy = Math.hypot(I.mx, I.my) > 0.15 || I.atk || I.jmp || I.prs.sp || I.prs.grab || this.st !== 'idle';
     this.idleT = busy ? 0 : this.idleT + dt;
-    if (this.idleT > 6) { this.idleT = -6; if (this.say('idle', true)) sfx('yawn', { vol: 0.5 }); }
+    if (this.idleT > 6) { this.idleT = -6; if (this.say('idle', true)) sfx(this.d.idleSfx || 'yawn', { vol: 0.5 }); }
     if (this.sayS && W.t > this.sayUntil) this.sayS = null;
   }
   drawSay() {
     if (!this.sayS || this.shoutT > W.t || this.st === 'out') return;
     const words = this.sayS.split(' '), lines = [];
     let cur = '';
-    for (const wd of words) { if (cur && (cur + ' ' + wd).length > 18) { lines.push(cur); cur = wd; } else cur = cur ? cur + ' ' + wd : wd; }
+    const wrapN = this.sayS.length > 60 ? 27 : this.sayS.length > 36 ? 22 : 18;  // v0.10: wider bubbles for long lines so they stay 3-4 rows
+    for (const wd of words) { if (cur && (cur + ' ' + wd).length > wrapN) { lines.push(cur); cur = wd; } else cur = cur ? cur + ' ' + wd : wd; }
     if (cur) lines.push(cur);
     const w = Math.max(...lines.map((q) => q.length)) * 8 + 8, h = lines.length * 10 + 4;
     const X = Math.round(this.x - W.camX), head = Math.round(this.y + offY() - this.z - this.h - 6 - (this.held ? 14 : 0));  // clear the <SLAM TOSS> hint
@@ -663,6 +679,10 @@ export class Hero extends Actor {
     if (this.st === 'super') { const X = this.x - W.camX, Y = this.y + offY() - 30; ellipse(X, Y, 26 + Math.sin(W.t * 30) * 3, 30, '#8ad8ff', 0.35); }
     if (this.st === 'teamwait' || this.st === 'teamup') { const X = this.x - W.camX, Y = this.y + offY() - this.z - 28; ellipse(X, Y, 22 + Math.sin(W.t * 24) * 3, 30, this.st === 'teamup' ? '#ffffff' : '#ffe84a', 0.35); }
     if (this.speedT > 0 && Math.floor(W.t * 10) % 2) ellipse(this.x - W.camX, this.y + offY() - 26, 14, 28, '#ffe84a', 0.18);
+    if (this.st === 'special' && this.id === 'heather' && this.t > 0.12 && this.t < 0.8) {  // v0.10 clothesline speed streaks behind her (arm height + legs)
+      const X = this.x - W.camX, Y = this.y + offY() - this.z;
+      for (const [dy, len, al] of [[-40, 30, 0.75], [-33, 20, 0.5], [-24, 26, 0.4], [-12, 16, 0.35]]) rect(this.face > 0 ? X - 10 - len : X + 10, Y + dy + (Math.floor(W.t * 30) % 2), len, 1, '#ffffff', al);
+    }
     if (this.st === 'special' && this.id === 'nate') {  // v0.8 the rolling office chair under Nate (backrest behind him)
       spr('chair' + (Math.floor(W.t * 14) % 2), this.x - W.camX - this.face * 3, this.y + offY() - this.z + 1, { ax: 13, ay: 34, flip: this.face < 0 });
     }
