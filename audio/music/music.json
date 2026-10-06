@@ -46,5 +46,11 @@
   "start": 5.861,
   "end": 52.747,
   "tempo": 81
+ },
+ "scooter": {
+  "loop": true,
+  "start": 2.723,
+  "end": 24.511,
+  "tempo": 176
  }
 }

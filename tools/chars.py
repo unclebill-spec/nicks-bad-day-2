@@ -534,6 +534,14 @@ def hero_anims(name):
                     P(lean=-18, ua_f=-50, fa_f=-10, ua_b=-80, fa_b=-50, th_f=92, sh_f=90, th_b=-8, sh_b=-6, face="yell"),
                     P(lean=-8, ua_f=-30, fa_f=30, ua_b=-50, fa_b=20, th_f=46, sh_f=10, th_b=-8, sh_b=-6)]
         A["win"] = [P(lean=-6, head=-4, ua_f=-150, fa_f=40, ua_b=-150, fa_b=50, face="grin"), P(lean=-7, head=-5, ua_f=-152, fa_f=44, ua_b=-150, fa_b=52, face="grin", hy=1)]
+    # v0.9 SCOOTER RUN: sitting on a mobility scooter (drawn by the game under her / him): hands on the tiller, knees
+    # forward, feet on the footboard; "scootf" = arm out flicking an Ativan syringe forward; "scooth" = crash, thrown back.
+    sit = dict(plant=False, hy=8, th_f=84, sh_f=6, th_b=80, sh_b=2)
+    A["scoot"] = [P(**sit, lean=4, ua_f=58, fa_f=96, ua_b=50, fa_b=92), P(**{**sit, "hy": 9}, lean=5, head=2, ua_f=60, fa_f=98, ua_b=52, fa_b=94)]
+    if name == "nate":  # finally sitting down: leans back, one hand on the tiller, the other behind his head
+        A["scoot"] = [P(**sit, lean=-8, head=4, ua_f=62, fa_f=100, ua_b=-150, fa_b=50), P(**{**sit, "hy": 9}, lean=-8, head=5, ua_f=62, fa_f=102, ua_b=-150, fa_b=52)]
+    A["scootf"] = [P(**sit, lean=8, ua_f=94, fa_f=94, ua_b=50, fa_b=92, hold=holder("syringe"), face="yell")]
+    A["scooth"] = [P(**{**sit, "sh_f": 30, "sh_b": 20}, lean=-20, head=-10, ua_f=150, fa_f=170, ua_b=-140, fa_b=-160, face="hurt")]
     if name == "kim":  # Kim's quick 4th hit: spinning back kick
         A["atk4"] = [P(lean=0, th_f=10, sh_f=10, th_b=-96, sh_b=-96, ua_f=100, fa_f=110, ua_b=60, fa_b=90, face="yell", flip=True),
                      P(lean=-12, th_f=96, sh_f=94, th_b=-6, ua_f=-70, fa_f=-80, ua_b=-100, fa_b=-110, face="yell")]
@@ -673,9 +681,36 @@ def enemy_anims(kind):
                       P(lean=16, ua_f=100, fa_f=96, ua_b=-20, fa_b=20, th_f=30, sh_f=10, th_b=-26, face="yell")]
         A["tired"] = [P(lean=34, head=10, ua_f=60, fa_f=30, ua_b=50, fa_b=24, th_f=20, sh_f=10, th_b=-10, sh_b=-6, face="hurt", hy=3),
                       P(lean=36, head=12, ua_f=62, fa_f=30, ua_b=52, fa_b=24, th_f=20, sh_f=10, th_b=-10, sh_b=-6, face="sleep", hy=4)]
+    # v0.9 SCOOTER RUN: rolling a wheelchair at the nurses (seated, shoving the hand rims, grinning)
+    sit = dict(plant=False, hy=8, th_f=84, sh_f=4, th_b=80, sh_b=0)
+    A["wheel"] = [P(**sit, lean=10, ua_f=20, fa_f=50, ua_b=10, fa_b=44, face="grin"), P(**sit, lean=16, ua_f=50, fa_f=70, ua_b=40, fa_b=64, face="yell")]
     base = hero_anims("nick")
     for k in ("hurt", "fall", "down", "getup", "dizzy"):
         A[k] = base[k]
     A["held"] = [P(lean=-10, head=-10, ua_f=-20, fa_f=-40, ua_b=-30, fa_b=-60, face="hurt", lift=3)]
     A["sleep"] = [{**base["down"][0], "face": "sleep"}]
+    return A
+
+
+# v0.9 MOTORCART MARV, the Scooter Run mini-boss: a speed-demon patient in his checked gown and grip socks, orange racing
+# goggles pushed over wild white hair. A normal patient build scaled up ~1.2x and sat on a raised racing seat, so he ends up only
+# modestly bigger than the nurses (~1.25x a standing nurse's height) (Bill's boss-size override for this game). No padding, no armor: just a gown.
+def marv_body():
+    B = bodies()
+    b = dict(B["runner"])
+    b.update(thigh=13, shin=13, torso=21.5, head=8.2, uarm=10, farm=10, arm_w=4.4, leg_w=6.0, torso_w=14.5, fist=2.4, foot=2, belly=1.0,
+             skin=SKIN["tan"][0], skin_s=SKIN["tan"][1], hair_c="#f4f4f8", hair_s="#b8bcc8", hair=hair_cap(top=-0.35, back=0.55, grow=1.2, spikes=6, seed=31),
+             glasses="#ff9a1a", mouth="#a01c28", beard="#d8dce4")
+    return b
+
+
+def marv_anims():
+    sit = dict(plant=False, hy=8, th_f=84, sh_f=6, th_b=80, sh_b=2)
+    A = {}
+    A["drive"] = [P(**sit, lean=10, ua_f=62, fa_f=98, ua_b=56, fa_b=94, face="grin"), P(**{**sit, "hy": 9}, lean=12, head=2, ua_f=64, fa_f=100, ua_b=58, fa_b=96, face="grin")]
+    A["taunt"] = [P(**sit, lean=-6, ua_f=62, fa_f=98, ua_b=170, fa_b=176, face="yell"), P(**sit, lean=-8, ua_f=62, fa_f=98, ua_b=160, fa_b=150, face="grin")]
+    A["throw"] = [P(**sit, lean=-12, ua_f=62, fa_f=98, ua_b=-150, fa_b=-170, hold_b=holder("urinal"), face="grin"),
+                  P(**sit, lean=10, ua_f=62, fa_f=98, ua_b=110, fa_b=100, face="yell")]
+    A["hurt"] = [P(**{**sit, "sh_f": 30}, lean=-20, head=-12, ua_f=150, fa_f=170, ua_b=-140, fa_b=-160, face="hurt")]
+    A["sleep"] = [P(**sit, lean=24, head=24, ua_f=10, fa_f=20, ua_b=4, fa_b=14, face="sleep")]
     return A

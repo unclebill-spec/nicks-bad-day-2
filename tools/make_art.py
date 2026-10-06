@@ -199,6 +199,13 @@ add("pizza", V6.pizza()); add("jerky", V6.jerky()); add("ativan", V6.ativan()); 
 add("firealarm0", V6.firealarm(False)); add("firealarm1", V6.firealarm(True))
 import v08_art as V8  # noqa: E402  (v0.8: Nasty Nate's rolling office chair)
 add("chair0", V8.office_chair(0)); add("chair1", V8.office_chair(1))
+import v09_art as V9  # noqa: E402  (v0.9 Scooter Run: mobility scooters, floor junk to jump, Motorcart Marv's hot-rod cart)
+for col in ("red", "blue"):
+    add(f"scoot_{col}0", V9.scooter(col, 0)); add(f"scoot_{col}1", V9.scooter(col, 1))
+add("tipcan", V9.tipped_can()); add("mopbucket", V9.mop_bucket())
+for i in range(3):
+    add(f"marvcart{i}", V9.marv_cart(i))
+char_sheet("marv", chars.marv_anims(), chars.marv_body(), cell=(96, 88), anchor=(48, 84))
 add("p_cup", RA.proj_cup()); add("puddle_w", RA.barium_splat()); add("p_film", RA.proj_film()); add("mri_wave0", RA.mri_wave(0)); add("mri_wave1", RA.mri_wave(1)); add("mri_table", RA.mri_table())
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
              ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
