@@ -96,6 +96,21 @@ def low_ponytail(S, hc, r, b, pose):
     S.rect(int(a[0] - 1.5), int(a[1] + 1.4), 3, 1, "#14141a")
 
 
+def long_hair(S, hc, r, b, pose):
+    """v0.10 Heather: long straight blonde hair worn down: a full fall from the crown past the back of the neck to the
+    shoulder blades, slightly flared at the ends, with a couple of shade strands. Swings a little with pose["tail"]."""
+    c, s = b["hair_c"], b["hair_s"]
+    sw = pose.get("tail", 0) * 0.6
+    top = (hc[0] - r * 0.35, hc[1] - r * 0.55)
+    S.ellipse((hc[0] - r * 0.45, hc[1] - r * 0.2), r * 0.95, r * 0.95, c, s)
+    S.poly([(hc[0] - r * 1.15, hc[1] - r * 0.3), (hc[0] + r * 0.05, hc[1] - r * 0.1), (hc[0] - r * 0.1 - sw * 0.3, hc[1] + r * 2.0),
+            (hc[0] - r * 1.45 - sw, hc[1] + r * 2.25), (hc[0] - r * 1.35 - sw * 0.6, hc[1] + r * 0.9)], c)
+    for k, dx in enumerate((-0.95, -0.55)):
+        S.line((hc[0] + r * dx, hc[1] + r * 0.2), (hc[0] + r * (dx - 0.25) - sw * 0.8, hc[1] + r * 2.05), s)
+    S.line((hc[0] - r * 1.45 - sw, hc[1] + r * 2.25), (hc[0] - r * 0.1 - sw * 0.3, hc[1] + r * 2.0), s)
+    del top
+
+
 def nightcap(S, hc, r, b, pose):
     c, s = "#4a6ad8", "#2e48a8"
     S.poly([(hc[0] - r - 1, hc[1] - r * 0.15), (hc[0] + r * 0.9, hc[1] - r * 0.25), (hc[0] - r * 1.6, hc[1] - r * 2.1)], c)
@@ -245,6 +260,9 @@ def hero_body(**kw):
 NATE_TEAL = ("#1f7a80", "#145258")   # v0.8 Nate's teal scrubs (not the navy nurses, not the pale-green gowns)
 NATE_TEAL_P = ("#175e66", "#0e3e44")   # v0.8.1 his scrub pants: a deeper teal than the top
 NATE_HAIR = ("#5a3420", "#3a2010")   # brunette
+HEATHER_BLUE = ("#2448d8", "#1832a0")     # v0.10 Heather's royal blue scrub top (brighter + more violet than Will's sky-blue tee)
+HEATHER_BLUE_P = ("#1c38b0", "#12257a")   # her scrub pants: a deeper royal blue, so top and bottom read separately
+HEATHER_HAIR = ("#f4d470", "#c9a23c")     # long blonde hair
 LEAD = ("#3c4658", "#2a3242", "#5a6880")   # lead apron: slate face, shade, edge highlight (not in any runtime palette)
 
 
@@ -354,6 +372,14 @@ def bodies():
                           hair=hair_cap(top=-0.28, back=0.12, grow=0.6, fringe=0), hair_back=low_ponytail, heavy_lids=True, beard="#cc9878",
                           shirt=NATE_TEAL[0], shirt_s=NATE_TEAL[1], sleeve=NATE_TEAL[0], sleeve_s=NATE_TEAL[1],
                           pants=NATE_TEAL_P[0], pants_s=NATE_TEAL_P[1], band="#0c3438", shoe="#3a3a44", shoe_s="#22222a", mouth="#a05a5a")
+    # v0.10 HEATHER: normal staff size, long blonde hair worn down, royal blue scrubs: a V-neck top with a hem over deeper
+    # royal blue drawstring pants (visible waist, separate legs), stethoscope, white sneakers. Fitted, nothing padded.
+    B["heather"] = hero_body(thigh=11, shin=10.5, torso=16.5, head=6.5, uarm=7.8, farm=7.8, torso_w=11.5, arm_w=3.3, leg_w=4.7,
+                             skin=sk["fair"][0], skin_s=sk["fair"][1], hair_c=HEATHER_HAIR[0], hair_s=HEATHER_HAIR[1],
+                             hair=hair_cap(top=-0.05, back=0.45, grow=1.1, fringe=1, seed=4), hair_back=long_hair,
+                             shirt=HEATHER_BLUE[0], shirt_s=HEATHER_BLUE[1], sleeve=HEATHER_BLUE[0], sleeve_s=HEATHER_BLUE[1],
+                             pants=HEATHER_BLUE_P[0], pants_s=HEATHER_BLUE_P[1], band="#0e1c5c", drawstring=True,
+                             shoe="#f4f6fa", shoe_s="#b8c2d0", mouth="#c0505e")
     gown = dict(shirt=GOWN[0], shirt_s=GOWN[1], sleeve=GOWN[0], sleeve_s=GOWN[1], check=True,
                 vneck=False, steth=False, badge=None, eye_white=True, gown_len=9, sleeve_len=0.45)
     socks = dict(shoe=SOCK[0], shoe_s=SOCK[1], sock=SOCK[0], foot_len=3.6)
@@ -503,6 +529,11 @@ def hero_anims(name):
         A["special"] = [P(plant=False, hy=8, lean=-4, th_f=82, sh_f=6, th_b=74, sh_b=0, ua_f=30, fa_f=80, ua_b=20, fa_b=70),
                         P(plant=False, hy=9, lean=-16, head=4, th_f=84, sh_f=70, th_b=78, sh_b=60, ua_f=24, fa_f=140, ua_b=-150, fa_b=50, hold=ph),
                         P(plant=False, hy=9, lean=-14, head=6, th_f=88, sh_f=80, th_b=80, sh_b=66, ua_f=22, fa_f=136, ua_b=-148, fa_b=56, hold=ph)]
+    elif name == "heather":  # v0.10 RUNNING CLOTHESLINE: cock the arm, sprint with it held straight out at neck height, skid to a stop
+        A["special"] = [P(lean=-8, ua_f=-70, fa_f=-40, ua_b=40, fa_b=100, th_f=24, sh_f=-10, th_b=-20, sh_b=-30, face="yell", tail=-2),
+                        P(lean=16, bob=0, th_f=62, sh_f=-20, th_b=-44, sh_b=-70, ua_f=92, fa_f=92, ua_b=-62, fa_b=-30, face="yell", tail=4),
+                        P(lean=16, hy=-1, th_f=-30, sh_f=-60, th_b=50, sh_b=-10, ua_f=94, fa_f=94, ua_b=-56, fa_b=-26, face="yell", tail=5),
+                        P(lean=-12, hy=2, th_f=40, sh_f=30, th_b=-30, sh_b=-20, ua_f=100, fa_f=110, ua_b=-30, fa_b=20, face="grin", tail=2)]
     else:  # jackie
         cb = holder("clipboard")
         A["special"] = [P(lean=-10, ua_f=-130, fa_f=-160, ua_b=40, fa_b=110, th_f=26, th_b=-26, hold=cb),
@@ -534,10 +565,20 @@ def hero_anims(name):
                     P(lean=-18, ua_f=-50, fa_f=-10, ua_b=-80, fa_b=-50, th_f=92, sh_f=90, th_b=-8, sh_b=-6, face="yell"),
                     P(lean=-8, ua_f=-30, fa_f=30, ua_b=-50, fa_b=20, th_f=46, sh_f=10, th_b=-8, sh_b=-6)]
         A["win"] = [P(lean=-6, head=-4, ua_f=-150, fa_f=40, ua_b=-150, fa_b=50, face="grin"), P(lean=-7, head=-5, ua_f=-152, fa_f=44, ua_b=-150, fa_b=52, face="grin", hy=1)]
+    if name == "heather":  # v0.10 snarky moves: hand-on-hip idle, quick jab, elbow, then a HIP CHECK that bumps them over
+        A["idle"] = [P(lean=-2, head=-4, ua_f=22, fa_f=128, ua_b=-30, fa_b=-150), P(lean=-2, head=-5, ua_f=22, fa_f=124, ua_b=-30, fa_b=-150, hy=1)]
+        A["hc1"] = [P(lean=4, ua_f=30, fa_f=120, ua_b=-10, fa_b=120), P(lean=12, ua_f=88, fa_f=90, ua_b=-16, fa_b=126, th_f=18, th_b=-16)]
+        A["hc2"] = [P(lean=-4, ua_f=-40, fa_f=150, ua_b=20, fa_b=110), P(lean=14, ua_f=70, fa_f=170, ua_b=-30, fa_b=90, th_f=20, th_b=-22, head=-4, face="yell")]
+        A["hc3"] = [P(lean=-6, ua_f=-20, fa_f=60, ua_b=30, fa_b=100, th_f=16, th_b=-20, hy=1, tail=-3),                       # wind up...
+                    P(flip=True, lean=-18, hy=2, th_f=30, sh_f=0, th_b=-30, sh_b=-10, ua_f=-20, fa_f=60, ua_b=-20, fa_b=60, face="grin", tail=5),   # ...turn and BUMP
+                    P(flip=True, lean=-10, hy=1, th_f=24, sh_f=0, th_b=-24, sh_b=-8, ua_f=-10, fa_f=70, ua_b=-10, fa_b=70, face="grin", tail=2)]
+        A["win"] = [P(lean=-2, head=-6, ua_f=30, fa_f=150, ua_b=-30, fa_b=-150, face="grin"), P(lean=-2, head=-6, ua_f=170, fa_f=176, ua_b=-30, fa_b=-150, face="grin", hy=-1)]
     # v0.9 SCOOTER RUN: sitting on a mobility scooter (drawn by the game under her / him): hands on the tiller, knees
     # forward, feet on the footboard; "scootf" = arm out flicking an Ativan syringe forward; "scooth" = crash, thrown back.
     sit = dict(plant=False, hy=8, th_f=84, sh_f=6, th_b=80, sh_b=2)
     A["scoot"] = [P(**sit, lean=4, ua_f=58, fa_f=96, ua_b=50, fa_b=92), P(**{**sit, "hy": 9}, lean=5, head=2, ua_f=60, fa_f=98, ua_b=52, fa_b=94)]
+    if name == "heather":  # sits up straight, one hand on the tiller, the other on her hip ("move it")
+        A["scoot"] = [P(**sit, lean=2, head=-3, ua_f=58, fa_f=96, ua_b=-30, fa_b=-150), P(**{**sit, "hy": 9}, lean=3, head=-2, ua_f=60, fa_f=98, ua_b=-30, fa_b=-150)]
     if name == "nate":  # finally sitting down: leans back, one hand on the tiller, the other behind his head
         A["scoot"] = [P(**sit, lean=-8, head=4, ua_f=62, fa_f=100, ua_b=-150, fa_b=50), P(**{**sit, "hy": 9}, lean=-8, head=5, ua_f=62, fa_f=102, ua_b=-150, fa_b=52)]
     A["scootf"] = [P(**sit, lean=8, ua_f=94, fa_f=94, ua_b=50, fa_b=92, hold=holder("syringe"), face="yell")]

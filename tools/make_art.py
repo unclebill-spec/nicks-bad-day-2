@@ -52,7 +52,7 @@ def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
 
 
 B = chars.bodies()
-for h in ("nick", "kim", "will", "jackie", "nate"):
+for h in ("nick", "kim", "will", "jackie", "nate", "heather"):
     char_sheet(h, chars.hero_anims(h), B[h])
 PATIENTS = ("wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite", "runner", "tray", "o2", "barium", "apron", "lou", "yeller")
 for e in PATIENTS + ("visitor",):
@@ -306,7 +306,7 @@ def portrait(body, pose_face="norm", k=2):
     return im.crop((int(hx - 18), top - 2, int(hx - 18) + 36, top + 34))
 
 
-for h in ("nick", "kim", "will", "jackie", "nate"):
+for h in ("nick", "kim", "will", "jackie", "nate", "heather"):
     SPR[f"face_{h}"] = portrait(B[h])
     SPR[f"face_{h}_hurt"] = portrait(B[h], "hurt")
 SPR["face_tilly"] = portrait(boss.tilly_body(), "grin")

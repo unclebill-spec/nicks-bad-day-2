@@ -4,9 +4,9 @@ from rig import figure
 from chars import bodies, hero_anims, enemy_anims
 B = bodies()
 rows = []
-names = sys.argv[1:] or ["nick", "kim", "will", "jackie", "nate"]
+names = sys.argv[1:] or ["nick", "kim", "will", "jackie", "nate", "heather"]
 for n in names:
-    A = hero_anims(n) if n in ("nick", "kim", "will", "jackie", "nate") else enemy_anims(n)
+    A = hero_anims(n) if n in ("nick", "kim", "will", "jackie", "nate", "heather") else enemy_anims(n)
     frames = []
     for k, fs in A.items():
         for f in fs:

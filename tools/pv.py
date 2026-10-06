@@ -8,7 +8,7 @@ names = sys.argv[1].split(',')
 only = sys.argv[2].split(',') if len(sys.argv) > 2 else None
 rows = []
 for n in names:
-    A = hero_anims(n) if n in ("nick", "kim", "will", "jackie", "nate") else enemy_anims(n)
+    A = hero_anims(n) if n in ("nick", "kim", "will", "jackie", "nate", "heather") else enemy_anims(n)
     fr = [figure(B[n], f)[0].image() for k, fs in A.items() if not only or k in only for f in fs]
     rows.append(fr)
 W = max(len(r) for r in rows)
