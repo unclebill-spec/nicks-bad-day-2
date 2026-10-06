@@ -175,6 +175,10 @@ def figure(body: dict, pose: dict, W=88, H=80, ax=44, ay=76):
             S.capsule(T(s0), T(add(s0, vec(ua, b["uarm"] * sl))), b["arm_w"] + 1.4, sleeve, sls)
             if sl > 1.0:  # long sleeves go down the forearm too
                 S.capsule(T(el), T(add(el, vec(fa, b["farm"] * (sl - 1.0)))), b["arm_w"] + 1.2, sleeve, sls)
+                if b.get("cuff"):  # v0.10.1 Will's sweater: a ribbed cuff at the end of the long sleeve
+                    cc, ccs = b["cuff"]
+                    S.capsule(T(add(el, vec(fa, b["farm"] * (sl - 1.0) - 1.6))), T(add(el, vec(fa, b["farm"] * (sl - 1.0)))), b["arm_w"] + 1.2,
+                              cc if front else ccs, ccs)
         S.ellipse(T(hd), b.get("fist", 1.6), b.get("fist", 1.6), skin, None)
         return hd, fa
 

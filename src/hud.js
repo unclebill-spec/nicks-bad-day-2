@@ -1,6 +1,6 @@
 // In-game HUD, drawn in the pixel buffer: portraits, health, lives, score, Code Blue meter, weapon, combo counter,
 // the last enemy you hit, GO arrow, boss bar, continue countdowns and toasts.
-import { G, spr, text, rect, frameRect, panel, sprSize, textW } from './gfx.js';
+import { G, spr, text, rect, frameRect, panel, sprSize, textW, heroName } from './gfx.js';
 import { HEROES, WEAPONS } from './data.js';
 import { W } from './world.js';
 
@@ -18,7 +18,7 @@ function bar(x, y, w, h, v, col, back = '#3a0a14') {
 }
 
 export function drawHUD(game) {
-  const VW = G.VW, left = 30, slotW = Math.min(170, (VW - left - 8) / 2);
+  const VW = G.VW, left = 30, slotW = Math.min(180, (VW - left - 8) / 2);  // v0.10.1: 180 fits NERVOUS NICK / KILLER KIM beside the score
   for (let s = 0; s < 2; s++) {
     const h = W.heroes.find((q) => q.slot === s);
     const x = s === 0 ? left : VW - slotW - 4, y = 4;
@@ -27,13 +27,15 @@ export function drawHUD(game) {
       continue;
     }
     if (h.st === 'out') {
-      if (game.continuesLeft() > 0 && h.continueT > 0) { text(`${h.d.short || h.d.name}`, x + 30, y + 2, { col: '#ffffff' }); text(`CONTINUE? ${Math.ceil(h.continueT - 1)}`, x + 30, y + 13, { col: Math.floor(W.t * 4) % 2 ? '#ffe84a' : '#ff8a1e' }); portrait(h.id, x, y + 1, true); }
+      if (game.continuesLeft() > 0 && h.continueT > 0) { const [hn, ha] = heroName(h.d, slotW - 34); text(hn, x + 30, y + 2, { col: '#ffffff', adv: ha }); text(`CONTINUE? ${Math.ceil(h.continueT - 1)}`, x + 30, y + 13, { col: Math.floor(W.t * 4) % 2 ? '#ffe84a' : '#ff8a1e' }); portrait(h.id, x, y + 1, true); }
       else text('SHIFT OVER', x + slotW / 2, y + 10, { col: '#ff8ac0', align: 'center' });
       continue;
     }
     portrait(h.id, x, y + 1, h.st === 'hurt' || h.st === 'fall' || h.hp < h.maxHp * 0.25);
-    text(h.d.short || h.d.name, x + 30, y, { col: s ? '#8ad8ff' : '#ffe84a' });
-    text(pad(h.score), x + slotW - 4, y, { col: '#ffffff', align: 'right' });
+    let [hn, ha] = heroName(h.d, slotW - 34 - 60), sa = 8;  // full name when it fits next to the score, else the short one
+    if (hn !== h.d.name) { const [n2, a2] = heroName(h.d, slotW - 34 - 53, 6); if (n2 === h.d.name) { hn = n2; ha = a2; sa = 7; } }  // CHARGE JACKIE / WONDERFUL WILL: squeeze the score too
+    text(hn, x + 30, y, { col: s ? '#8ad8ff' : '#ffe84a', adv: ha });
+    text(pad(h.score), x + slotW - 4, y, { col: '#ffffff', align: 'right', adv: sa });
     const bw = slotW - 34;
     bar(x + 30, y + 10, bw, 5, h.hp / h.maxHp, h.hp < h.maxHp * 0.3 ? (Math.floor(W.t * 6) % 2 ? '#ff3a3a' : '#ffe84a') : '#3ae86a');
     // Code Blue meter

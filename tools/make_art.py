@@ -35,6 +35,8 @@ def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
     post = chars.gown_check if body.get("check") else None
     if body.get("plaid"):  # flannel: same fixed-grid check, its own colours and a wider period
         pl = body["plaid"]; post = lambda im: chars.gown_check(im, base=pl[0], check=pl[1], period=4)
+    if body.get("post"):  # v0.10.1: any other per-frame post-process (Will's sweater knit)
+        post = body["post"]
     for an, poses in anims.items():
         start = len(frames)
         hands = []
@@ -302,6 +304,8 @@ def portrait(body, pose_face="norm", k=2):
     img, m = figure(big, P(lean=0, head=0, face=pose_face, ua_f=-5, fa_f=-5, ua_b=5, fa_b=5), W=176, H=170, ax=88, ay=166)
     hx = 88 + m["head"][0]
     im = img.image()
+    if body.get("post"):  # v0.10.1 Will's sweater knit on the portrait too
+        im = body["post"](im)
     top = min(y for y in range(im.height) if any(im.getpixel((x, y))[3] for x in range(im.width)))
     return im.crop((int(hx - 18), top - 2, int(hx - 18) + 36, top + 34))
 

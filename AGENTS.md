@@ -8,7 +8,26 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-06, v0.10)
+## Current state (2026-10-06, v0.10.1)
+- **v0.10.1 nicknames + personalities (Bill).** `HEROES[id].name` is the nickname, `.short` the plain name (HUD / END fall back to it
+  when space is tight), `.role` the personality shown on the select card: NERVOUS NICK (Pessimist), KILLER KIM (Cheerful), WONDERFUL
+  WILL (Top Dog), CHARGE JACKIE (Helpful), NASTY NATE (Lazy), HEATHER (Tough). Don't rename them back.
+  - **Lines:** Nick, Kim, Will and Jackie now have `d.lines` / `d.scoot` / `d.shout` like Nate and Heather (~30-40 each). New events:
+    `throw` (hero.js `s_throw` and `slamLand`), `drop` (enemy.js `takeHit` when a hero's hit knocks a patient down or out; Kim has
+    the most) and `teamup` (Jackie, from `startTeam`). Bill's lines must stay verbatim: `NICK_LINES`, `KIM_LINES`, `WILL_LINES`,
+    `JACKIE_LINES` in data.js (tests/v10_1.py checks them, like `BILL_LINES` for Heather). Keep lines PG-13 and <= ~57 chars (phone bubbles).
+  - **Cutscenes:** `lz(id, normal, lazy, snark, nerv, cheer, help, ego)`: Nate, Heather, Nick, Kim, Jackie, Will takes on each hero line.
+  - **Names on screen:** `heroName(d, room, min)` in gfx.js: full name at 8 or 7 px advance, else `short`. HUD slot is 180 px; a long
+    name may squeeze the score to 7 px and itself to 6 (WONDERFUL WILL). `text(..., { adv: 6 })` (or less) draws a **narrow font**:
+    a condensed copy of font8 built at runtime (`narrowFont()` in gfx.js: 7 px glyphs squeezed to 5 px, 6 px advance). Select
+    `fit()` uses 8 px, else the narrow font (PESSIMIST, WONDERFUL, CHEERFUL on 62 px cards). THE END line reads "NERVOUS NICK AND THE CREW SURVIVED THE SHIFT." (2 rows if narrow).
+  - **Nick is a ginger:** `B["nick"]` hair `NICK_GINGER` (#e8842e copper-orange, shade #b0581c) + light freckles (#e2aa88), deliberately
+    more orange than Kim's red (#d8462a / #9c2c1a, ponytail). Glasses, build, navy scrubs, orange shoes unchanged. Don't make him blond.
+  - **Will's ugly Christmas sweater:** `B["will"]`: bright blue knit (`WILL_BLUE`), long sleeves (`sleeve_len` 1.8) with red ribbed
+    cuffs (new rig `cuff` option), `pattern=xmas_sweater` (red rib hem at the hips + collar, red chest band with a white zigzag, a
+    little tree with a star on the visible side; designed on a 16 px torso so the 2x portrait matches) and `post=xmas_knit` (white
+    snowflake dots on the blue; make_art.py now honours a body's `post`). Belt + navy pants show under the hem. Christmas only, no pumpkins.
+  - Docs: docs/v10_1_nick_ginger.png, docs/v10_1_select_nick.png, docs/v10_1_select_phone.png, docs/v10_1_will_sweater.png, docs/v10_1_bubbles.png. Tests: tests/v10_1.py.
 - **v0.10 HEATHER (6th playable nurse, `HEROES.heather`, last in `HERO_ORDER`):**
   - **Look:** `B["heather"]` in tools/chars.py: blonde (`HEATHER_HAIR`), long hair worn down (`long_hair()` hair_back), royal blue
     scrubs: top `HEATHER_BLUE` #2448d8 over deeper pants `HEATHER_BLUE_P` #1c38b0 with a waistband + drawstring (Bill's style rule).
@@ -136,10 +155,10 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
 - **Lighting (v0.5, `drawLighting()` in world.js):** an offscreen darkness layer at `W.dark` with banded (retro-stepped) holes cut for every
   light, then an additive colour glow. `W.lights` is built from the wall pieces in `buildLevel`; moving lights come from `W.lightHook`.
 - **6 heroes:**
-  - Nick: balanced, Crash Cart special.
-  - Kim: fast, Whirlwind Kick.
-  - Will: power, Body Slam, big throws. He is bald (skin-tone head with a shine) in a normal fitted short-sleeve bright blue top, with skin forearms, a belt, dark pants and shoes. His stat color is blue. There's no orange/Halloween look and no padded suit/armor look.
-  - Jackie: reach, Clipboard Spin, strong jump and dash.
+  - Nervous Nick (Pessimist): balanced, Crash Cart special. Ginger (v0.10.1: copper-orange hair, light freckles), glasses, navy scrubs, orange shoes.
+  - Killer Kim (Cheerful): fast, Whirlwind Kick. Red hair in a ponytail. Sweet as pie while she flattens people.
+  - Wonderful Will (Top Dog): power, Body Slam, big throws. Bald (skin-tone head with a shine). v0.10.1: an ugly Christmas sweater (bright blue knit, red cuffs / band / hem, white zigzag + snowflakes, a little tree) ending at the hips over a belt and dark navy pants. His stat color is blue. Christmas only: no orange/Halloween look, no padded suit/armor look.
+  - Charge Jackie (Helpful): reach, Clipboard Spin, strong jump and dash. Always offering to pitch in.
   - Nasty Nate (v0.8): lazy; longest reach, slowest, Rolling Chair special, speech bubbles. Tall, glasses, ponytail, teal scrubs.
   - Heather (v0.10): fast and tough, mid power; Running Clothesline special, snarky speech bubbles. Blonde, long hair, royal blue scrubs.
 - **Moves:** combos with a finisher, jump and jump kick, run (double-tap or Shift/RB) and dash attack, back attack (Attack+Jump),
@@ -232,6 +251,7 @@ python3 tests/v06.py        # v0.6: A carry/throw, B priorities, C directions/tr
 python3 tests/v07.py        # v0.7: A grab/toss/slam + help pages, B priority/pad/2P/touch layout, C beef jerky, D boss + patient sizes
 python3 tests/v08.py        # v0.8: Nasty Nate: A select/title, B phones/touch, C pad, D size/art, E combo/chair, F speech bubbles, G 2P, H cutscene + MRI headroom
 python3 tests/v10.py        # v0.10: Heather: A art/data/Bill's lines, B select+title+HUD, C phones+4:3 grid+touch, D pad, E combo, F clothesline, G bubbles, H 2P, I scooter, J cutscenes+ending, K moves
+python3 tests/v10_1.py      # v0.10.1: nicknames/roles, Bill's lines verbatim, ~30+ lines per trigger, phone-fit bubbles, ginger Nick vs Kim, Will's sweater, Kim's drop line, cutscene takes
 python3 tests/v09.py        # v0.9: Scooter Run: A art/sizes, B flow+carry, C keys, D crash/jump, E patients, F pickups, G continue, H Marv, I 2P, J pad, K touch, L cutscene, M pause, N timed bot ride (~85 s)
 python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
@@ -271,7 +291,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
 | `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
 | `src/scooter.js` | v0.9 Scooter Run driving level: course, riders, hazards, patients, Motorcart Marv, parallax drawing, HUD, tally rows, test bot |
-| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v16: **bump N on every release**) |
+| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v17: **bump N on every release**) |
 
 ## Bill's standing preferences
 - **Outfit style rule (Bill, v0.8.1):** every character's clothes read as a **separate top and bottom with a visible waist**

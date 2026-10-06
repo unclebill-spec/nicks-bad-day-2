@@ -8,7 +8,7 @@
 // Coordinates: hallway things have a world x (distance down the hall, S.d = how far the camera has scrolled); riders
 // and Marv live in screen x. y is the usual floor depth (Y_MIN..Y_MAX), z the height off the floor. W.camX stays 0 so
 // the shared effects (floatText, word, dust, sparks) can be placed in screen x.
-import { G, spr, text, rect, panel, frame, anim, sprSize, ellipse } from './gfx.js';
+import { G, spr, text, rect, panel, frame, anim, sprSize, ellipse, heroName } from './gfx.js';
 import { ITEMS, Y_MIN, Y_MAX } from './data.js';
 import { W, buildLevel, floatText, word, addFx, shake, offY, FLOOR_Y, updateWorld, drawFx } from './world.js';
 import { lookFor } from './enemy.js';
@@ -477,7 +477,7 @@ export function drawScootTally(game) {
   T.forEach((R, i) => {
     const x = Math.round(VW / 2 - (n * (pw + 6)) / 2 + i * (pw + 6)), y = 52;
     panel(x, y, pw, 128);
-    spr(`face_${R.h.id}`, x + 4, y + 4); text(R.h.d.name, x + 44, y + 10, { col: R.h.slot ? '#8ad8ff' : '#ffe84a' });
+    spr(`face_${R.h.id}`, x + 4, y + 4); { const [hn, ha] = heroName(R.h.d, pw - 48); text(hn, x + 44, y + 10, { col: R.h.slot ? '#8ad8ff' : '#ffe84a', adv: ha }); }
     const reveal = Math.min(R.rows.length, Math.floor(game.t * 2));
     R.rows.forEach((r, j) => { if (j >= reveal) return; text(r[0], x + 6, y + 44 + j * 14, { col: r[1] && j >= 2 ? '#8ae87a' : '#c8d4f0' }); text(String(r[1]), x + pw - 6, y + 44 + j * 14, { col: '#ffffff', align: 'right' }); });
     if (reveal >= R.rows.length) text(`BONUS ${R.total}`, x + pw / 2, y + 108, { col: '#ffe84a', align: 'center' });

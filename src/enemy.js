@@ -66,11 +66,11 @@ export class Enemy extends Actor {
     if (this.tank && (down || force || dmg >= 12 || this.hp <= 0)) this.loseTank(dir, from);
     if (this.hp <= 0) {
       this.hp = 0; if (this.holder) { this.holder.held = null; this.holder = null; }
-      this.knock(dir, Math.max(kb || 0, 130), 200); this.koBy = from; return;
+      this.knock(dir, Math.max(kb || 0, 130), 200); this.koBy = from; if (from && from.isHero && from.say) from.say('drop'); return;  // v0.10.1 drop lines (Killer Kim)
     }
     if (held) { this.flash = 0.12; return; }
     if (this.armor > 0 && !down && !force) { this.armor--; this.armorT = 1.6; return; }  // brute shrugs off jabs
-    if (down || force) { if (this.holder) { this.holder.held = null; this.holder = null; } this.knock(dir, kb || 140, 190); return; }
+    if (down || force) { if (this.holder) { this.holder.held = null; this.holder = null; } this.knock(dir, kb || 140, 190); if (from && from.isHero && from.say && from.held !== this) from.say('drop'); return; }
     if (dizzy) { this.set('dizzy'); this.stun = dizzy; this.vx = 0; return; }
     this.set('hurt'); this.stun = stun || 0.3; this.vx = dir * (kb || 30);
   }

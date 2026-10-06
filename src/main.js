@@ -4,7 +4,7 @@
 // Breakroom Bonus -> bonus tally -> [cutscene next] -> Floor 4 Radiology (Lou mini-boss, [cutscene mri] -> MRI boss) ->
 // tally -> [cutscene scoot] -> v0.9 SCOOTER RUN (Motorcart Marv) -> scooter tally -> [cutscene night] -> Night Shift -> tally -> [cutscene ending] -> THE END (v0.5). Scores, lives, continues and
 // 2P carry from floor to floor. Cutscenes skip with any button / tap (auto-skipped with ?bot / ?nocut).
-import { G, initGfx, resize, present, text, spr, rect, panel, frame, anim, textW, sprSize, frameRect, ellipse } from './gfx.js';
+import { G, initGfx, resize, present, text, spr, rect, panel, frame, anim, textW, sprSize, frameRect, ellipse, heroName } from './gfx.js';
 import { loaded, Q, audio } from '../kit/common.js';
 import { createDisplay } from '../kit/display.js';
 import { C, initControls, pollControls, readPlayer, menuIntents } from './controls.js';
@@ -502,7 +502,7 @@ function drawBonusTally() {
   game.btally.forEach((T, i) => {
     const x = Math.round(VW / 2 - (n * (pw + 6)) / 2 + i * (pw + 6)), y = 58;
     panel(x, y, pw, 112);
-    spr(`face_${T.h.id}`, x + 4, y + 4); text(T.h.d.name, x + 44, y + 10, { col: T.h.slot ? '#8ad8ff' : '#ffe84a' });
+    spr(`face_${T.h.id}`, x + 4, y + 4); { const [hn, ha] = heroName(T.h.d, pw - 48); text(hn, x + 44, y + 10, { col: T.h.slot ? '#8ad8ff' : '#ffe84a', adv: ha }); }
     const reveal = Math.min(T.rows.length, Math.floor(game.t * 2));
     T.rows.forEach((r, j) => { if (j >= reveal) return; text(r[0], x + 6, y + 44 + j * 14, { col: j === 2 && r[1] ? '#8ae87a' : '#c8d4f0' }); text(String(r[1]), x + pw - 6, y + 44 + j * 14, { col: '#ffffff', align: 'right' }); });
     if (reveal >= T.rows.length) text(`BONUS ${T.total}`, x + pw / 2, y + 96, { col: '#ffe84a', align: 'center' });
@@ -542,7 +542,7 @@ function drawSelect() {
   const grid = Math.floor((VW - 8) / n) - gap < 56, cols = grid ? Math.ceil(n / 2) : n;
   const cw = grid ? Math.min(96, Math.floor((VW - 8) / cols) - gap) : Math.min(84, Math.floor((VW - 8) / n) - gap);
   const ch = grid ? Math.floor((VH - y0 - 24) / 2) - 3 : 176, x0 = Math.round((VW - (cw + gap) * cols + gap) / 2);
-  const fit = (q, x, y, col) => { const adv = q.length * 8 <= cw - 4 ? 8 : 7; text(q, x - (q.length * adv) / 2, y, { col, adv }); };
+  const fit = (q, x, y, col) => { const adv = q.length * 8 <= cw - 4 ? 8 : 6; text(q, x, y, { col, adv, align: 'center' }); };  // v0.10.1: 6 = the narrow font (cleaner than touching 7 px letters)
   game.cardRects = [];
   HERO_ORDER.forEach((id, i) => {
     const H = HEROES[id], x = x0 + (i % cols) * (cw + gap), y = y0 + Math.floor(i / cols) * (ch + 3);
@@ -611,7 +611,7 @@ function drawTally() {
   game.tally.forEach((T, i) => {
     const x = Math.round(VW / 2 - (n * (pw + 6)) / 2 + i * (pw + 6)), y = 56;
     panel(x, y, pw, 118);
-    spr(`face_${T.h.id}`, x + 4, y + 4); text(T.h.d.name, x + 44, y + 10, { col: T.h.slot ? '#8ad8ff' : '#ffe84a' });
+    spr(`face_${T.h.id}`, x + 4, y + 4); { const [hn, ha] = heroName(T.h.d, pw - 48); text(hn, x + 44, y + 10, { col: T.h.slot ? '#8ad8ff' : '#ffe84a', adv: ha }); }
     if (T.quote && game.t > 0.6) {  // v0.8 Nate's floor-clear line next to the face; v0.10 long ones (Heather's) go full width under the card
       const side = wrapText(`"${T.quote}"`, Math.floor((pw - 50) / 8));
       if (side.length <= 2) side.forEach((q, k) => text(q, x + 44, y + 21 + k * 9, { col: '#c8f0e8', shadow: null }));
@@ -634,9 +634,11 @@ function drawEnding() {  // v0.5: the end of the shift
   rect(0, 0, VW, VH, '#05060c', 0.9);
   const sc = Math.min(1, (VW - 20) / sprSize('w_theend')[0]), [w] = sprSize('w_theend');
   spr('w_theend', VW / 2, 26, { ax: w / 2, scale: sc * Math.min(1, game.t * 2) });
-  text('NICK AND THE CREW SURVIVED THE SHIFT.', VW / 2, 82, { col: '#ffffff', align: 'center' });
+  const sv = 'NERVOUS NICK AND THE CREW SURVIVED THE SHIFT.', sa = sv.length * 8 <= VW - 8 ? 8 : 7;  // v0.10.1
+  if (sv.length * sa <= VW - 8) text(sv, VW / 2, 82, { col: '#ffffff', align: 'center', adv: sa });
+  else { text('NERVOUS NICK AND THE CREW', VW / 2, 78, { col: '#ffffff', align: 'center' }); text('SURVIVED THE SHIFT.', VW / 2, 87, { col: '#ffffff', align: 'center' }); }
   text('EVERY PATIENT TUCKED IN. MOSTLY.', VW / 2, 96, { col: '#c8d4f0', align: 'center' });
-  W.heroes.forEach((h, i) => { const n = W.heroes.length, x = VW / 2 + (i - (n - 1) / 2) * 120; spr(`face_${h.id}`, x - 52, 112); text(h.d.short || h.d.name, x - 10, 118, { col: h.slot ? '#8ad8ff' : '#ffe84a' }); text(String(h.score).padStart(7, '0'), x - 10, 132, { col: '#ffffff' }); });
+  W.heroes.forEach((h, i) => { const n = W.heroes.length, sp = Math.min(160, VW / 2), x = VW / 2 + (i - (n - 1) / 2) * sp; spr(`face_${h.id}`, x - 52, 112); const [hn, ha] = heroName(h.d, n > 1 ? sp - 62 : 140); text(hn, x - 10, 118, { col: h.slot ? '#8ad8ff' : '#ffe84a', adv: ha }); text(String(h.score).padStart(7, '0'), x - 10, 132, { col: '#ffffff' }); });
   text('SEE YOU NEXT SHIFT...', VW / 2, 164, { col: '#3aa8ff', align: 'center' });
   if (game.newHi) text('NEW HIGH SCORE!', VW / 2, 178, { col: Math.floor(game.t * 6) % 2 ? '#ffe84a' : '#ff8a1e', align: 'center' });
   if (game.t > 1.5) text('PRESS ATTACK', VW / 2, VH - 20, { col: '#c8d4f0', align: 'center' });
@@ -668,7 +670,7 @@ function drawScores() {
   for (let i = 0; i < 5; i++) {
     const r = L[i], y = 50 + i * 24;
     text(`${i + 1}.`, VW / 2 - 120, y, { col: '#8ad8ff' });
-    if (r) { spr(`face_${r.h}`, VW / 2 - 100, y - 10, { scale: 0.5 }); text(HEROES[r.h] ? HEROES[r.h].name : '?', VW / 2 - 76, y, { col: '#ffffff' }); text(String(r.s).padStart(7, '0'), VW / 2 + 70, y, { col: '#ffe84a', align: 'right' }); text(r.d || '', VW / 2 + 120, y, { col: '#8a94b4', align: 'right' }); }
+    if (r) { spr(`face_${r.h}`, VW / 2 - 100, y - 10, { scale: 0.5 }); { const [hn, ha] = HEROES[r.h] ? heroName(HEROES[r.h], 86) : ['?', 8]; text(hn, VW / 2 - 76, y, { col: '#ffffff', adv: ha }); } text(String(r.s).padStart(7, '0'), VW / 2 + 70, y, { col: '#ffe84a', align: 'right' }); text(r.d || '', VW / 2 + 120, y, { col: '#8a94b4', align: 'right' }); }
     else text('-------', VW / 2 + 70, y, { col: '#3a4c92', align: 'right' });
   }
   text(`FLOORS CLEARED: ${save.best}   SHIFTS WORKED: ${save.plays}`, VW / 2, 178, { col: '#c8d4f0', align: 'center' });

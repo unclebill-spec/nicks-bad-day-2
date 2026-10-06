@@ -2,6 +2,43 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-06: v0.10.1 "Nicknames" (Bill: ginger Nick, then a nickname + personality for four nurses, and Will's Christmas sweater)
+All six nurses now have a nickname and a personality on the select card: **Nervous Nick** (Pessimist), **Killer Kim** (Cheerful),
+**Wonderful Will** (Top Dog), **Charge Jackie** (Helpful), **Nasty Nate** (Lazy) and **Heather** (Tough). Stats and moves are unchanged.
+- **Nick is a ginger:** warm copper-orange hair (#e8842e, shade #b0581c) with light freckles. It is clearly more orange / copper
+  than Kim's red (#d8462a), and Kim keeps her ponytail, so the two still read apart at a glance. Glasses, spiky cut, tall average
+  build, navy scrubs and orange shoes are unchanged.
+- **Wonderful Will's ugly Christmas sweater:** a bright blue knit (his colour, and it keeps him apart from the red-flannel visitor)
+  with long sleeves and red ribbed cuffs, a red chest band with a white zigzag, white snowflake dots, a little tree with a star, and
+  a red rib hem that ends at the hips over his belt and navy pants (visible waist, no onesie). Christmas, not Halloween, no pumpkins.
+  So "Do you like my festive shirt?" lands.
+- **About 30-40 speech bubbles each** for Nick, Kim, Will and Jackie on the same triggers as Nate and Heather: spawn, idle, grabs,
+  lifting, food, coffee, weapons, hurt, KO, revive, the Ativan jab, Code Blue, special, zone clear, floor clear (the tally card),
+  the Scooter Run (start, crash, snack, sedating a rider) and their own take on every cutscene line. Each also has a personal
+  Ativan shout. New triggers: **throw** (a throw or slam lands) and **drop** (you just knocked a patient down).
+  - **Nervous Nick (Pessimist):** anxious and sure the worst is coming. Bill's lines: "Did you see what the emergency room looks
+    like right now?", "I know we're just going to get that admit.", "How come we always get screwed?", plus the full moon, the Q
+    word, short two nurses, nine hours without peeing, the Pyxis, floated to the ICU, "This is fine. Nothing is fine." and more.
+  - **Killer Kim (Cheerful):** relentlessly sweet while she flattens people. Extra lines on knockdowns, grabs, throws and her
+    special, said to the patient she just dropped: "Can I help you back to bed?" (Bill), "Oopsie! Let's get you tucked in!",
+    "Nap time, sweetie!", "I'll chart that as a mechanical fall!", "You're doing amazing! Stay on the floor!" and more.
+  - **Wonderful Will (Top Dog):** cheerfully egotistical. Bill's lines: "I make nursing look easy.", "Lucky you, you got the best
+    nurse on the unit.", "I make nursing look good!", "Do you like my festive shirt?", "Someone call for help?", "Normally this
+    would be a two-nurse job, but I'm here.", plus "Hold your applause.", "One stick. Every time.", "Watch and learn, rookies." and more.
+  - **Charge Jackie (Helpful):** the take-charge charge nurse who always pitches in. Bill's lines: "Who needs help?", "What can I do
+    for you?", "Do you guys need anything?", "I'll get vitals!", "No, finish your charting, I'll get the patient!", plus "Go eat
+    lunch, I've got your patients.", "I'll take the rapid response.", "Teamwork makes the dream work!" and more. She also has a line
+    for the 2P **Charge Nurse** team-up (that move keeps its name; she's "Charge Jackie", the team-up is still "CHARGE NURSE").
+- All lines are PG-13 and at most 57 characters, so the bubbles wrap to 2-3 rows and fit on a phone (tests/v10_1.py checks them).
+- **Names everywhere:** select cards (two-line nickname + personality; 3x2 grid on 4:3), HUD (full nickname beside the score; the
+  HUD slot grew from 170 to 180 px and long names / the score squeeze their letter spacing; very narrow screens fall back to the
+  short name). New **narrow font** (a condensed copy of the 8 px font built at runtime) so 9-letter words like WONDERFUL and
+  PESSIMIST fit the 62 px select cards cleanly, floor / bonus / Scooter Run tallies, high scores, THE END ("NERVOUS NICK AND THE CREW SURVIVED THE SHIFT.") and
+  join / continue toasts. New `heroName(d, room)` in gfx.js picks the full or short name for the space.
+- Regenerated: Nick's and Will's sheets (every frame, incl. the scooter rider poses), their HUD / hurt faces, the app icons.
+- Service worker cache `nbd2-app-v17`. Tests: new `tests/v10_1.py`. Docs: `docs/v10_1_nick_ginger.png` (old vs new Nick next to Kim),
+  `docs/v10_1_select_nick.png` (select, Nervous Nick picked), `docs/v10_1_select_phone.png`, `docs/v10_1_will_sweater.png`, `docs/v10_1_bubbles.png` (in-game bubbles).
+
 ## 2026-10-06: v0.10 "Heather" (Bill: a sixth playable nurse with a running clothesline and a sharp tongue)
 - **HEATHER, the 6th playable nurse.** Blonde, long hair worn down, **royal blue scrubs**: a V-neck top with a hem over deeper royal
   blue drawstring pants, so the top, waistband and pants read separately (Bill's style rule: no onesie, diaper, padded or armor

@@ -312,7 +312,7 @@ export class Hero extends Actor {
     const B = W.boss;
     if (B && B.alive && B.hittable && B.hittable() && (B.depthAny || Math.abs(B.y - e.y) < 18) && Math.abs(B.x - e.x) < (B.w || 40) / 2 + 24) B.takeHit({ dmg: 12 * pw, dir: -f, from: this });
     bumpProps({ x: e.x, y: e.y, z: 0, w: 20 }, 12, -f, this, new Set([e]), 16);
-    addScore(this, 250); W.stats.slams = (W.stats.slams || 0) + 1;
+    addScore(this, 250); W.stats.slams = (W.stats.slams || 0) + 1; this.say('throw', true);
   }
   s_knee(dt) { const e = this.held; if (e) { e.x = this.x + this.face * 15; e.y = this.y + 0.5; } if (this.t > ATTACKS.knee.dur) { if (e && e.st === 'held' && e.hp > 0) { this.st = 'grab'; this.t = 0.2; } else { this.held = null; this.set('idle'); } } }
   throwHeld(dir) {
@@ -324,7 +324,7 @@ export class Hero extends Actor {
     if (e && !this.thrown && this.t > 0.14) {
       this.thrown = true; this.held = null;
       e.thrownBy(this, this.throwDir, this.d.throwK || 1); e.rot = 0;
-      sfx('whoosh', { vol: 0.7 }); sfx('toss', { vol: 0.5 }); addScore(this, 120); W.stats.tosses = (W.stats.tosses || 0) + 1;
+      sfx('whoosh', { vol: 0.7 }); sfx('toss', { vol: 0.5 }); addScore(this, 120); W.stats.tosses = (W.stats.tosses || 0) + 1; this.say('throw');
     }
     if (this.t > 0.36) this.set('idle');
   }
@@ -627,7 +627,7 @@ export class Hero extends Actor {
     text(L[1], bx + w / 2, Y + 12, { col: '#7a3ab8', align: 'center', shadow: null });
   }
   // ---- v0.8 speech bubbles: heroes with d.lines say something in character (Nasty Nate: lazy). ev = spawn, idle, grab, food,
-  // weapon, hurt, ko, revive, codeblue, special, zone, clear. A line shows ~2.6 s; `force` skips the cooldown (big moments).
+  // weapon, hurt, ko, revive, codeblue, special, zone, clear (v0.10.1: + throw, drop = a patient you knocked down). A line shows ~2.6 s; `force` skips the cooldown (big moments).
   say(ev, force = false) {
     const L = this.d.lines && this.d.lines[ev];
     if (!L || !L.length || (!force && W.t < this.sayCd)) return null;
@@ -717,6 +717,7 @@ function startTeam(a, b) {
   W.team = { t: 0, x: cx, y: cy, a, b, hit: false };
   W.stop = 0.12; W.flash = 1; W.flashCol = '#ffffff'; sfx('charge'); shake(4);
   word('w_charge', cx, cy, 64); floatText('CHARGE NURSE, COMING THROUGH!', cx, cy, 96, '#ffe84a');
+  for (const h of [a, b]) if (h.say('teamup', true)) break;  // v0.10.1 Charge Jackie has a line for it
   W.stats.teamups = (W.stats.teamups || 0) + 1;
 }
 function teamBlast(T) {

@@ -88,19 +88,51 @@ function tinted(col) {
   if (G.fontCache[col]) return G.fontCache[col];
   return (G.fontCache[col] = silhouette(G.font, col));
 }
+// v0.10.1: fit a hero's name into `room` px: full name, squeezed (adv 7), else the short one (NERVOUS NICK -> NICK)
+export function heroName(d, room, min = 7) {
+  const n = d.name;
+  if (n.length * 8 <= room) return [n, 8];
+  if (n.length * 7 <= room) return [n, 7];
+  if (min <= 6 && n.length * 6 <= room) return [n, 6];  // narrow font
+  const s = d.short || n; return [s, s.length * 8 <= room ? 8 : 7];
+}
+// v0.10.1: narrow mode (adv <= 6): a condensed copy of the font, built once at runtime: each 7 px glyph squeezed to 5 px by
+// OR-merging its most similar neighbouring columns (the 2 px strokes become 1 px), drawn on a 6 px advance. Lets 9-letter
+// nicknames (WONDERFUL, PESSIMIST) fit a 62 px select card without the letters overlapping.
+function narrowFont() {
+  if (G.fontN) return G.fontN;
+  const f = G.font, W_ = f.width, H_ = f.height, c = document.createElement('canvas'); c.width = W_; c.height = H_;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(f, 0, 0);
+  const src = x.getImageData(0, 0, W_, H_), out = x.createImageData(W_, H_), d = src.data, o = out.data;
+  const bits = (v) => { let n = 0; while (v) { n += v & 1; v >>= 1; } return n; };
+  for (let k = 0; k < (W_ / 8) * (H_ / 8); k++) {
+    const gx = (k % (W_ / 8)) * 8, gy = Math.floor(k / (W_ / 8)) * 8, cols = [];
+    for (let xx = 0; xx < 7; xx++) { let m = 0; for (let yy = 0; yy < 8; yy++) if (d[((gy + yy) * W_ + gx + xx) * 4 + 3] > 0) m |= 1 << yy; cols.push(m); }
+    while (cols.length > 5) {
+      let bi = 0, bd = 99;
+      for (let q = 0; q < cols.length - 1; q++) { const dd = bits(cols[q] ^ cols[q + 1]); if (dd < bd) { bd = dd; bi = q; } }
+      cols.splice(bi, 2, cols[bi] | cols[bi + 1]);
+    }
+    cols.forEach((m, xx) => { for (let yy = 0; yy < 8; yy++) if (m & (1 << yy)) { const j = ((gy + yy) * W_ + gx + xx) * 4; o[j] = o[j + 1] = o[j + 2] = 255; o[j + 3] = 255; } });
+  }
+  x.clearRect(0, 0, W_, H_); x.putImageData(out, 0, 0);
+  return (G.fontN = c);
+}
+function tintedN(col) { const k = 'n' + col; return G.fontCache[k] || (G.fontCache[k] = silhouette(narrowFont(), col)); }
 export function text(s, x, y, { col = '#fff', shadow = '#1a1020', align = 'left', scale = 1, alpha = 1, adv = 8 } = {}) {
-  s = String(s); const w = s.length * adv * scale;  // adv: glyph advance (v0.10: 7 squeezes tight select-card names)
+  s = String(s); const w = s.length * adv * scale;  // adv: glyph advance (v0.10: 7 squeezes tight select-card names; v0.10.1: <= 6 = narrow font)
   let x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
   x0 = Math.round(x0); y = Math.round(y);
   const c = G.ctx; c.save(); c.globalAlpha = alpha;
+  const nar = adv <= 6, tint = nar ? tintedN : tinted;
   const draw = (img, dx, dy) => {
     for (let i = 0; i < s.length; i++) {
       const code = s.charCodeAt(i) - 32; if (code <= 0 || code > 94) continue;
       c.drawImage(img, (code % 16) * 8, Math.floor(code / 16) * 8, 8, 8, x0 + i * adv * scale + dx, y + dy, 8 * scale, 8 * scale);
     }
   };
-  if (shadow) draw(tinted(shadow), scale, scale);
-  draw(tinted(col), 0, 0);
+  if (shadow) draw(tint(shadow), scale, scale);
+  draw(tint(col), 0, 0);
   c.restore();
   return w;
 }

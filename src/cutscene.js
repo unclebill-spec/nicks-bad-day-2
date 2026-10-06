@@ -16,7 +16,8 @@ const FLOOR_Y = 118;
 function nightNurse() {  // the night-shift nurse: Jackie's build in maroon scrubs, grey hair, white clogs
   return tintSheet('jackie', 'night', [['#283a7a', '#7a2a5a'], ['#1b2756', '#561a40'], ['#1d2a5e', '#66204c'], ['#121a40', '#4a1434'], ['#10183a', '#38102a'], ['#4a2a18', '#b8bcc8'], ['#2e180c', '#868a98'], ['#9a5ae0', '#f4f4f8'], ['#6a34a8', '#b8c2d0']]);
 }
-const lz = (id, s, lazy, snark) => (id === 'nate' ? lazy : id === 'heather' && snark ? snark : s);  // v0.8 Nasty Nate's lazy take / v0.10 Heather's snarky take on a hero line
+// v0.8 Nasty Nate's lazy take / v0.10 Heather's snarky take / v0.10.1 Nervous Nick's worried take and Killer Kim's cheery take / Charge Jackie's helpful take / Wonderful Will's ego take on a hero line
+const lz = (id, s, lazy, snark, nerv, cheer, help, ego) => (id === 'nate' ? lazy : id === 'heather' && snark ? snark : id === 'nick' && nerv ? nerv : id === 'kim' && cheer ? cheer : id === 'jackie' && help ? help : id === 'will' && ego ? ego : s);
 const heroIds = () => { const h = W.heroes.map((q) => q.id); return h.length ? h : ['nick']; };
 const nm = (id) => (HEROES[id] ? HEROES[id].name : 'NURSE');
 
@@ -28,7 +29,7 @@ const SCRIPTS = {
       (w, h) => ({ bg: ['hall', 0, 58], cap: '6:58 AM. FLOOR 3 WEST.', acts: [{ s: a, a: 'walk', x: w * 0.2, y: h - 3, mv: 14 }, ...(b ? [{ s: b, a: 'walk', x: w * 0.2 - 26, y: h - 1, mv: 14 }] : []), { s: night, a: 'idle', x: w * 0.72, y: h - 3, flip: true }],
         bubbles: [{ x: w * 0.3, y: 4, s: 'Morning! 30 patients, 12 call lights, and one RUNNER.', tail: [w * 0.7, h - 52], at: 0.35, mw: Math.min(220, w * 0.62) }] }),
       (w, h) => ({ bg: ['hall', 620, 58], dark: true, faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
-        bubbles: [{ x: 6, y: 6, s: lz(a, `Did you say... RUNNER?`, 'RUNNER? Ugh. I was playing a game on my phone.', "A RUNNER? I'm your nurse, not your track coach."), tail: [w / 2 - 6, h - 70], at: 0.3, mw: w - 20 }] }),
+        bubbles: [{ x: 6, y: 6, s: lz(a, `Did you say... RUNNER?`, 'RUNNER? Ugh. I was playing a game on my phone.', "A RUNNER? I'm your nurse, not your track coach.", "A RUNNER? Of course there's a runner.", "A RUNNER? Yay, cardio! Let's go!", "A RUNNER? I'll grab him! You finish charting!", "A RUNNER? Relax. The best nurse is here."), tail: [w / 2 - 6, h - 70], at: 0.3, mw: w - 20 }] }),
       (w, h) => ({ bg: ['hall', 1340, 58], speed: true, acts: [{ s: 'tilly', a: 'drive', x: w * 0.85, y: h - 4, flip: true, mv: -70, rate: 10 }],
         bubbles: [{ x: 4, y: 4, s: 'OUT OF MY WAY, SWEETIE! HONK HONK!', tail: [w * 0.7, h - 70], at: 0.2, mw: w - 16, shout: true },
           { x: 4, y: h - 26, s: "One of THOSE days.", tail: [8, h - 2], at: 1.4, mw: w - 16 }] }),
@@ -42,18 +43,18 @@ const SCRIPTS = {
       (w, h) => ({ bg: null, burst: '#e83a6a', faces: [{ id: 'tilly', x: w / 2 - 36, y: h - 72, scale: 2 }],
         bubbles: [{ x: 6, y: 6, s: 'NOBODY touches the remote!', tail: [w / 2, h - 72], at: 0.25, mw: w - 20, shout: true }] }),
       (w, h) => ({ bg: ['hall', 2860, 58], faces: [{ id: a, x: b ? 6 : w / 2 - 36, y: h - 72, scale: 2 }, ...(b ? [{ id: b, x: w - 78, y: h - 72, scale: 2, flip: true }] : [])],
-        bubbles: [{ x: 4, y: 4, s: lz(a, 'Time for your meds, Tilly.', 'Time for your meds, Tilly.', "Hospital food isn't room service, Tilly. Meds."), tail: [b ? 40 : w / 2, h - 70], at: 0.25, mw: w - 16 }, { x: 4, y: 30, s: b ? `...and a NAP.` : '...and a NAP. For me.', tail: [b ? w - 40 : w / 2, h - 70], at: 1.3, mw: w - 16 }] }),
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Time for your meds, Tilly.', 'Time for your meds, Tilly.', "Hospital food isn't room service, Tilly. Meds.", "Tilly, please take your meds. I'm begging you.", "Meds time, Tilly! You're doing amazing!", "Tilly, I'll get your meds! Anything else?", "Meds, Tilly. From the best nurse on the unit."), tail: [b ? 40 : w / 2, h - 70], at: 0.25, mw: w - 16 }, { x: 4, y: 30, s: b ? `...and a NAP.` : '...and a NAP. For me.', tail: [b ? w - 40 : w / 2, h - 70], at: 1.3, mw: w - 16 }] }),
     ];
   },
   lunch() {
     const [a, b] = heroIds(), thief = lookFor('wanderer', 3);
     return [
       (w, h) => ({ bg: ['hall', 600, 58], cap: '12:30 PM. FLOOR 3: QUIET. FOR NOW.', acts: [{ s: a, a: 'win', x: w * 0.3, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.3 + 34, y: h - 1, rate: 3 }] : [])],
-        bubbles: [{ x: w * 0.5, y: 20, s: lz(a, 'Finally... LUNCH BREAK!', 'Is it time for my break yet? ...It IS?!', "Lunch. Nobody ring for ice chips."), tail: [w * 0.36, h - 50], at: 0.35, mw: Math.min(200, w * 0.45) }] }),
+        bubbles: [{ x: w * 0.5, y: 20, s: lz(a, 'Finally... LUNCH BREAK!', 'Is it time for my break yet? ...It IS?!', "Lunch. Nobody ring for ice chips.", "Lunch break? Something's gonna code. Watch.", "LUNCH BREAK! Best. Shift. EVER!", "Lunch? Go ahead, I've got your patients!", "Lunch break. I've earned it. Every day."), tail: [w * 0.36, h - 50], at: 0.35, mw: Math.min(200, w * 0.45) }] }),
       (w, h) => ({ bg: ['break', 'fridge', 58], cap: 'MEANWHILE, IN THE BREAKROOM...', fridge: true, acts: [{ s: thief, a: 'atk', x: w * 0.42, y: h - 3, rate: 6 }],
         bubbles: [{ x: 4, y: h - 30, s: 'Nom nom nom!', tail: [w * 0.42, h - 52], at: 0.4, mw: w - 16 }] }),
       (w, h) => ({ bg: null, burst: '#ff8a1e', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
-        bubbles: [{ x: 4, y: 4, s: lz(a, "HEY! That's MY yogurt! It was LABELED!", "HEY! That's MY yogurt! It was LABELED!", "HEY! This isn't a restaurant! That's MY yogurt!"), tail: [w / 2, h - 70], at: 0.25, mw: w - 16, shout: true }] }),
+        bubbles: [{ x: 4, y: 4, s: lz(a, "HEY! That's MY yogurt! It was LABELED!", "HEY! That's MY yogurt! It was LABELED!", "HEY! This isn't a restaurant! That's MY yogurt!", "MY yogurt?! How come we always get screwed?", "Oopsie! That's MY yogurt, sweetie! Drop it!", "HEY! That's MY yogurt! ...Want half?", "HEY! That's MY yogurt! I'm the TOP DOG here!"), tail: [w / 2, h - 70], at: 0.25, mw: w - 16, shout: true }] }),
     ];
   },
   next() {
@@ -64,7 +65,7 @@ const SCRIPTS = {
       (w, h) => ({ bg: null, elevator: true, cap: 'THE PAGER GOES OFF...',
         bubbles: [{ x: 4, y: h - 30, s: '*BZZT* Floor 4, Radiology. STAT!', tail: [w - 10, h - 40], at: 0.3, mw: w - 16, shout: true }] }),
       (w, h) => ({ bg: null, glow: true, cap: 'FLOOR 4: RADIOLOGY', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
-        bubbles: [{ x: 4, y: 20, s: lz(a, 'Why is everything up there... GLOWING?', "Glowing? Ugh. I'm not charting that.", "Glowing? Great. Nobody's charting that either."), tail: [w / 2, h - 70], at: 0.4, mw: w - 16 }] }),
+        bubbles: [{ x: 4, y: 20, s: lz(a, 'Why is everything up there... GLOWING?', "Glowing? Ugh. I'm not charting that.", "Glowing? Great. Nobody's charting that either.", "Glowing? Great. I knew today was cursed.", "Ooh, glowing! How pretty! ...Is that safe?", "Glowing? I'll call Radiology for you!", "Glowing? Like me. Wonderful."), tail: [w / 2, h - 70], at: 0.4, mw: w - 16 }] }),
     ];
   },
   mri() {
@@ -85,16 +86,16 @@ const SCRIPTS = {
         { s: 'marv', a: 'taunt', ride: 'marvcart', x: w * 1.04, y: h - 2, mv: -48, rate: 6 }],
         bubbles: [{ x: w * 0.4, y: 18, s: 'OUTTA MY WAY, NURSES! MOTORCART MARV IS BUSTING OUT!', tail: [w * 0.75, h - 66], at: 0.3, mw: Math.min(230, w * 0.6), shout: true }] }),
       (w, h) => ({ bg: null, burst: '#ff8a1e', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
-        bubbles: [{ x: 4, y: 4, s: lz(a, 'Was that a mobility scooter... with FLAMES?', 'Flames? Ugh. Can someone else chase him?', "Flames? On a mobility scooter? I'm charting that."), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Was that a mobility scooter... with FLAMES?', 'Flames? Ugh. Can someone else chase him?', "Flames? On a mobility scooter? I'm charting that.", "Flames? Of course there are flames.", "Flames! Fire safety time, everybody!", "A flaming scooter? I'll take the rapid response!", "A flaming scooter? Watch and learn, rookies."), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
       (w, h) => ({ bg: ['rad', 900, 58], cap: 'THE SCOOTER CHARGING STATION', acts: [{ s: a, a: 'scoot', ride: 'scoot_red', x: w * 0.3, y: h - 4, mv: 22, rate: 4 }, ...(b ? [{ s: b, a: 'scoot', ride: 'scoot_blue', x: w * 0.3 - 40, y: h - 2, mv: 22, rate: 4 }] : [])],
-        bubbles: [{ x: 4, y: 4, s: lz(a, 'Grab a scooter! He went down the long hall!', "Wait. I get to SIT? ...I'm in.", "Grab a scooter! I'm your nurse, not your chauffeur, Marv!"), tail: [w * 0.3, h - 50], at: 0.25, mw: w - 16, shout: a !== 'nate' }] }),
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Grab a scooter! He went down the long hall!', "Wait. I get to SIT? ...I'm in.", "Grab a scooter! I'm your nurse, not your chauffeur, Marv!", "Scooters indoors? This is how people get hurt.", "Scooter time! Beep beep, sweeties!", "Grab a scooter! I'll take the long hall!", "Grab a scooter! I make driving look good!"), tail: [w * 0.3, h - 50], at: 0.25, mw: w - 16, shout: a !== 'nate' }] }),
     ];
   },
   night() {
     const [a, b] = heroIds();
     return [
       (w, h) => ({ bg: ['hall', 600, 58], dark: true, moon: true, cap: '11:00 PM. BACK ON FLOOR 3.', acts: [{ s: a, a: 'idle', x: w * 0.3, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.3 + 28, y: h - 1 }] : [])],
-        bubbles: [{ x: w * 0.46, y: 12, s: lz(a, 'Double shift. Quiet night, right?', 'Double shift? You made me get up from my chair.', 'Double shift. One more ice chip call and I walk.'), tail: [w * 0.33, h - 52], at: 0.35, mw: Math.min(200, w * 0.48) }] }),
+        bubbles: [{ x: w * 0.46, y: 12, s: lz(a, 'Double shift. Quiet night, right?', 'Double shift? You made me get up from my chair.', 'Double shift. One more ice chip call and I walk.', "Double shift. Don't say the Q word.", "Double shift! Twice the fun!", "Double shift? I'll take the next admit!", "Double shift? I make nursing look easy."), tail: [w * 0.33, h - 52], at: 0.35, mw: Math.min(200, w * 0.48) }] }),
       (w, h) => ({ bg: null, blackout: true, cap: 'KA-CHUNK!',
         bubbles: [{ x: 4, y: h - 26, s: '...nurse?  ...nurse?  ...NURSE?', tail: [w * 0.5, h - 50], at: 0.6, mw: w - 16 }] }),
       (w, h) => ({ bg: null, flashlight: true, faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
@@ -109,7 +110,7 @@ const SCRIPTS = {
       (w, h) => ({ bg: null, burst: '#ff8a1e', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
         bubbles: [{ x: 4, y: 4, s: 'A wheelchair drag race, a magnet that ate my IV pole, and a blackout.', tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
       (w, h) => ({ bg: ['hall', 40, 58], sunrise: true, acts: [{ s: a, a: 'walk', x: w * 0.3, y: h - 3, mv: -30, flip: true }, ...(b ? [{ s: b, a: 'walk', x: w * 0.3 + 26, y: h - 1, mv: -30, flip: true }] : [])],
-        bubbles: [{ x: 4, y: 4, s: lz(a, 'NOPE! See you tomorrow!', 'NOPE! See you tomorrow!', "NOPE! Here's a rag. See you tomorrow!"), tail: [w * 0.3, h - 52], at: 0.25, mw: w - 16, shout: true }] }),
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'NOPE! See you tomorrow!', 'NOPE! See you tomorrow!', "NOPE! Here's a rag. See you tomorrow!", "NOPE! Leaving before they float me!", "NOPE! Bye, sweeties! Love you!", "NOPE! ...Do you guys need anything first?", "NOPE! Hold your applause!"), tail: [w * 0.3, h - 52], at: 0.25, mw: w - 16, shout: true }] }),
     ];
   },
 };

@@ -2,14 +2,112 @@
 export const Y_MIN = 136, Y_MAX = 212, GRAV = 760;
 
 export const HEROES = {
-  nick: { name: 'NICK', role: 'Balanced', blurb: 'Tall, glasses, orange shoes. Steady hands.', hp: 100, walk: 72, depth: 50, run: 150, jump: 250, power: 1.0, reach: 1.0,
-    combo: ['atk1', 'atk2', 'atk1', 'atk3'], special: 'CRASH CART', stats: [3, 3, 3, 3], color: '#ff8a1e' },
-  kim: { name: 'KIM', role: 'Fast', blurb: 'Quick combos, lighter hits.', hp: 90, walk: 88, depth: 60, run: 170, jump: 255, power: 0.78, reach: 0.95,
-    combo: ['atk1', 'atk2', 'atk1', 'atk2', 'atk4'], special: 'WHIRLWIND KICK', stats: [2, 5, 2, 2], color: '#ff5a3a', comboGap: 0.85, atkK: 0.85 },
-  will: { name: 'WILL', role: 'Power', blurb: 'Slow, hits hard, big throws.', hp: 120, walk: 58, depth: 42, run: 128, jump: 225, power: 1.38, reach: 1.0,
-    combo: ['atk1', 'atk2', 'atk4'], special: 'BODY SLAM', stats: [5, 2, 3, 5], color: '#3a92ff', throwK: 1.45, grabR: 1.3, atkK: 1.12 },
-  jackie: { name: 'JACKIE', role: 'Reach', blurb: 'Long reach, big jumps, strong dash.', hp: 100, walk: 74, depth: 50, run: 160, jump: 290, power: 1.0, reach: 1.3,
-    combo: ['atk1', 'atk2', 'atk3'], special: 'CLIPBOARD SPIN', stats: [3, 3, 5, 3], color: '#9a5ae0', dashK: 1.4 },
+  // v0.10.1 NERVOUS NICK (Bill): ginger now, and a pessimist. lines = his anxious speech bubbles (Hero.say), same triggers as Nate / Heather.
+  // Bill's three lines are verbatim (NICK_LINES). drop = he knocked a patient down, throw = a throw or slam landed.
+  nick: { name: 'NERVOUS NICK', short: 'NICK', role: 'Pessimist', blurb: 'Ginger, tall, glasses, orange shoes. Expects the worst.', hp: 100, walk: 72, depth: 50, run: 150, jump: 250, power: 1.0, reach: 1.0,
+    combo: ['atk1', 'atk2', 'atk1', 'atk3'], special: 'CRASH CART', stats: [3, 3, 3, 3], color: '#ff8a1e',
+    shout: ["IT'S TIME FOR SOME", 'ATIVAN... I HOPE.'], idleSfx: 'huff',
+    lines: {
+      spawn: ['Did you see what the emergency room looks like right now?', "We're short two nurses again.", "It's a full moon, isn't it? I knew it."],
+      idle: ["I know we're just going to get that admit.", "I haven't peed in nine hours.", "Don't say the Q word.", "Charge nurse is looking at me. That's bad.",
+        "Something's gonna code before shift change.", "Watch, they'll float me to the ICU.", "It's too quiet. I hate when it's quiet."],
+      grab: ["Please don't bite me. Please don't bite me.", "Back to bed. I'm begging you.", "This is going to be an incident report, isn't it?"],
+      throw: ["Oh no. That's a fall. That's paperwork.", 'Sorry! Sorry! Please stay down!'],
+      drop: ["Sorry! Please don't file a complaint.", "That's a fall. I'll be charting till midnight."],
+      lift: ['My back is going to remember this.'],
+      food: ["I'm never getting a lunch break. ...Wait, is this lunch?", "Eat fast. Somebody's gonna code."],
+      coffee: ["Coffee. It won't help, but okay."],
+      weapon: ['This is fine. Nothing is fine.', "I'm going to have to chart this."],
+      hurt: ['How come we always get screwed?', 'Of course. OF COURSE.', 'I knew it. I knew today was the day.'],
+      ko: ['Tell my charge nurse... I tried.'],
+      revive: ["Great. I'm back. Lucky me.", 'Did I miss the admit? Please say I missed the admit.'],
+      ativan: ["That'll hold him. For ten minutes.", 'Okay. One down. Forty to go.'],
+      codeblue: ['CODE BLUE! I KNEW something would code!', 'Called it! Something always codes!'],
+      special: ['Crash cart! I knew we would need it!', 'Pyxis is down? Crash cart it is!'],
+      zone: ['Of course the Pyxis is down.', "We're short two nurses again.", 'How come we always get screwed?', "Don't say the Q word."],
+      clear: ["I know we're just going to get that admit.", 'This is fine. Nothing is fine.', "I'm never getting a lunch break.", "Watch, they'll float me to the ICU."],
+    },
+    scoot: { start: ['Scooters? Indoors? This is how people get hurt.'], crash: ['I knew that was going to happen.', 'How come we always get screwed?'],
+      snack: ["Eat fast. Somebody's gonna code."], hit: ['Sorry! Sorry! Back to bed!'] } },
+  // v0.10.1 KILLER KIM (Bill): relentlessly upbeat and sweet while she flattens people. Extra drop / throw / grab / special lines,
+  // said to the patient she just put down. Bill's line is verbatim (KIM_LINES).
+  kim: { name: 'KILLER KIM', short: 'KIM', role: 'Cheerful', blurb: 'Quick combos, lighter hits. Sweet as pie.', hp: 90, walk: 88, depth: 60, run: 170, jump: 255, power: 0.78, reach: 0.95,
+    combo: ['atk1', 'atk2', 'atk1', 'atk2', 'atk4'], special: 'WHIRLWIND KICK', stats: [2, 5, 2, 2], color: '#ff5a3a', comboGap: 0.85, atkK: 0.85,
+    shout: ["IT'S TIME FOR", 'SOME ATIVAN, SWEETIE!'], idleSfx: 'blip',
+    lines: {
+      spawn: ["Good morning! Who's ready to heal?", "Smile! It's a beautiful day on the unit!"],
+      idle: ["Smile! It's a beautiful day on the unit!", "Let's work on those deep breaths, okay?", 'Who needs a warm blanket? Everybody? Yay!', 'Drink your water, sweeties!'],
+      grab: ['Can I help you back to bed?', "Bed alarm's on, hon!", 'Hug time! Hold still, sweetie!', "Let's get you tucked in, okay?"],
+      throw: ['Ambulation goal met!', 'Wheee! Look at you go!', "Fall risk! Good thing I'm here!"],
+      drop: ["Oopsie! Let's get you tucked in!", 'Nap time, sweetie!', 'Great job resting! Stay down!', "I'll chart that as a mechanical fall!",
+        "You're doing amazing! Stay on the floor!", "I'll get you a warm blanket after this!", 'Can I help you back to bed?', "Fall risk! Good thing I'm here!"],
+      lift: ['Up we go, sweetie!'],
+      food: ['Snack time! You earned it, me!'],
+      coffee: ['Coffee! Today just got even BETTER!'],
+      weapon: ['Ooh! Gentle, gentle... okay, not gentle!'],
+      hurt: ["Ouchie! That's okay, I still like you!", "Ow! You're feisty! I love that!"],
+      ko: ['Just resting my eyes! Be right back!'],
+      revive: ["I'm back, sweeties! Did you miss me?"],
+      ativan: ['Sweet dreams! Sleep tight!', "Night night! Don't let the bedbugs bite!"],
+      codeblue: ["CODE BLUE! Everybody's doing GREAT!", 'Code Blue! Deep breaths, everyone!'],
+      special: ['Whirlwind of wellness!', 'Spin class is mandatory today, hon!', 'Everybody down for a nap! Great job!'],
+      zone: ["Bed alarm's on, hon!", 'Next hall! More friends to tuck in!', 'Ambulation goal met!'],
+      clear: ["Everyone's tucked in! Best shift ever!", "I'll get you all warm blankets!", 'You were all wonderful patients!'],
+    },
+    scoot: { start: ['Beep beep! Coming through, sweeties!'], crash: ["Oopsie! I'm okay!"], snack: ['Yummy! Thank you!'], hit: ['Nap time, sweetie!', 'Can I help you back to bed?'] } },
+  // v0.10.1 WONDERFUL WILL (Bill): over-the-top, cheerfully egotistical top dog of the unit. His shirt stays plain bright blue
+  // ("festive" is the joke). Bill's six lines are verbatim (WILL_LINES).
+  will: { name: 'WONDERFUL WILL', short: 'WILL', role: 'Top Dog', blurb: "Slow, hits hard, big throws. Just ask him.", hp: 120, walk: 58, depth: 42, run: 128, jump: 225, power: 1.38, reach: 1.0,
+    combo: ['atk1', 'atk2', 'atk4'], special: 'BODY SLAM', stats: [5, 2, 3, 5], color: '#3a92ff', throwK: 1.45, grabR: 1.3, atkK: 1.12,
+    shout: ["IT'S TIME FOR SOME", "ATIVAN. YOU'RE WELCOME."], idleSfx: 'huff',
+    lines: {
+      spawn: ['Lucky you, you got the best nurse on the unit.', 'Someone call for help?', 'Do you like my festive shirt?'],
+      idle: ['I make nursing look easy.', 'Do you like my festive shirt?', 'They should name the unit after me.', 'Doctors ask ME for advice.',
+        'Nurse of the Year, three years running. In my heart.', 'Patient satisfaction scores just went up.', 'Rock star nurse, reporting for duty.'],
+      grab: ["Normally this would be a two-nurse job, but I'm here.", 'One stick. Every time.', 'Watch and learn, rookies.'],
+      throw: ['Hold your applause.', 'I make nursing look good!'],
+      drop: ["You're welcome, everybody.", 'Did someone say rock star?'],
+      lift: ['Normally a two-nurse lift. Not for me.'],
+      food: ['Fuel for greatness.', 'Even my snacks are wonderful.'],
+      coffee: ["Coffee? I'm already at a hundred percent."],
+      weapon: ['Even this looks good on me.', 'Watch how a pro does it.'],
+      hurt: ['Not the sweater! It plays music!', 'Hey! Not the face!', 'Careful! This sweater is vintage.'],
+      ko: ['Tell them... I was wonderful.'],
+      revive: ['Did you miss me? Of course you did.', 'The legend returns.'],
+      ativan: ['One stick. Every time.', 'Hold your applause.'],
+      codeblue: ['CODE BLUE! Relax, the best nurse is here!', "Code Blue? I don't break a sweat, I break records."],
+      special: ["I don't break a sweat, I break records.", 'Body slam! Patient satisfaction just went up.'],
+      zone: ['Watch and learn, rookies.', 'Someone call for help?', 'They should name the unit after me.', 'Another hallway I made look good.'],
+      clear: ["You're welcome, everybody.", 'I make nursing look easy.', 'Patient satisfaction scores just went up.'],
+    },
+    scoot: { start: ['Watch and learn, rookies.'], crash: ['Not the sweater!'], snack: ['Fuel for greatness.'], hit: ['One stick. Every time.', 'Hold your applause.'] } },
+  // v0.10.1 CHARGE JACKIE (Bill): the take-charge charge nurse who always offers to pitch in. teamup = her line on the 2P
+  // Charge Nurse team-up. Bill's five lines are verbatim (JACKIE_LINES).
+  jackie: { name: 'CHARGE JACKIE', short: 'JACKIE', role: 'Helpful', blurb: 'Long reach, big jumps, strong dash. Always pitching in.', hp: 100, walk: 74, depth: 50, run: 160, jump: 290, power: 1.0, reach: 1.3,
+    combo: ['atk1', 'atk2', 'atk3'], special: 'CLIPBOARD SPIN', stats: [3, 3, 5, 3], color: '#9a5ae0', dashK: 1.4,
+    shout: ["IT'S TIME FOR SOME", "ATIVAN! I'LL GET IT!"], idleSfx: 'blip',
+    lines: {
+      spawn: ['Who needs help?', 'Okay team, what can I do for you?', "I've got the board. Who's drowning?"],
+      idle: ['Do you guys need anything?', 'Who needs help?', 'What can I do for you?', 'Need another set of hands in 12?', "I'll call pharmacy for you.",
+        "Go eat lunch, I've got your patients."],
+      grab: ["No, finish your charting, I'll get the patient!", "I've got this one! Back to bed!", "Don't worry, I'll talk to the family."],
+      throw: ["I'll take the rapid response.", 'Room 12, coming right up!'],
+      drop: ["I'll get vitals!", "I'll start that IV."],
+      lift: ['Teamwork makes the dream work!'],
+      food: ["Snack's for the team! Okay, one bite."],
+      coffee: ['Coffee run! Who else wants one?'],
+      weapon: ["I'll handle it. Stand back!"],
+      hurt: ["I'm fine! Who else needs help?", "Ow! Okay, I'll chart that one myself."],
+      ko: ['Somebody... grab my patients...'],
+      revive: ["I'm back! Who needs help?"],
+      ativan: ["I'll get vitals!", "Night night. I'll check on you in an hour."],
+      codeblue: ["CODE BLUE! I'll run it! Everybody grab a job!", "I'll take the rapid response!"],
+      special: ["I've got the call light!", 'Clipboard says: everybody back to bed!'],
+      zone: ["I'll grab the next admit, you take a breather.", "Who's drowning? Point me at it.", "I've got the call light!"],
+      clear: ['Teamwork makes the dream work!', 'Do you guys need anything?', "Go eat lunch, I've got your patients."],
+      teamup: ["Charge nurse here! I've got your back!", 'Teamwork makes the dream work!'],
+    },
+    scoot: { start: ['I\'ll drive! Who needs a lift?'], crash: ["I'm okay! Keep going!"], snack: ["I'll share!"], hit: ["I'll get vitals!"] } },
   // v0.8 NASTY NATE: tall, glasses, ponytail, teal scrubs, extremely lazy. Longest reach, slowest feet and wind-ups.
   // lines = his speech bubbles (Hero.say), shout = his take on the Ativan call, ativanSfx = his slower voice clip.
   nate: { name: 'NASTY NATE', short: 'NATE', role: 'Lazy', blurb: 'Longest reach, slowest walk. Would rather be sitting.', hp: 105, walk: 56, depth: 40, run: 124, jump: 230,
@@ -63,6 +161,12 @@ export const HEROES = {
 };
 export const HERO_ORDER = ['nick', 'kim', 'will', 'jackie', 'nate', 'heather'];
 // v0.10: Bill's exact lines for Heather. They must stay verbatim (tests/v10.py checks HEROES.heather.lines against these).
+// v0.10.1: Bill's lines for Nervous Nick, Killer Kim, Wonderful Will and Charge Jackie (tests/v10_1.py checks they're in).
+export const NICK_LINES = ['Did you see what the emergency room looks like right now?', "I know we're just going to get that admit.", 'How come we always get screwed?'];
+export const KIM_LINES = ['Can I help you back to bed?'];
+export const WILL_LINES = ['I make nursing look easy.', 'Lucky you, you got the best nurse on the unit.', 'I make nursing look good!', 'Do you like my festive shirt?',
+  'Someone call for help?', "Normally this would be a two-nurse job, but I'm here."];
+export const JACKIE_LINES = ['Who needs help?', 'What can I do for you?', 'Do you guys need anything?', "I'll get vitals!", "No, finish your charting, I'll get the patient!"];
 export const BILL_LINES = ["Your hands aren't broke, you can wipe your own ass.", "You don't like being wet? Shouldn't have pissed in your gown.",
   "Here's a rag, you can clean it up yourself.", "This isn't a restaurant. I have sick patients to take care of, your sandwich can wait."];
 
