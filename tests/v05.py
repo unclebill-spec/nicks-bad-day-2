@@ -17,6 +17,7 @@ def ready(pg, st='idle'):
     pg.wait_for_function(f"window.__nbd && {SC}==='play' && __nbd.W.heroes.length>0", timeout=30000); time.sleep(0.4)
 CLEAR = "(()=>{const W=__nbd.W; W.enemies.forEach(e=>{e.alive=false}); W.enemies.length=0; W.queue && (W.queue.length=0); W.items.length=0; W.shots.length=0;})()"
 ok = True
+SKIP_SCOOT = "(()=>{const S=__nbd.SC; S.phase='finish'; S.endT=0; S.bossBeat=true;})()"  # v0.9: fast-forward the Scooter Run to its finish line
 def check(name, cond, info=''):
     global ok
     print(('PASS ' if cond else 'FAIL ') + name, info); sys.stdout.flush(); ok = ok and bool(cond)
@@ -227,7 +228,10 @@ with sync_playwright() as p:
         pg.wait_for_function("__nbd.W.boss && __nbd.W.boss.isMRI && __nbd.W.boss.st!=='enter'", timeout=8000)
         pg.evaluate("(()=>{const b=__nbd.W.boss; b.set('vent'); b.hp=2; b.takeHit({dmg:9, dir:1, from:__nbd.W.heroes[0]});})()")
         pg.wait_for_function(f"{SC}==='tally'", timeout=10000); time.sleep(3.3); key(pg, 'KeyJ', after=0.4)
-        check('Radiology tally -> night cutscene', pg.evaluate("__nbd.game.cut.id") == 'night')
+        check('Radiology tally -> v0.9 scooter cutscene', pg.evaluate("__nbd.game.cut.id") == 'scoot')
+        time.sleep(1.0); key(pg, 'KeyK', after=0.6); pg.wait_for_function(f"{SC}==='scoot'", timeout=6000); time.sleep(1.0)
+        pg.evaluate(SKIP_SCOOT); pg.wait_for_function(f"{SC}==='stally'", timeout=8000); time.sleep(3.3); key(pg, 'KeyJ', after=0.4)
+        check('scooter tally -> night cutscene', pg.evaluate("__nbd.game.cut.id") == 'night')
         time.sleep(6.6); pg.screenshot(path='tests/out/v05_cut_night.png'); key(pg, 'KeyK', after=0.4)
         check('-> Night Shift', pg.evaluate("__nbd.W.lv.id") == 3 and pg.evaluate(SC) in ('intro', 'play'))
         pg.wait_for_function(f"{SC}==='play'", timeout=6000); pg.evaluate("__nbd.W.cleared = true")
@@ -261,6 +265,8 @@ with sync_playwright() as p:
         # P2 is KO'd with no lives: at the next floor they can still continue in
         pg.evaluate("(()=>{const h=__nbd.W.heroes[1]; h.lives=0; h.hp=0; h.set('out'); h.continueT=0; __nbd.W.cleared=true;})()")
         pg.wait_for_function(f"{SC}==='tally'", timeout=5000); time.sleep(3.3); key(pg, 'KeyJ', after=0.9); key(pg, 'KeyK', after=0.6)
+        pg.wait_for_function(f"{SC}==='scoot'", timeout=6000); time.sleep(1.0)  # v0.9: through the Scooter Run (fast-forwarded)
+        pg.evaluate(SKIP_SCOOT); pg.wait_for_function(f"{SC}==='stally'", timeout=8000); time.sleep(3.3); key(pg, 'KeyJ', after=0.9); key(pg, 'KeyK', after=0.6)
         pg.wait_for_function(f"__nbd.W.lv.id===3 && {SC}==='play'", timeout=8000)
         check("night: the KO'd partner gets a continue countdown", pg.evaluate("__nbd.W.heroes[1].st") == 'out' and pg.evaluate("__nbd.W.heroes[1].continueT") > 0)
         key(pg, 'Comma', after=0.5)
@@ -307,6 +313,7 @@ with sync_playwright() as p:
         s, seen, dt = run_floor(2, 1500)
         check('bot: Radiology start to finish (Lou + MRI) without a softlock', s[0] == 'tally' and s[1] == 2 and 'LEAD-APRON LOU' in seen and 'MAGNA-SCAN 3000' in seen, [s, dt])
         pg.wait_for_function(f"{SC}==='tally' && __nbd.game.t > 3.2", timeout=20000); key(pg, 'KeyJ', after=0.6)
+        pg.wait_for_function(f"{SC}==='stally' && __nbd.game.t > 3.2", timeout=240000); key(pg, 'KeyJ', after=0.6)  # v0.9: the bot rides the Scooter Run too
         pg.wait_for_function("__nbd.W.lv.id === 3", timeout=10000)
         s, seen, dt = run_floor(3, 1200)
         check('bot: Night Shift start to finish without a softlock', s[0] == 'tally' and s[1] == 3, [s, dt])

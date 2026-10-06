@@ -1,4 +1,5 @@
-# Flow test: boss defeat -> tally -> Breakroom Bonus (bot) -> bonus tally -> Radiology -> Night Shift -> ending -> scores -> title; then a game over -> scores.
+# Flow test: boss defeat -> tally -> Breakroom Bonus (bot) -> bonus tally -> Radiology -> v0.9 Scooter Run (the bot rides it all the way,
+# Marv included) -> scooter tally -> Night Shift -> ending -> scores -> title; then a game over -> scores.
 # (?bot=1 auto-skips the v0.4 cutscenes; tests/v04.py covers them.)
 import time
 from playwright.sync_api import sync_playwright
@@ -27,6 +28,14 @@ with sync_playwright() as p:
         pg.wait_for_function("__nbd.game.scene === 'tally'", timeout=5000); time.sleep(3.3)
         pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1)
         print('after floor', lv, pg.evaluate(J))
+        if lv == 2:  # v0.9: Radiology -> the Scooter Run, played for real by the test bot (~80 s), then its tally -> the night shift
+            pg.wait_for_function("__nbd.game.scene === 'scoot'", timeout=5000); t0 = time.time()
+            pg.wait_for_function("__nbd.SC.phase === 'boss'", timeout=150000); time.sleep(4); pg.screenshot(path='tests/out/f_scooter_boss.png')
+            pg.wait_for_function("__nbd.game.scene === 'stally'", timeout=150000); ride = round(time.time() - t0)
+            time.sleep(3.3); pg.screenshot(path='tests/out/f_scooter_tally.png')
+            print('scooter run', ride, 's', pg.evaluate("JSON.stringify({beat:__nbd.SC.bossBeat, sed:__nbd.SC.sedated, score:__nbd.W.heroes[0].score})"))
+            if not (55 <= ride <= 100): print('FAIL scooter run length', ride)
+            pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1)
     time.sleep(1); pg.screenshot(path='tests/out/f_ending.png')
     pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1); print(pg.evaluate(J))
     pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1); print(pg.evaluate(J))
