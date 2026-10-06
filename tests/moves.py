@@ -8,7 +8,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1280, 'height': 720})
     pg.on('console', lambda m: errs.append(f'{m.type}: {m.text}') if m.type in ('error', 'warning') else None)
     pg.on('pageerror', lambda e: errs.append(f'PAGEERROR: {e}'))
-    for hero in ['nick', 'kim', 'will', 'jackie', 'nate']:
+    for hero in ['nick', 'kim', 'will', 'jackie', 'nate', 'heather']:
         pg.goto(f'http://localhost:8731/?autostart=1&hero={hero}'); pg.wait_for_function('window.__loaded === true'); time.sleep(3.2)
         r = {'hero': pg.evaluate('__nbd.W.heroes[0].id')}
         key(pg, 'KeyK'); time.sleep(0.12); r['jump'] = st(pg); key(pg, 'KeyJ'); time.sleep(0.05); r['jkick'] = st(pg); time.sleep(1)

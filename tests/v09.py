@@ -47,9 +47,9 @@ with sync_playwright() as p:
     if 'A' in ONLY:
         pg = b.new_page(viewport={'width': 960, 'height': 540}); watch(pg)
         pg.goto(U); pg.wait_for_function('window.__loaded === true', timeout=30000); time.sleep(0.5)
-        heroes = ['nick', 'kim', 'will', 'jackie', 'nate']
+        heroes = ['nick', 'kim', 'will', 'jackie', 'nate', 'heather']
         has = pg.evaluate("(hs)=>hs.every(h=>['scoot','scootf','scooth'].every(a=>__nbd.G.atlas.chars[h].anims[a]))", heroes)
-        check('all five nurses have seated scooter poses (ride / shoot / crash)', has)
+        check('all six nurses have seated scooter poses (ride / shoot / crash)', has)
         sp = pg.evaluate("['scoot_red0','scoot_red1','scoot_blue0','scoot_blue1','tipcan','mopbucket','marvcart0','marvcart1','marvcart2'].every(n=>__nbd.G.atlas.sprites.rects[n])")
         check('sprites: red + blue scooters, tipped trash can, mop bucket, Marv\'s hot-rod cart (3 states)', sp)
         mv = pg.evaluate("['drive','taunt','throw','hurt','sleep'].every(a=>__nbd.G.atlas.chars.marv && __nbd.G.atlas.chars.marv.anims[a])")
