@@ -8,7 +8,7 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-06, v0.10.2)
+## Current state (2026-10-06, v0.10.3)
 - **v0.10.1 nicknames + personalities (Bill).** `HEROES[id].name` is the nickname, `.short` the plain name (HUD / END fall back to it
   when space is tight), `.role` the personality shown on the select card: NERVOUS NICK (Pessimist), KILLER KIM (Cheerful), WONDERFUL
   WILL (Top Dog), CHARGE JACKIE (Helpful), NASTY NATE (Lazy), HEATHER (Tough). Don't rename them back.
@@ -30,6 +30,12 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
     red** (no tree, no knit dots; tests/v10_1.py checks it). The 2x HUD portrait raises the band 3 rows so it shows. `xmas_knit` and
     the tree are gone; make_art.py still honours a body's `post`. Christmas only, no pumpkins; card / HUD colour stays blue.
     Before/after: docs/v10_2_will_sweater.png.
+  - **Will's flat belly (v0.10.3, Bill: "a blob at the belly"):** no `belly` ellipse (its curved ink rim + shade read as a gut); a
+    straight-front torso like the other nurses, a bit broader (`torso_w` 14, `waist` 0.5, `hip_flare` 0.1) with only the flat back-side
+    shade strip. Long sleeves used to run 0.8 x `uarm` past the elbow (a round red lump at the waist), so Will has `sleeve_clip=True`
+    (rig: the upper sleeve stops at the elbow) and slimmer sleeves (`sleeve_add` 0.8 / `sleeve_add_fa` 0.6, `arm_w` 3.5, `uarm` 6.5).
+    His idle / walk / punch wind-up use a high boxer's guard (elbow at chest height, clear gap over the stomach; `hero_anims("will")`).
+    Don't bring back `belly` or a low elbow for Will. Other long-sleeve bodies (coat, boss) are unchanged. docs/v10_3_will_belly.png.
   - Docs: docs/v10_1_nick_ginger.png, docs/v10_1_select_nick.png, docs/v10_1_select_phone.png, docs/v10_1_will_sweater.png, docs/v10_1_bubbles.png, docs/v10_1_crew.gif. Tests: tests/v10_1.py.
 - **v0.10 HEATHER (6th playable nurse, `HEROES.heather`, last in `HERO_ORDER`):**
   - **Look:** `B["heather"]` in tools/chars.py: blonde (`HEATHER_HAIR`), long hair worn down (`long_hair()` hair_back), royal blue
@@ -160,7 +166,7 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
 - **6 heroes:**
   - Nervous Nick (Pessimist): balanced, Crash Cart special. Ginger (v0.10.1: copper-orange hair, light freckles), glasses, navy scrubs, orange shoes.
   - Killer Kim (Cheerful): fast, Whirlwind Kick. Red hair in a ponytail. Sweet as pie while she flattens people.
-  - Wonderful Will (Top Dog): power, Body Slam, big throws. Bald (skin-tone head with a shine). v0.10.2: a classic red and green Christmas sweater (red knit, green chest/shoulder Fair Isle band with white snowflakes, green collar, cuffs and a straight green hem band at the hips; plain red stomach) over a belt and dark navy pants. His stat color is blue. Christmas only: no orange/Halloween look, no padded suit/armor look.
+  - Wonderful Will (Top Dog): power, Body Slam, big throws. Bald (skin-tone head with a shine). v0.10.2: a classic red and green Christmas sweater (red knit, green chest/shoulder Fair Isle band with white snowflakes, green collar, cuffs and a straight green hem band at the hips; plain red stomach; v0.10.3: straight flat front, no belly, high guard) over a belt and dark navy pants. His stat color is blue. Christmas only: no orange/Halloween look, no padded suit/armor look.
   - Charge Jackie (Helpful): reach, Clipboard Spin, strong jump and dash. Always offering to pitch in.
   - Nasty Nate (v0.8): lazy; longest reach, slowest, Rolling Chair special, speech bubbles. Tall, glasses, ponytail, teal scrubs.
   - Heather (v0.10): fast and tough, mid power; Running Clothesline special, snarky speech bubbles. Blonde, long hair, royal blue scrubs.
@@ -294,7 +300,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
 | `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
 | `src/scooter.js` | v0.9 Scooter Run driving level: course, riders, hazards, patients, Motorcart Marv, parallax drawing, HUD, tally rows, test bot |
-| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v18: **bump N on every release**) |
+| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v19: **bump N on every release**) |
 
 ## Bill's standing preferences
 - **Outfit style rule (Bill, v0.8.1):** every character's clothes read as a **separate top and bottom with a visible waist**

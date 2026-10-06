@@ -2,6 +2,19 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-06: v0.10.3 "Flat Front" (Bill: "it looks like he's got a blob at the belly because of how the lines are done on the sweater.")
+- **No more belly blob on Wonderful Will:** his sweater front is now straight from chest to hem, like Nick, Nate and Heather's tops
+  but a bit broader for his stocky build. The old belly bulge (a curved outline and curved shading around the stomach) is gone; the
+  only shading is one flat darker strip down the far side.
+- **Arm fix:** his long sleeves used to run past the elbow and bunch into a round red lump in front of his stomach. The sleeve now
+  stops at the elbow and is a little slimmer, and his idle, walk and punch wind-up use a high boxer's guard (elbow up at chest
+  height), so there's a clear gap over the stomach.
+- Same red and green sweater: red body, green collar, cuffs and hip band, the green zigzag band with snowflakes on the chest and
+  shoulders only, a plain red belly, belt and navy pants with a visible waist. Checked in game at real size and 2x.
+- Regenerated every Will frame (including the scooter rider and Body Slam); his HUD faces get the slimmer sleeve too. Other
+  characters are unchanged. Service worker cache `nbd2-app-v19`. Docs: `docs/v10_3_will_belly.png` (v0.10.2 vs v0.10.3 at 3x:
+  idle, walk, punch, scooter, plus in-game crops at real size and 2x).
+
 ## 2026-10-06: v0.10.2 "Red and Green" (Bill: "Just do a red and green sweater, the belly looks weird.")
 - **Wonderful Will's sweater is now a classic red and green Christmas sweater:** a red knit body and long sleeves, a green Fair Isle
   band across the chest and shoulders (two solid green rows with a green zigzag between them and a white snowflake pixel in each

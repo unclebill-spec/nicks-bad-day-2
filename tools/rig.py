@@ -172,12 +172,15 @@ def figure(body: dict, pose: dict, W=88, H=80, ax=44, ay=76):
         S.capsule(T(s0), T(el), b["arm_w"] + 0.6, skin, sks)
         sl = b.get("sleeve_len", 0.55)
         if sl > 0:
-            S.capsule(T(s0), T(add(s0, vec(ua, b["uarm"] * sl))), b["arm_w"] + 1.4, sleeve, sls)
+            sa, sf = b.get("sleeve_add", 1.4), b.get("sleeve_add_fa", 1.2)  # v0.10.3: Will's knit sleeves sit closer to the arm
+            # v0.10.3: long sleeves used to run 0.8 x uarm past the elbow (a round lump at Will's belly); "sleeve_clip" stops them at the elbow
+            usl = min(sl, 1.0) if b.get("sleeve_clip") else sl
+            S.capsule(T(s0), T(add(s0, vec(ua, b["uarm"] * usl))), b["arm_w"] + sa, sleeve, sls)
             if sl > 1.0:  # long sleeves go down the forearm too
-                S.capsule(T(el), T(add(el, vec(fa, b["farm"] * (sl - 1.0)))), b["arm_w"] + 1.2, sleeve, sls)
+                S.capsule(T(el), T(add(el, vec(fa, b["farm"] * (sl - 1.0)))), b["arm_w"] + sf, sleeve, sls)
                 if b.get("cuff"):  # v0.10.1 Will's sweater: a ribbed cuff at the end of the long sleeve
                     cc, ccs = b["cuff"]
-                    S.capsule(T(add(el, vec(fa, b["farm"] * (sl - 1.0) - 1.6))), T(add(el, vec(fa, b["farm"] * (sl - 1.0)))), b["arm_w"] + 1.2,
+                    S.capsule(T(add(el, vec(fa, b["farm"] * (sl - 1.0) - 1.6))), T(add(el, vec(fa, b["farm"] * (sl - 1.0)))), b["arm_w"] + sf,
                               cc if front else ccs, ccs)
         S.ellipse(T(hd), b.get("fist", 1.6), b.get("fist", 1.6), skin, None)
         return hd, fa

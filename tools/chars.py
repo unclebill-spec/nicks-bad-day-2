@@ -409,7 +409,7 @@ def bodies():
                          freckles="#d08a6a", shoe="#ffffff", shoe_s="#b8c2d0", mouth="#c0505e")
     # Will (v0.2.2): regular guy proportions, belt, navy pants. v0.10.2 (Bill): a classic red + green Christmas sweater
     # (xmas_sweater): red knit with long sleeves, green Fair Isle band on the chest / shoulders, green collar, cuffs and hem band.
-    B["will"] = hero_body(thigh=9, shin=8.5, torso=16, head=7, uarm=7, farm=7, arm_w=3.8, leg_w=5.2, torso_w=13, belly=1, fist=2.1,
+    B["will"] = hero_body(thigh=9, shin=8.5, torso=16, head=7, uarm=6.5, farm=7, arm_w=3.5, leg_w=5.2, torso_w=14, fist=2.1, waist=0.5, hip_flare=0.1, sleeve_add=0.8, sleeve_add_fa=0.6, sleeve_clip=True,
                           skin=sk["light"][0], skin_s=sk["light"][1], hair=bald_shine, shirt=XMAS_RED[0], shirt_s=XMAS_RED[1], sleeve=XMAS_RED[0], sleeve_s=XMAS_RED[1],
                           vneck=False, crew="#136a30", steth=True, belt="#4a3220", pants="#2a3658", pants_s="#1c2440", hem_c=XMAS["green"][1],
                           shoe="#3a2a22", shoe_s="#22160e", badge=None, sleeve_len=1.8, pattern=xmas_sweater, cuff=XMAS["green"])
@@ -535,6 +535,13 @@ def hero_anims(name):
     for f in A["run"]:
         f.update(fa_f=f["ua_f"] + 80, fa_b=f["ua_b"] + 80)
     A["atk1"] = [P(lean=6, ua_f=40, fa_f=110, ua_b=-10, fa_b=120), P(lean=12, ua_f=86, fa_f=90, ua_b=-14, fa_b=125, th_f=20, th_b=-18)]
+    if name == "will":  # v0.10.3 (Bill: "a blob at the belly"): high boxer's guard -- elbow up at chest height with a clear gap
+        # under it, so the long red sleeve never bunches into a round lump in front of the stomach (idle / walk / punch wind-up)
+        g2 = dict(ua_f=50, fa_f=152, ua_b=-6, fa_b=118)
+        A["idle"] = [P(**g2), P(**{**g2, "fa_f": 146}, hy=1)]
+        for f in A["walk"]:
+            f.update(ua_f=34 + f["ua_f"] * 0.5, fa_f=150)
+        A["atk1"][0].update(ua_f=52, fa_f=140)
     A["atk2"] = [P(lean=4, ua_f=10, fa_f=130, ua_b=-30, fa_b=100), P(lean=16, ua_f=10, fa_f=135, ua_b=84, fa_b=90, th_f=22, th_b=-22, head=-4)]
     A["atk3"] = [P(lean=-4, ua_f=-20, fa_f=60, ua_b=-40, fa_b=40, th_f=40, sh_f=-30, th_b=-6, sh_b=-6),
                  P(lean=-14, ua_f=-60, fa_f=-20, ua_b=-90, fa_b=-60, th_f=96, sh_f=92, th_b=-10, sh_b=-8, face="yell"),
