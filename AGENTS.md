@@ -27,7 +27,7 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
     cuffs (new rig `cuff` option), `pattern=xmas_sweater` (red rib hem at the hips + collar, red chest band with a white zigzag, a
     little tree with a star on the visible side; designed on a 16 px torso so the 2x portrait matches) and `post=xmas_knit` (white
     snowflake dots on the blue; make_art.py now honours a body's `post`). Belt + navy pants show under the hem. Christmas only, no pumpkins.
-  - Docs: docs/v10_1_nick_ginger.png, docs/v10_1_select_nick.png, docs/v10_1_select_phone.png, docs/v10_1_will_sweater.png, docs/v10_1_bubbles.png. Tests: tests/v10_1.py.
+  - Docs: docs/v10_1_nick_ginger.png, docs/v10_1_select_nick.png, docs/v10_1_select_phone.png, docs/v10_1_will_sweater.png, docs/v10_1_bubbles.png, docs/v10_1_crew.gif. Tests: tests/v10_1.py.
 - **v0.10 HEATHER (6th playable nurse, `HEROES.heather`, last in `HERO_ORDER`):**
   - **Look:** `B["heather"]` in tools/chars.py: blonde (`HEATHER_HAIR`), long hair worn down (`long_hair()` hair_back), royal blue
     scrubs: top `HEATHER_BLUE` #2448d8 over deeper pants `HEATHER_BLUE_P` #1c38b0 with a waistband + drawstring (Bill's style rule).

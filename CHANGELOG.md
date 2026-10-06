@@ -37,7 +37,7 @@ All six nurses now have a nickname and a personality on the select card: **Nervo
   join / continue toasts. New `heroName(d, room)` in gfx.js picks the full or short name for the space.
 - Regenerated: Nick's and Will's sheets (every frame, incl. the scooter rider poses), their HUD / hurt faces, the app icons.
 - Service worker cache `nbd2-app-v17`. Tests: new `tests/v10_1.py`. Docs: `docs/v10_1_nick_ginger.png` (old vs new Nick next to Kim),
-  `docs/v10_1_select_nick.png` (select, Nervous Nick picked), `docs/v10_1_select_phone.png`, `docs/v10_1_will_sweater.png`, `docs/v10_1_bubbles.png` (in-game bubbles).
+  `docs/v10_1_select_nick.png` (select, Nervous Nick picked), `docs/v10_1_select_phone.png`, `docs/v10_1_will_sweater.png`, `docs/v10_1_bubbles.png` (in-game bubbles), `docs/v10_1_crew.gif`.
 
 ## 2026-10-06: v0.10 "Heather" (Bill: a sixth playable nurse with a running clothesline and a sharp tongue)
 - **HEATHER, the 6th playable nurse.** Blonde, long hair worn down, **royal blue scrubs**: a V-neck top with a hem over deeper royal
