@@ -8,7 +8,28 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-04, v0.8.1)
+## Current state (2026-10-05, v0.9)
+- **v0.9 SCOOTER RUN (`src/scooter.js`), between Radiology and the night shift:** a TMNT sewer-surf style driving level on mobility scooters.
+  - **Flow:** `afterTally()` on lv 2 → `goScooter()` → cutscene `scoot` → `enterScooter()` (scene `scoot`, `scootUI(true)`: touch HIT reads SHOOT,
+    `html[data-mode=scoot]` hides GRAB/SP) → `scootPlay()` each step (pause, continues, `updateScooter(dt, inputs)`) → `toScootTally()` (scene
+    `stally`, `scootRows(h)` added to the score) → `goNight()` → cutscene `night` → `loadLevel(2)`. `loadLevel`/`toTitle` reset `W.scoot`.
+  - **Model:** hallway things have a world x (`SC.d` = distance scrolled; screen x = `o.x - SC.d`); riders (`h.sc` on each Hero: x/y/z/vz/inv/crash/cd/fire/col)
+    and Marv (`SC.boss`) live in screen x. `W.camX` stays 0 so `floatText`/`word`/`addFx` work in screen x. `syncHero()` copies the rider onto h.x/y/z
+    so `drawSay()` and the HUD follow. Score/lives/continues are the Hero's own, so they carry both ways.
+  - **Tuning** in `SCOOT` (len 10600 px ≈ 60 s at base 172 px/s, ±25% with left/right, jumpV 236 / grav 760, steer 96, dmg 14, inv 1.6, shot cd 0.22,
+    boss HP 30 / 42 in 2P, `bossMax` 24 s before Marv runs out of battery). Hazards in `KIND` (`jump` = hop it with z > 0.7·h, `tall` = dodge only,
+    `stop` = blocks syringes, `skid` = spill), patients in `FOE` (wander / charge / thrower / wheel). `buildCourse()` scripts tips, a Wheelchair Derby
+    (~45%) and a Gurney Slalom (~70%), and exactly one ZYNN.
+  - **Marv:** acts cycle `weave, throw, weave, drop, ram` (ram = BEEP BEEP reverse), phase 2 NITRO at half HP; `W.boss` is a plain HUD object
+    (name/hp/maxHp/shown/phase/drawIcon/hint) only for the boss bar. Defeat → `SC.phase='finish'` → done after 3.2 s.
+  - **Draw:** `drawHall()` parallax (wall 0.72x, floor 1x from the looping 1536 px `W.scootBg` built by `buildLevel`), `drawFront()` posts at 1.45x,
+    y-sorted list of hazards / patients / riders / Marv / lobs / syringes. Rider = `scoot_red|blue0/1` sprite (ax 22, ay 43) + hero frame at (−4, −4);
+    Marv = `marvcart0/1/2` (ax 34, ay 49) + `marv` frame at (−1, −8).
+  - **Art:** `tools/v09_art.py` (scooters, `tipcan`, `mopbucket`, `marvcart*`), `hero_anims` `scoot`/`scootf`/`scooth` (all five; Nate leans back),
+    `enemy_anims` `wheel`, `chars.marv_body()`/`marv_anims()` (sheet `marv`, cell 96x88). Marv + cart ≈ 1.22x a standing nurse (Bill's boss-size rule).
+  - **Audio:** `tools/v09_audio.py` → music `scooter`, sfx pew, skid, scoot, beepbeep, marv, marv_ko.
+  - **Debug / tests:** `?autostart=1&scene=scooter`, `__nbd.scooter()`, `__nbd.goScooter()`, `__nbd.SC`, `__nbd.SCOOT`, `__nbd.scootSpawn(kind, dx, dy, who)`;
+    `?bot=1` uses `scootBot()` (dodge / hop / shoot / dodge the ram). `tests/v09.py` A-N; flow.py rides the whole level with the bot.
 - **v0.8.1 waistline (Bill):** the torso in tools/rig.py `figure()` is a shaped top polygon (shoulders -> waist inset `waist`
   (default 2.0) -> hip flare `hip_flare` (0.9) -> hem at `hem` (-1.2, just below the hip joint) + a `hem_c` stitch row), drawn over a pants
   "seat" polygon with a waistband (`band` colour, or `belt` + `buckle`) and drawstring ends (`drawstring`, `drawstring_c`). Legs hang
@@ -126,7 +147,8 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
   - **Flow:** `teamwait`, then `startTeam`, then `s_teamup`. The blast at 0.75s does 70 forced damage to on-screen foes, 15% to the boss, and hits props. It costs 50 meter each.
   - **Fallback:** a release, a 1.2s timeout or no partner gives the normal special or Code Blue.
   - **FX:** `drawTeamBack`/`drawTeamFront`.
-- **Cutscenes (v0.4, `src/cutscene.js`):** 3-panel comic pages (`start`, `boss`, `lunch`, `next`; v0.5 `mri`, `night`, `ending`), 8.6s each, skipped by any input after 0.6s.
+- **Cutscenes (v0.4, `src/cutscene.js`):** 3-panel comic pages (`start`, `boss`, `lunch`, `next`; v0.5 `mri`, `night`, `ending`; v0.9 `scoot`), 8.6s each, skipped by any input after 0.6s.
+  - v0.9: an act with `ride: 'scoot_red' | 'scoot_blue' | 'marvcart'` is drawn sitting on that vehicle.
   - Test URLs (`autostart`/`zone`/`bot`/`nocut`) skip them unless `&cuts=1`.
   - The boss one runs through `W.onBossCut`.
 - **Breakroom Bonus (v0.4, `src/bonus.js`, `BONUS` in data.js):** a 45s round where thieves raid the fridge, vending machine and counter.
@@ -137,7 +159,7 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
 - **Boss: Turbo Tilly** in an electric wheelchair.
   - Phase 1: horn honk shock ring (dizzies), rev and charge. After a charge her battery panel opens as the weak point; she takes only 30% damage otherwise.
   - Phase 2 (turbo): faster charges, drops puddles and yarn, and calls patients for backup.
-- **Flow:** title, 1P/2P select, stage intro, waves, boss, tally, then the next floor (`afterTally()`), and THE END (`ending` scene) after the
+- **Flow:** title, 1P/2P select, stage intro, waves, boss, tally, then the next floor (`afterTally()`; v0.9: Radiology → Scooter Run → night), and THE END (`ending` scene) after the
   night shift. The tally total becomes the hero's score (ON TIME bonus = 2 game-hours from the floor's start clock). High scores are recorded at the end
   of the run or on game over. A KO'd 2P partner gets a fresh continue countdown on the next floor. Continues (3 / 5 / free play), lives,
   top-5 high scores, and settings saved in localStorage (`nbd2.save`, `nbd2.display`, `nbd2.input`). `save.best` = floors cleared (max 3).
@@ -165,7 +187,7 @@ Debug query params:
 - `?god=1` keeps P1 at full HP.
 - `?bot=1` lets a simple bot drive P1 (used for tests and GIFs).
 - `?nocut=1` skips the cutscenes, and `&cuts=1` forces them back on for autostart/zone URLs.
-- `?autostart=1&scene=bonus` jumps straight to the Breakroom Bonus.
+- `?autostart=1&scene=bonus` jumps straight to the Breakroom Bonus; `?autostart=1&scene=scooter` to the v0.9 Scooter Run.
 - `?yeller=1` forces a Fire Alarm Yeller into every wave (still capped at 2 per floor); `?noalarm=1` disables the event.
 
 Tests (Playwright + Chromium; the server must be running):
@@ -174,7 +196,7 @@ python3 tests/smoke.py      # desktop keyboard: title, select, first fight
 python3 tests/moves.py      # every hero: jump, kick, special cost, super, run/dash, weapon pickup + swing
 python3 tests/pad.py        # mocked gamepad: menus, select, move, attack, pause; 2P keyboard + pad
 python3 tests/touch.py      # emulated Pixel phone landscape: taps, floating joystick, buttons, pause, rotate prompt
-python3 tests/flow.py       # boss defeat -> tally -> bonus round -> bonus tally -> Radiology -> Night -> ending -> scores -> title; continue; game over
+python3 tests/flow.py       # boss defeat -> tally -> bonus round -> bonus tally -> Radiology -> Scooter Run (bot) -> Night -> ending -> scores -> title; continue; game over
 python3 tests/will.py       # Will's look on title, select, in-game HUD, tally
 python3 tests/patients.py   # all patient types + random looks, elite syringe/urinal throws, splash + puddle, KO drops, new pickups
 python3 tests/props.py      # v0.3 breakables: roll/plow/bounce/break, every kind, patients into props, loot odds, 2P pad, touch, bot to boss
@@ -184,6 +206,7 @@ python3 tests/v05.py C D    # sections: A radiology, B Lou, C MRI, D night, E fl
 python3 tests/v06.py        # v0.6: A carry/throw, B priorities, C directions/trays/magnet, D touch/pad/2P, E Tilly, F meter tiers, G food, H fire alarm
 python3 tests/v07.py        # v0.7: A grab/toss/slam + help pages, B priority/pad/2P/touch layout, C beef jerky, D boss + patient sizes
 python3 tests/v08.py        # v0.8: Nasty Nate: A select/title, B phones/touch, C pad, D size/art, E combo/chair, F speech bubbles, G 2P, H cutscene + MRI headroom
+python3 tests/v09.py        # v0.9: Scooter Run: A art/sizes, B flow+carry, C keys, D crash/jump, E patients, F pickups, G continue, H Marv, I 2P, J pad, K touch, L cutscene, M pause, N timed bot ride (~85 s)
 python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
 python3 tests/shots.py "autostart=1&bot=1&god=1" 240 full 1280 720 6   # whole level with the bot
@@ -196,10 +219,10 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
   (`chars.<patient>.pal` and `palettes`), and the game swaps those exact colors per spawn (a pool of 6 looks per type).
   If you add a patient, give it `**gown` and `**socks`, and add it to `PATIENTS` in `make_art.py`.
 - `python3 tools/make_art.py` rewrites `art/*.png`, `art/atlas.json`, the font and the icons.
-  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art, `tools/v08_art.py` Nate's office chair, and `tools/v06_art.py` the v0.6 art (pizza, BEEF JERKY bag, Ativan syringe, skeleton, fire-alarm station; the `yeller` patient is in chars.py) (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
+  - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art, `tools/v08_art.py` Nate's office chair, `tools/v09_art.py` the Scooter Run vehicles + floor junk, and `tools/v06_art.py` the v0.6 art (pizza, BEEF JERKY bag, Ativan syringe, skeleton, fire-alarm station; the `yeller` patient is in chars.py) (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
   - It uses vendored copies of Master Builder's Gravewake `sprite_writer`/`pixel_writer` and brileta-sprites (plants, via node).
   - Never edit `/workspace/gravewake` itself. It belongs to another bot.
-- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, defib, crackle, clear, alarm, yell, sprinkler, stink); `tools/v07_audio.py` the v0.7 ones (jerky, slam, toss); `tools/v08_audio.py` the v0.8 ones (ativan_nate, yawn).
+- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, defib, crackle, clear, alarm, yell, sprinkler, stink); `tools/v07_audio.py` the v0.7 ones (jerky, slam, toss); `tools/v08_audio.py` the v0.8 ones (ativan_nate, yawn); `tools/v09_audio.py` the v0.9 `scooter` music + pew, skid, scoot, beepbeep, marv, marv_ko.
 - `python3 tools/make_audio.py` rewrites `audio/music/*.mp3` (with loop points in `music.json`) and `audio/sfx/*.wav`, using the N64 suite in `/workspace/n64-suite` (music.compose with the chiptune fallback, sfx.make, babble).
 - All art is original. There are no copyrighted characters or sprites.
 
@@ -221,7 +244,8 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/hud.js` | portraits, HP/meter (half-meter team tick), lives, score, combo, last-hit foe bar, boss bar, toasts, continue prompts |
 | `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
 | `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
-| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v9: **bump N on every release**) |
+| `src/scooter.js` | v0.9 Scooter Run driving level: course, riders, hazards, patients, Motorcart Marv, parallax drawing, HUD, tally rows, test bot |
+| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v15: **bump N on every release**) |
 
 ## Bill's standing preferences
 - **Outfit style rule (Bill, v0.8.1):** every character's clothes read as a **separate top and bottom with a visible waist**
@@ -239,8 +263,8 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 ## Known issues / caveats
 - Tested on emulated phones (Chromium, Pixel-size landscape) and desktop Chromium with a mocked gamepad. It has not been tested on real iPhone or Android hardware yet.
 - The heroes' skin tones and hair styles were guessed from Bill's short descriptions (they may be real coworkers). They are easy to change in `tools/chars.py` `bodies()`, followed by `python3 tools/make_art.py`.
-- Three floors exist (Med-Surg, Radiology, Night Shift) plus the Breakroom Bonus. The ending says "SEE YOU NEXT SHIFT...".
-- Boss sizes follow Bill's v0.7 override (1.2-1.5x a nurse's height): Tilly 1.46x, MRI 1.48x, Lou 1.43x.
+- Three floors exist (Med-Surg, Radiology, Night Shift) plus the Breakroom Bonus and (v0.9) the Scooter Run driving level. The ending says "SEE YOU NEXT SHIFT...".
+- Boss sizes follow Bill's v0.7 override (1.2-1.5x a nurse's height): Tilly 1.46x, MRI 1.48x, Lou 1.43x, Motorcart Marv (with his cart) 1.22x.
 - Balance is first-pass: Tilly has 420 HP, the MRI 560, Lou 300 (x1.35 in 2P) and patient damage scales by difficulty in `DIFF`. The elite waves make zones 2–4 noticeably harder.
 - The gown check pattern is drawn on a fixed pixel grid, so it doesn't move with the body. It shimmers very slightly during animation.
 - Online co-op is not implemented. That was optional in the spec.

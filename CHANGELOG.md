@@ -2,6 +2,87 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-05: v0.9 "Scooter Run" (Bill: a TMNT sewer-surf style driving level on mobility scooters)
+- **New level between Radiology and the Night Shift: the SCOOTER RUN.** After the Radiology tally, a comic cutscene: a patient,
+  **MOTORCART MARV**, busts out of Radiology on a souped-up mobility scooter ("OUTTA MY WAY, NURSES!"), the lead nurse wonders
+  about the flames (Nate: "Flames? Ugh. Can someone else chase him?"), and the team grabs scooters from the charging station
+  (Nate: "Wait. I get to SIT? ...I'm in."). Then the chase down the long Floor 4 hallway at 6:30 PM.
+- **How it plays (TMNT hover / sewer-surf style):**
+  - The screen auto-scrolls quickly (172 px/s). UP / DOWN steers across the lanes. RIGHT speeds up and LEFT eases off, about 25%
+    either way; the scooter also edges forward or back on screen.
+  - **JUMP** hops the scooter over junk lying on the floor (knocked-over trash cans, mop buckets, green jello spills), with air
+    time and a shadow under it. **Dodge** the things you can't jump: wet-floor signs, gurneys, supply and med carts, IV poles and
+    patients.
+  - **ATTACK fires Ativan syringes forward** (tap, or hold for auto-fire). A sedated patient tumbles to the side of the hall and naps
+    there ("Nice scooter... zzz"), so the nurses can ride past.
+  - **Patients:** wanderers drift across the lanes, chargers run straight at you ("RACE YA!"), food-tray throwers lob jello, cups
+    and trays from the wall, and wheelchair patients roll at you ("WHEELCHAIR DERBY!"). Wheelchairs and throwers take two syringes;
+    the empty wheelchair rolls off on its own.
+  - **Crashing** costs health (difficulty-scaled), with a spin-out and ~1.6 s of invincible blinking. Losing all health costs a life;
+    on the last life you get the usual CONTINUE countdown, and with no continues left it's GAME OVER.
+  - **Pickups:** health snacks along the route (fruit snacks, donut, jerky, energy drink) and one ZYNN tin (+1 life).
+  - **Set pieces:** a Wheelchair Derby at ~45% and a Gurney Slalom at ~70%, with tips at the top of the screen for the first jump,
+    shot and dodge.
+- **Mini-boss: MOTORCART MARV.** He roars up from behind ("EAT MY EXHAUST, NURSES!") in a candy-red hot-rod mobility scooter with
+  flame decals, chrome twin exhausts, a spoiler, bull-horn handlebars, a bike horn and a checkered whip flag. Marv wears the normal
+  checked gown, grip socks and orange racing goggles. Following Bill's size override, he is only modestly bigger than a nurse:
+  about 1.22x a standing nurse with his cart.
+  - **Attacks:** he weaves across the lanes, throws bedpans and urinals, drops trash cans and spills behind him, and reverses straight
+    back at you ("BEEP BEEP!").
+  - **NITRO** kicks in at half health and makes him faster.
+  - **Defeat:** his cart sputters, smokes and coasts back while he falls asleep ("TUCKED IN! ...zzz", +5000). If nobody beats him
+    within ~24 s, he runs out of battery.
+- **Length:** about 60 s of hallway, then the Marv chase, for 60-90 s in total (the test bot takes ~82 s).
+- **Scooter tally,** then on to the night shift. The tally adds:
+  - SEDATED x150
+  - SNACKS x100
+  - NO CRASHES! 3000
+  - MARV PARKED! 2000
+- **Score, lives, continues and 2P carry over** both ways, because the nurses are the same Hero objects.
+- **Look:**
+  - Same pixel rig. All five nurses visibly sit on the scooters in their normal scrubs (separate top and pants with the waist;
+    nothing padded): hands on the tiller, knees forward, feet on the footboard. Nate leans back with one hand behind his head.
+  - New poses `scoot` / `scootf` (flicking a syringe) / `scooth` (crash), plus `wheel` for patients in wheelchairs.
+  - Scooters come in red (P1) and blue (P2), with a basket holding a sharps box of Ativan and the classic orange safety flag.
+- **Parallax:** a looping hallway at dusk. The ceiling and wall scroll at 0.72x, the floor at 1x, and dark support posts sweep past
+  in front at 1.45x. Floor seams whip by, light pools sit under the ceiling lights, there is an evening tint, and speed lines and
+  dust trail the wheels.
+- **Controls:**
+  - Keyboard: WASD / J / K, and P2 arrows / , / .
+  - Gamepad: stick or d-pad, X shoots, A jumps.
+  - Touch: the floating joystick steers, HIT reads SHOOT, JUMP jumps, and GRAB / SP hide during the level.
+  - Pause (Esc / Start / the pause button) works.
+  - 2P = two scooters.
+- **New music and sounds:** a fast "scooter" chiptune (176 bpm), plus syringe "pew", tyre skid, motor rev, reversing beeper and
+  Marv's voice lines (`tools/v09_audio.py`).
+- **New code and art:**
+  - New: `src/scooter.js`, `tools/v09_art.py`, `chars.marv_body()` / `marv_anims()` and the new poses.
+  - Changed: main.js (`goScooter` / `scootPlay` / `toScootTally` / `goNight`, scenes `scoot` + `stally`), the `scoot` cutscene with
+    vehicle support for cutscene actors, HUD (no SP hints on a scooter), CSS for the touch layout, and the world.js `door0` wall
+    layer.
+  - Debug: `?autostart=1&scene=scooter`, `__nbd.scooter()`, `__nbd.SC`, `__nbd.SCOOT`, `__nbd.scootSpawn(kind, dx, dy, who)`.
+    The `?bot=1` test bot rides the level (dodges, hops, shoots, fights Marv).
+- **Tests:**
+  - New `tests/v09.py`, sections A-N:
+    - A: art and sizes
+    - B: flow and carry-over
+    - C: keyboard
+    - D: crashes and jumps
+    - E: patients
+    - F: pickups and course mix
+    - G: continue and game over
+    - H: Marv
+    - I: 2P
+    - J: pad
+    - K: touch
+    - L: cutscene
+    - M: pause
+    - N: timed bot ride
+  - `tests/flow.py` now plays the whole Scooter Run with the bot between Radiology and the night shift. `tests/v05.py` follows the
+    new Radiology -> scooter -> night flow.
+- Service worker cache `nbd2-app-v15`. Screens: `docs/v09_scooter.gif`, `docs/v09_scooter.png`, `docs/v09_boss.png`,
+  `docs/v09_cutscene.png`, `docs/v09_2p.png`.
+
 ## 2026-10-04: v0.8.1 "Waistline" (Bill: the nurses looked like they had a onesie or a diaper on, with no waist)
 - **All five nurses redrawn with a separate scrub top and scrub pants.** The torso used to be one capsule whose round bottom
   swallowed the hips in the shirt colour, and the pants were the same colour as the top, so everyone read as a onesie / diaper.

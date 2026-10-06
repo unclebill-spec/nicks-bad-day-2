@@ -2,7 +2,7 @@
 
 A 1990s-arcade-style beat 'em up about a nurse's worst shift. Pick Nick, Kim, Will, Jackie or (v0.8) the very lazy NASTY NATE, then fight your way
 down the Med-Surg hallway past wandering, call-light-spamming and escape-artist patients. Then face **Turbo Tilly**
-in her electric wheelchair.
+in her electric wheelchair, clear Radiology, chase **Motorcart Marv** down the long hall on mobility scooters (v0.9), and survive the night shift.
 
 **Play:** https://unclebill-spec.github.io/nicks-bad-day-2/ (works on phones held sideways, with gamepads, and on keyboards; use Install app in Settings)
 
@@ -21,6 +21,11 @@ Plain HTML5 Canvas, with no build step: serve the folder (`python3 -m http.serve
 and `CHANGELOG.md` for history.
 
 ![screenshots](docs/screenshots.png)
+
+v0.9: the SCOOTER RUN, a TMNT-style driving level. Steer, hop the junk, flick Ativan syringes, and catch Motorcart Marv
+(scooter controls: stick / WASD steers, right / left = faster / slower, JUMP hops, ATTACK or SHOOT fires):
+
+![Scooter Run](docs/v09_scooter.gif)
 
 v0.8: NASTY NATE, the fifth nurse (long reach, slow, Rolling Chair special, lazy speech bubbles):
 
