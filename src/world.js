@@ -16,6 +16,7 @@ const FLOOR_Y = 118, OFF = () => G.VH - 224;  // retro (240 lines) adds a strip 
 const LAYER = {  // wall features: vertical placement by kind
   door: (w, h) => FLOOR_Y - h, elev: (w, h) => FLOOR_Y - 82, callpanel: () => 74, floornum3: () => 40, station: (w, h) => FLOOR_Y + 2 - h,
   chairs: (w, h) => FLOOR_Y + 4 - h, plant0: (w, h) => FLOOR_Y + 3 - h, plant1: (w, h) => FLOOR_Y + 3 - h, plant2: (w, h) => FLOOR_Y + 3 - h,
+  door0: (w, h) => FLOOR_Y - h,  // v0.9 scooter hallway: closed doors baked into the looping wall
   gurney: (w, h) => FLOOR_Y + 3 - h, fountain: (w, h) => FLOOR_Y - 4 - h + 4, wheelchair: (w, h) => FLOOR_Y + 3 - h,
   // v0.4 breakroom pieces
   // v0.5 radiology + night pieces

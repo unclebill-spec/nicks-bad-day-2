@@ -23,7 +23,7 @@ export function drawHUD(game) {
     const h = W.heroes.find((q) => q.slot === s);
     const x = s === 0 ? left : VW - slotW - 4, y = 4;
     if (!h) {
-      if (s === 1 && game.mode !== 'attract' && Math.floor(W.t * 2) % 2) text('2P PRESS START', x + slotW / 2, y + 10, { col: '#8ad8ff', align: 'center' });
+      if (s === 1 && game.mode !== 'attract' && !W.scoot && Math.floor(W.t * 2) % 2) text('2P PRESS START', x + slotW / 2, y + 10, { col: '#8ad8ff', align: 'center' });
       continue;
     }
     if (h.st === 'out') {
@@ -43,7 +43,8 @@ export function drawHUD(game) {
     rect(x + 30 + Math.round((bw - 30) / 2), y + 17, 1, 5, '#ffe84a', 0.8);  // half-meter tick: Charge Nurse team-up (2P)
     for (const f of [1 / 3, 2 / 3]) rect(x + 30 + Math.round((bw - 30) * f), y + 17, 1, 5, h.meter >= f * 100 - 0.01 ? '#c8f0ff' : '#5a6a9a', 0.9);  // v0.6 tiers: each 1/3 = one Ativan jab
     const mate = W.heroes.length > 1 && W.heroes.find((q) => q !== h && q.alive && q.st !== 'out');
-    if (full) text('CODE BLUE: SP!', x + 30, y + 24, { col: Math.floor(W.t * 6) % 2 ? '#8ad8ff' : '#ffffff' });
+    if (W.scoot) { /* v0.9 Scooter Run: no SP moves on a scooter */ }
+    else if (full) text('CODE BLUE: SP!', x + 30, y + 24, { col: Math.floor(W.t * 6) % 2 ? '#8ad8ff' : '#ffffff' });
     else if (h.meter >= 100 / 3 - 0.01 && !h.weapon && !(mate && h.meter >= 50 && mate.meter >= 50)) text('ATIVAN: SP!', x + 30, y + 24, { col: Math.floor(W.t * 4) % 2 ? '#c8a0ff' : '#ffffff' });
     else if (mate && h.meter >= 50 && mate.meter >= 50 && !h.weapon) text('TEAM UP: SP+SP!', x + 30, y + 24, { col: Math.floor(W.t * 6) % 2 ? '#ffe84a' : '#ffffff' });
     else if (h.weapon) {

@@ -46,3 +46,6 @@ html[data-res=retro] #stage::after{content:"";position:absolute;inset:0;pointer-
 #b_sp{white-space:pre-line;line-height:.95}
 #b_sp.ctx{background:#3a7aff;border-color:#c8f0ff}
 #b_sp.full{background:#e8e8ff;color:#0a1430;border-color:#ffe84a;animation:ctxpulse .4s ease-in-out infinite alternate}
+
+/* v0.9 Scooter Run: just the stick, SHOOT and JUMP */
+html[data-mode=scoot] #b_grab, html[data-mode=scoot] #b_sp{visibility:hidden}

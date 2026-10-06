@@ -3,6 +3,7 @@
 //   start: before Floor 3 (night-shift handoff, Tilly zooms past)   boss: before Turbo Tilly
 //   lunch: after the floor tally, into the Breakroom Bonus          next: after the bonus, up to Floor 4
 // v0.5: mri: before the MRI boss   night: after Radiology, into the night shift   ending: after the night shift
+// v0.9: scoot: after Radiology, Motorcart Marv busts out and the nurses grab the mobility scooters (then the Scooter Run)
 import { G, text, rect, spr, frame, anim, sprSize, tintSheet, textW } from './gfx.js';
 import { LEVEL1, HEROES } from './data.js';
 import { W } from './world.js';
@@ -75,6 +76,18 @@ const SCRIPTS = {
         bubbles: [{ x: 6, y: 4, s: 'MAGNET... ON!', tail: [w / 2, h - 60], at: 0.25, mw: w - 20, shout: true }] }),
       (w, h) => ({ bg: ['rad', 2700, 58], dark: true, floaty: true, faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
         bubbles: [{ x: 4, y: 4, s: 'Why is my badge clip FLOATING?', tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }, { x: 4, y: 36, s: 'Drop the IV pole! DROP IT!', tail: [w / 2, h - 70], at: 1.4, mw: w - 16 }] }),
+    ];
+  },
+  scoot() {
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['rad', 300, 58], speed: true, cap: '6:30 PM. RADIOLOGY: DONE. GOING HOME.', acts: [{ s: a, a: 'idle', x: w * 0.14, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.14 + 26, y: h - 1 }] : []),
+        { s: 'marv', a: 'taunt', ride: 'marvcart', x: w * 1.04, y: h - 2, mv: -48, rate: 6 }],
+        bubbles: [{ x: w * 0.4, y: 18, s: 'OUTTA MY WAY, NURSES! MOTORCART MARV IS BUSTING OUT!', tail: [w * 0.75, h - 66], at: 0.3, mw: Math.min(230, w * 0.6), shout: true }] }),
+      (w, h) => ({ bg: null, burst: '#ff8a1e', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Was that a mobility scooter... with FLAMES?', 'Flames? Ugh. Can someone else chase him?'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+      (w, h) => ({ bg: ['rad', 900, 58], cap: 'THE SCOOTER CHARGING STATION', acts: [{ s: a, a: 'scoot', ride: 'scoot_red', x: w * 0.3, y: h - 4, mv: 22, rate: 4 }, ...(b ? [{ s: b, a: 'scoot', ride: 'scoot_blue', x: w * 0.3 - 40, y: h - 2, mv: 22, rate: 4 }] : [])],
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Grab a scooter! He went down the long hall!', "Wait. I get to SIT? ...I'm in."), tail: [w * 0.3, h - 50], at: 0.25, mw: w - 16, shout: a !== 'nate' }] }),
     ];
   },
   night() {
@@ -188,8 +201,14 @@ function drawPanel(P, px, py, pw, ph, local, idx) {
   if (P.speed) for (let i = 0; i < 10; i++) rect(px + ((i * 47 - local * 400) % pw + pw) % pw, py + 30 + (i * 17) % (ph - 34), 22, 1, '#ffffff', 0.7);
   for (const A of P.acts || []) {
     const an = anim(A.s, A.a); if (!an) continue;
-    const i = an.s + (Math.floor(local * (A.rate || 8)) % an.n);
-    frame(A.s, i, px + A.x + (A.mv || 0) * local, py + A.y, { flip: !!A.flip, scale: A.scale || 1 });
+    const i = an.s + (Math.floor(local * (A.rate || 8)) % an.n), X = px + A.x + (A.mv || 0) * local, Y = py + A.y;
+    if (A.ride) {  // v0.9: on a vehicle (a nurse's mobility scooter or Motorcart Marv's hot rod), drawn under the rider
+      const marv = A.ride === 'marvcart', wh = Math.floor(local * 12) % 2;
+      spr(A.ride + wh, X, Y, { ax: marv ? 34 : 22, ay: marv ? 49 : 43, flip: !!A.flip });
+      frame(A.s, i, X + (marv ? -1 : -4) * (A.flip ? -1 : 1), Y - (marv ? 8 : 4), { flip: !!A.flip });
+      continue;
+    }
+    frame(A.s, i, X, Y, { flip: !!A.flip, scale: A.scale || 1 });
   }
   if (P.floaty) for (let i = 0; i < 6; i++) { const k = (local * 0.6 + i * 0.17) % 1; rect(px + 10 + i * (pw / 6), py + ph - 10 - k * (ph - 20), 4, 3, ['#c8ccd6', '#ffe84a', '#8ad8ff'][i % 3]); }
   for (const F of P.faces || []) spr(`face_${F.id}`, px + F.x + (F.flip ? 36 * F.scale : 0), py + F.y, { scale: F.scale, flip: !!F.flip });

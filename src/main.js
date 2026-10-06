@@ -2,7 +2,7 @@
 // teaser, game over, high scores), pause / settings / how-to menus, saves, display presets and fullscreen / install.
 // v0.4 flow: select -> [cutscene start] -> intro -> play -> [cutscene boss] -> Tilly -> tally -> [cutscene lunch] ->
 // Breakroom Bonus -> bonus tally -> [cutscene next] -> Floor 4 Radiology (Lou mini-boss, [cutscene mri] -> MRI boss) ->
-// tally -> [cutscene night] -> Night Shift -> tally -> [cutscene ending] -> THE END (v0.5). Scores, lives, continues and
+// tally -> [cutscene scoot] -> v0.9 SCOOTER RUN (Motorcart Marv) -> scooter tally -> [cutscene night] -> Night Shift -> tally -> [cutscene ending] -> THE END (v0.5). Scores, lives, continues and
 // 2P carry from floor to floor. Cutscenes skip with any button / tap (auto-skipped with ?bot / ?nocut).
 import { G, initGfx, resize, present, text, spr, rect, panel, frame, anim, textW, sprSize, frameRect, ellipse } from './gfx.js';
 import { loaded, Q, audio } from '../kit/common.js';
@@ -18,6 +18,7 @@ import { ALARM, drawStations, drawWetFloor, drawAlarmFront, maybeYeller, pullAla
 import { drawHUD } from './hud.js';
 import { makeCut, updateCut, drawCut } from './cutscene.js';
 import { B as BONUS_STATE, buildBreakroom, startBonus, updateBonus, drawBonusHUD, bonusRows } from './bonus.js';
+import { SC, SCOOT, startScooter, updateScooter, drawScooter, drawScooterHUD, scootRows, drawScootTally, scootBot, continueRider, scootSpawn } from './scooter.js';
 
 // ------------------------------------------------------------------ save
 const SAVE_KEY = 'nbd2.save';
@@ -194,11 +195,41 @@ function goNext() {  // after the breakroom: up to Floor 4
   const go = () => loadLevel(1);
   if (noCuts()) go(); else startCut('next', go);
 }
+// ---- v0.9 SCOOTER RUN between Radiology and the night shift (src/scooter.js)
+function scootUI(on) {  // touch: the stick steers, HIT becomes SHOOT, GRAB / SP hide
+  document.documentElement.dataset.mode = on ? 'scoot' : '';
+  const b = document.getElementById('b_atk'); if (b) b.textContent = on ? 'SHOOT' : 'HIT';
+  if (!on) W.scoot = false;
+}
+function enterScooter() { startScooter(game); game.scene = 'scoot'; game.t = 0; game.tally = null; setScene('game'); scootUI(true); playMusic('scooter'); preloadMusic(['clear', 'night']); }
+function goScooter() { if (noCuts()) enterScooter(); else startCut('scoot', enterScooter); }
+function scootPlay(dt) {
+  let pause = (C.lastCodes || []).some((c) => c === 'Escape' || c === 'Pause');
+  const inputs = new Map();
+  for (const h of W.heroes) { const I = Q.get('bot') && h.slot === 0 ? scootBot(h) : readPlayer(h); inputs.set(h, I); if (I.prs.start && h.st !== 'out' && !Q.get('bot')) pause = true; }
+  if (pause && !game.overlay) { game.overlay = pauseMenu(); sfx('select'); return; }
+  SC.god = !!Q.get('god');
+  for (const h of W.heroes) {
+    if (h.st !== 'out') continue;
+    const I = inputs.get(h);
+    if (h.continueT > 0 && game.continuesLeft() > 0) {
+      h.continueT -= dt;
+      if (I.prs.start || I.prs.atk || I.prs.jmp) { game.creditsUsed++; continueRider(h); sfx('powerup'); game.toast(`${h.d.name}: back on the scooter!`); }
+    } else h.continueT = 0;
+  }
+  if (updateScooter(dt, inputs)) { toScootTally(); return; }
+  if (W.heroes.every((h) => h.st === 'out' && !(h.continueT > 0 && game.continuesLeft() > 0))) { scootUI(false); W.scootOver = true; toGameOver(); }
+}
+function toScootTally() {
+  game.scene = 'stally'; game.t = 0; setScene('menu'); scootUI(false); W.scootOver = true; playMusic('clear'); sfx('fanfare', { vol: 0.7 });
+  game.stally = W.heroes.map((h) => { const r = scootRows(h); h.score += r.total; return { h, ...r }; });
+}
+function goNight() { W.scootOver = false; const go = () => loadLevel(2); if (noCuts()) go(); else startCut('night', go); }
 // v0.5: after a floor's tally. Floor 4 -> night shift -> the ending.
 function afterTally() {
   const i = W.lv.id;
   if (i === 1) return goLunch();
-  if (i === 2) { const go = () => loadLevel(2); if (noCuts()) go(); else startCut('night', go); return; }
+  if (i === 2) return goScooter();  // v0.9: Radiology -> the Scooter Run -> the night shift
   finishRun(true); save.best = Math.max(save.best, 3); writeSave();
   const go = () => { game.scene = 'ending'; game.t = 0; setScene('menu'); playMusic('clear'); };
   if (noCuts()) go(); else startCut('ending', go);
@@ -207,7 +238,7 @@ function afterTally() {
 function loadLevel(idx, zone = 0) {
   const lv = LEVELS[idx];
   W.enemies = []; W.boss = null; W.shots = []; W.fx = []; W.items = []; W.decor = []; W.t = 0; W.finalT = 0; W.vc = 0; W.bgHook = null; W.team = null;
-  W.forceYeller = !!Q.get('yeller'); W.noAlarm = !!Q.get('noalarm');
+  W.forceYeller = !!Q.get('yeller'); W.noAlarm = !!Q.get('noalarm'); W.scoot = false; W.scootOver = false; scootUI(false);
   buildLevel(lv); Director.reset(); W.camX = 0; W.camMin = 0; W.clock = lv.clock || 7 * 60; W.stats.time = 0;
   if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else W.nightBg = W.bg;
   W.heroes.forEach((h, i) => {
@@ -236,7 +267,7 @@ function nightLights(dt) {
   if (t > 0.9 && t0 <= 0.9) sfx('powerdown', { vol: 0.6 });
 }
 function toTitle() {
-  W.bgHook = null; W.team = null;
+  W.bgHook = null; W.team = null; W.scootOver = false; scootUI(false);
   game.scene = 'title'; game.t = 0; game.menu = titleMenu(); W.heroes = []; W.enemies = []; W.boss = null; W.shots = []; W.fx = []; game.overlay = null;
   C.split = false; buildLevel(LEVEL1); W.camX = 0; playMusic('title'); setScene('menu');
 }
@@ -639,6 +670,8 @@ function step(dt) {
       break;
     }
     case 'btally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) goNext(); break;
+    case 'scoot': scootPlay(dt); break;
+    case 'stally': W.t += dt; updateWorld(dt); if (game.t > 3 && any) goNight(); break;
     case 'tally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) afterTally(); break;
     case 'teaser': if (game.t > 1.5 && any) toTitle(); break;
     case 'ending': if (game.t > 1.5 && any) { game.scene = 'scores'; game.t = 0; } break;
@@ -657,9 +690,11 @@ function render() {
     case 'cutscene': drawCut(game.cut); break;
     case 'bonus': drawWorld(); drawHUD(game); drawBonusHUD(); break;
     case 'btally': drawWorld(); drawBonusTally(); break;
+    case 'scoot': drawScooter(); drawHUD(game); drawScooterHUD(); break;
+    case 'stally': drawScooter(); drawScootTally(game); break;
     case 'teaser': drawTeaser(); break;
     case 'ending': drawEnding(); break;
-    case 'gameover': drawWorld(); drawGameOver(); break;
+    case 'gameover': if (W.scootOver) drawScooter(); else drawWorld(); drawGameOver(); break;
     case 'scores': drawScores(); break;
   }
   if (game.overlay) drawMenu(game.overlay);
@@ -690,7 +725,7 @@ async function boot() {
   if (bar) bar.style.width = '100%';
   // HUD buttons
   document.getElementById('fsbtn').addEventListener('click', (e) => { e.stopPropagation(); display.toggleFS(); });
-  document.getElementById('pausebtn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (game.scene === 'play' || game.scene === 'bonus') { if (game.overlay) resume(); else { game.overlay = pauseMenu(); sfx('select'); } } });
+  document.getElementById('pausebtn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (game.scene === 'play' || game.scene === 'bonus' || game.scene === 'scoot') { if (game.overlay) resume(); else { game.overlay = pauseMenu(); sfx('select'); } } });
   addEventListener('keydown', (e) => {
     if (e.code === 'Backquote') { display.toggleFS(); return; }
     const m = activeMenu();
@@ -718,6 +753,7 @@ async function boot() {
     else if (['teaser', 'gameover', 'scores', 'ending'].includes(game.scene) && game.t > 1.2) { if (game.scene === 'teaser') toTitle(); else if (game.scene === 'gameover' || game.scene === 'ending') { game.scene = 'scores'; game.t = 0; } else toTitle(); }
     else if (game.scene === 'tally' && game.t > 3) afterTally();
     else if (game.scene === 'btally' && game.t > 3) goNext();
+    else if (game.scene === 'stally' && game.t > 3) goNight();
   });
   view.addEventListener('pointermove', (e) => { const m = activeMenu(); if (!m || e.pointerType !== 'mouse') return; const [lx, ly] = toLogical(e); const i = hitMenu(m, lx, ly); if (i >= 0 && i !== m.sel) m.sel = i; });
   toTitle();
@@ -725,7 +761,7 @@ async function boot() {
   requestAnimationFrame(frameLoop);
   // test hooks
   window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, Director, display,
-    cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext, ALARM, maybeYeller, pullAlarm, stationFor, alarmAllowed, settingsMenu, applySettings };
-  if (Q.get('autostart') || Q.get('zone') || Q.get('level')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } }
+    cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext, scooter: enterScooter, goScooter, goNight, SC, SCOOT, scootSpawn, ALARM, maybeYeller, pullAlarm, stationFor, alarmAllowed, settingsMenu, applySettings };
+  if (Q.get('autostart') || Q.get('zone') || Q.get('level')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } if (Q.get('scene') === 'scooter') { game.cut = null; game.cutDone = null; enterScooter(); } }
 }
 boot().catch((e) => { const t = document.getElementById('loadtxt'); if (t) t.textContent = 'Could not load: ' + e.message; console.error(e); });
