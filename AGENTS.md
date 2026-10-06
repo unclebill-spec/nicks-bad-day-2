@@ -4,11 +4,35 @@ Handoff notes for any builder (Cursor reads this file automatically, and so do B
 `CHANGELOG.md` current before every commit and push. **Pull first** when you resume work.
 
 ## What it is
-A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons arcade games. Five nurses fight
+A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons arcade games. Six nurses fight
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-05, v0.9)
+## Current state (2026-10-06, v0.10)
+- **v0.10 HEATHER (6th playable nurse, `HEROES.heather`, last in `HERO_ORDER`):**
+  - **Look:** `B["heather"]` in tools/chars.py: blonde (`HEATHER_HAIR`), long hair worn down (`long_hair()` hair_back), royal blue
+    scrubs: top `HEATHER_BLUE` #2448d8 over deeper pants `HEATHER_BLUE_P` #1c38b0 with a waistband + drawstring (Bill's style rule).
+    Staff-sized (56 px). `hero_anims("heather")`: hand-on-hip idle, `hc1` jab / `hc2` elbow / `hc3` turn-and-bump hip check
+    (`flip=True` frames), 4-frame `special` (cock, dash A/B with the arm straight out, skid), `win`, seated `scoot` (hand on hip).
+  - **Stats:** hp 115, walk 84, run 166, power 1.0, reach 0.95, `stats` [3, 4, 2, 4], colour #4a6cff. Attacks `hc1`-`hc3` in `ATTACKS`.
+  - **RUNNING CLOTHESLINE** (`s_special` heather branch in hero.js): t 0.12-0.8 dashes at up to 255 px/s, `strike` once per target
+    (box [-4, 28], z [8, 52], depth 15, 16 x power, kb 200, forced knockdown, +150 each, `W.stats.clotheslined`), skid at 0.8, idle +
+    `say('special', true)` at 1.0. Not hittable mid-dash (`hittable()`), no inv blink. Speed streaks drawn in `draw()`. SFX `charge`
+    (wind-up), `clothesline`, `skid`.
+  - **Lines:** `d.lines` (spawn, idle, grab, lift, food, coffee, weapon, hurt, ko, revive, **ativan** (new event: said when the jab lands,
+    shown after the shout), codeblue, special, zone, clear), `d.shout` = her Ativan bubble, `ativanSfx` 'ativan_heather', `idleSfx`
+    'huff' (sayTick uses `d.idleSfx || 'yawn'`). **Bill's four lines must stay verbatim**: they are also in `BILL_LINES` (data.js),
+    which tests/v10.py checks. `say()` now keeps long lines up longer (2.6 s + 0.045 s per char over 34) and starts the timer after
+    an Ativan shout; `drawSay()` wraps at 18 / 22 / 27 chars by length.
+  - **Scooter lines** moved to data: `HEROES[id].scoot` {start, crash, snack, hit} for Nate and Heather (`line()` in scooter.js).
+    `SC.talk`: tip banners wait/pause while a rider bubble is up.
+  - **Cutscenes:** `lz(id, normal, lazy, snark)`: 4th arg = Heather's line (start, boss, lunch x2, next, scoot x2, night, ending).
+  - **Select (`drawSelect`):** 6 cards, gap 3, `cw = min(84, floor((VW - 8) / n) - gap)` (62 px at VW 398, 75 at 480); `fit()` squeezes
+    a name / role to a 7 px advance (`text(..., { adv })` in gfx.js) when 8 px doesn't fit. If cards would be < 56 px (4:3 / retro,
+    VW 300-320) it switches to a 3 x 2 grid (face + P/S/R/T bars, name, role; no full-body sprite). Title line-up: `xs` 3 left + 3 right.
+  - **Tally:** a quote that needs more than 2 rows beside the face is printed under the card (full width in 1P, 7 px advance if needed)
+    and PRESS ATTACK moves to the bottom row.
+  - Tests: `tests/v10.py` A-K (see below). Docs: docs/v10_select.png, docs/v10_select_phone.png, docs/v10_heather.gif.
 - **v0.9 SCOOTER RUN (`src/scooter.js`), between Radiology and the night shift:** a TMNT sewer-surf style driving level on mobility scooters.
   - **Flow:** `afterTally()` on lv 2 → `goScooter()` → cutscene `scoot` → `enterScooter()` (scene `scoot`, `scootUI(true)`: touch HIT reads SHOOT,
     `html[data-mode=scoot]` hides GRAB/SP) → `scootPlay()` each step (pause, continues, `updateScooter(dt, inputs)`) → `toScootTally()` (scene
@@ -53,7 +77,7 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
     `low_ponytail`, `heavy_lids` in rig.py `face()`, light `beard` stubble, glasses). `hero_anims("nate")`: phone idle (`holder("phone")`),
     lz1-3, chair special (phone in hand), hands-behind-head win. Height ~63 px (taller than Jackie's 61, <= 1.15x the 56 px average).
     Plain scrubs only: Bill dislikes bulky / padded / armor-looking outfits.
-  - Select (`drawSelect`): `cw = min(84, floor((VW-12)/n)-4)`, `ch` 176, names longer than the card wrap at the space, 1P/2P in the top
+  - Select (`drawSelect`, v0.8 layout; v0.10 changed it, see above): `cw = min(84, floor((VW-12)/n)-4)`, `ch` 176, names longer than the card wrap at the space, 1P/2P in the top
     corners, OK! at the bottom. Title line-up `xs` has five slots. Cutscenes use `lz(a, normal, lazy)` for Nate's versions of hero-a lines.
   - MRI sheet: `MOY` = 12.5 base units of headroom in tools/radiology.py (cell 104x96, anchor 52,93) so the vent plume isn't clipped.
   - Tests: `tests/v08.py` (A desktop select + title, B phones + touch, C pad, D size/art/stats, E combo/reach/chair, F bubbles + Ativan +
@@ -111,12 +135,13 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
   (`drawEyes`). The last zone has `final:true`: when it's cleared the power comes back (`W.finalT`, "POWER'S BACK!") and then the tally.
 - **Lighting (v0.5, `drawLighting()` in world.js):** an offscreen darkness layer at `W.dark` with banded (retro-stepped) holes cut for every
   light, then an additive colour glow. `W.lights` is built from the wall pieces in `buildLevel`; moving lights come from `W.lightHook`.
-- **5 heroes:**
+- **6 heroes:**
   - Nick: balanced, Crash Cart special.
   - Kim: fast, Whirlwind Kick.
   - Will: power, Body Slam, big throws. He is bald (skin-tone head with a shine) in a normal fitted short-sleeve bright blue top, with skin forearms, a belt, dark pants and shoes. His stat color is blue. There's no orange/Halloween look and no padded suit/armor look.
   - Jackie: reach, Clipboard Spin, strong jump and dash.
   - Nasty Nate (v0.8): lazy; longest reach, slowest, Rolling Chair special, speech bubbles. Tall, glasses, ponytail, teal scrubs.
+  - Heather (v0.10): fast and tough, mid power; Running Clothesline special, snarky speech bubbles. Blonde, long hair, royal blue scrubs.
 - **Moves:** combos with a finisher, jump and jump kick, run (double-tap or Shift/RB) and dash attack, back attack (Attack+Jump),
   GRAB a patient, then knee, toss forward or body slam behind (both hit other patients), a special that costs 8 HP, and the Code Blue super when the meter is full.
 - **Patients:** all wear checked hospital gowns (pale green or faded olive) with yellow grip socks, and get random hair and skin at runtime.
@@ -206,6 +231,7 @@ python3 tests/v05.py C D    # sections: A radiology, B Lou, C MRI, D night, E fl
 python3 tests/v06.py        # v0.6: A carry/throw, B priorities, C directions/trays/magnet, D touch/pad/2P, E Tilly, F meter tiers, G food, H fire alarm
 python3 tests/v07.py        # v0.7: A grab/toss/slam + help pages, B priority/pad/2P/touch layout, C beef jerky, D boss + patient sizes
 python3 tests/v08.py        # v0.8: Nasty Nate: A select/title, B phones/touch, C pad, D size/art, E combo/chair, F speech bubbles, G 2P, H cutscene + MRI headroom
+python3 tests/v10.py        # v0.10: Heather: A art/data/Bill's lines, B select+title+HUD, C phones+4:3 grid+touch, D pad, E combo, F clothesline, G bubbles, H 2P, I scooter, J cutscenes+ending, K moves
 python3 tests/v09.py        # v0.9: Scooter Run: A art/sizes, B flow+carry, C keys, D crash/jump, E patients, F pickups, G continue, H Marv, I 2P, J pad, K touch, L cutscene, M pause, N timed bot ride (~85 s)
 python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
@@ -222,7 +248,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
   - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art, `tools/v08_art.py` Nate's office chair, `tools/v09_art.py` the Scooter Run vehicles + floor junk, and `tools/v06_art.py` the v0.6 art (pizza, BEEF JERKY bag, Ativan syringe, skeleton, fire-alarm station; the `yeller` patient is in chars.py) (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
   - It uses vendored copies of Master Builder's Gravewake `sprite_writer`/`pixel_writer` and brileta-sprites (plants, via node).
   - Never edit `/workspace/gravewake` itself. It belongs to another bot.
-- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, defib, crackle, clear, alarm, yell, sprinkler, stink); `tools/v07_audio.py` the v0.7 ones (jerky, slam, toss); `tools/v08_audio.py` the v0.8 ones (ativan_nate, yawn); `tools/v09_audio.py` the v0.9 `scooter` music + pew, skid, scoot, beepbeep, marv, marv_ko.
+- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, defib, crackle, clear, alarm, yell, sprinkler, stink); `tools/v07_audio.py` the v0.7 ones (jerky, slam, toss); `tools/v08_audio.py` the v0.8 ones (ativan_nate, yawn); `tools/v10_audio.py` the v0.10 ones (ativan_heather, huff, clothesline); `tools/v09_audio.py` the v0.9 `scooter` music + pew, skid, scoot, beepbeep, marv, marv_ko.
 - `python3 tools/make_audio.py` rewrites `audio/music/*.mp3` (with loop points in `music.json`) and `audio/sfx/*.wav`, using the N64 suite in `/workspace/n64-suite` (music.compose with the chiptune fallback, sfx.make, babble).
 - All art is original. There are no copyrighted characters or sprites.
 
@@ -245,7 +271,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
 | `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
 | `src/scooter.js` | v0.9 Scooter Run driving level: course, riders, hazards, patients, Motorcart Marv, parallax drawing, HUD, tally rows, test bot |
-| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v15: **bump N on every release**) |
+| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v16: **bump N on every release**) |
 
 ## Bill's standing preferences
 - **Outfit style rule (Bill, v0.8.1):** every character's clothes read as a **separate top and bottom with a visible waist**
@@ -272,5 +298,5 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 ## Next steps
 1. Bill plays on his phone and gives feedback on feel, difficulty and hero looks.
 2. **Size rule from Bill (v0.7 override for this game):** bosses only **~1.2-1.5x a nurse's height**; patients **the same size as the nurses**.
-3. More voice barks (Nate has speech bubbles via `say()`; the others could get lines too), plus an attract-mode demo on the title screen using the bot.
+3. More voice barks (Nate and Heather have speech bubbles via `say()`; the others could get lines too), plus an attract-mode demo on the title screen using the bot.
 4. More stages per the spec: lobby/ER, ICU, cafeteria, roof helipad.

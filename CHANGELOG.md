@@ -2,6 +2,47 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-06: v0.10 "Heather" (Bill: a sixth playable nurse with a running clothesline and a sharp tongue)
+- **HEATHER, the 6th playable nurse.** Blonde, long hair worn down, **royal blue scrubs**: a V-neck top with a hem over deeper royal
+  blue drawstring pants, so the top, waistband and pants read separately (Bill's style rule: no onesie, diaper, padded or armor
+  look). Stethoscope, badge, white sneakers. Normal staff size (56 px, the nurse average is ~57).
+- **Stats: fast and tough, mid power.** 115 HP (only Will has more), walk 84 / run 166 (only Kim is quicker), power 1.0, reach 0.95.
+  Select card: POW 3, SPD 4, RCH 2, TUF 4, in royal blue.
+- **Her own 3-hit combo:** a quick jab, a swinging elbow, then a turn-and-bump **HIP CHECK** that knocks the patient over.
+- **Special: RUNNING CLOTHESLINE** (her special slot, like Nate's Rolling Chair). She cocks her arm, sprints forward ~145 px with it
+  held straight out at neck height (speed streaks, dust, a rising whoosh), flattens every patient in her lane (16 x power, forced
+  knockdown, +150 each), then skids to a stop. She can't be interrupted mid-dash. Costs 8 HP like every special; the Ativan jab
+  and Code Blue tiers work as usual.
+- **Snarky speech bubbles** (same system as Nate's): spawn, idle (with an annoyed huff), grabs, lifting, food, coffee, weapons,
+  taking damage, KO, revive / continue, after the Ativan jab, Code Blue, her special, zone clear and floor clear (also on the
+  tally card). **Bill's lines, verbatim:**
+  - "Your hands aren't broke, you can wipe your own ass."
+  - "You don't like being wet? Shouldn't have pissed in your gown."
+  - "Here's a rag, you can clean it up yourself."
+  - "This isn't a restaurant. I have sick patients to take care of, your sandwich can wait."
+  - Plus more in the same spirit: "Call bell's for emergencies, not ice chips.", "I'm your nurse, not your waitress.", "No, you
+    can't have more Dilaudid.", "Hospital food isn't room service.", "The remote is right next to you.", "No, the TV doesn't get
+    HBO.", "You're NPO. That means no cheeseburger.", "Yes, the gown opens in the back. That is how gowns work.", and others.
+  - **Ativan jab:** her own shout bubble, "NO MORE DILAUDID. / HERE'S YOUR ATIVAN!", with a brisk voice clip, then a follow-up
+    line once the jab lands ("Sweet dreams, sunshine.").
+  - Long lines get wider bubbles (up to 27 characters a row) and stay up longer so they can be read.
+- **Everywhere the other nurses are:** select card, HUD portrait (and hurt face), the title line-up (now six: three either side
+  of the menu), tally, THE END screen, and her own takes in the cutscenes ("A RUNNER? I'm your nurse, not your track coach.",
+  "Grab a scooter! I'm your nurse, not your chauffeur, Marv!", "NOPE! Here's a rag. See you tomorrow!", and more).
+- **Scooter Run:** she rides a scooter sitting up straight, one hand on the tiller and the other on her hip, with her own lines
+  ("Beep beep. Move it, Marv.", "Ow! Incident report!"). Tip banners now wait while a rider is talking so they don't cover the bubble.
+- **Six-card select that fits phones:** 62 px cards on a 398 px (16:9) phone, up to 75 px on wide phones; tight names squeeze to a
+  7 px letter spacing. Narrow 4:3 / retro views switch to a 3 x 2 grid of shorter cards. Keyboard, d-pad, touch and 2P all wrap
+  across the six cards.
+- **Tally card:** a long floor-clear quote is printed full width under the card instead of being cut off.
+- **Controls:** keyboard (1P / 2P), gamepad and touch all work for her, including the touch joystick and the SP button.
+- **Tests:** new `tests/v10.py` (A art / data / Bill's lines, B desktop select + title + HUD, C phones + 4:3 grid + touch,
+  D gamepad, E combo + stats, F clothesline, G speech bubbles + Ativan + Code Blue + tally, H 2P keyboard, I Scooter Run 1P / 2P,
+  J cutscenes + ending, K moves). `moves.py` covers Heather; `v08.py` and `v09.py` updated for six nurses.
+- **Assets:** `art/heather.png` and the portraits (tools/chars.py `B["heather"]`, `long_hair()`, `hero_anims("heather")`);
+  `tools/v10_audio.py` makes `ativan_heather`, `huff` and `clothesline`. Service worker cache `nbd2-app-v16`.
+- Docs: `docs/v10_select.png`, `docs/v10_select_phone.png`, `docs/v10_heather.gif`.
+
 ## 2026-10-05: v0.9 "Scooter Run" (Bill: a TMNT sewer-surf style driving level on mobility scooters)
 - **New level between Radiology and the Night Shift: the SCOOTER RUN.** After the Radiology tally, a comic cutscene: a patient,
   **MOTORCART MARV**, busts out of Radiology on a souped-up mobility scooter ("OUTTA MY WAY, NURSES!"), the lead nurse wonders
