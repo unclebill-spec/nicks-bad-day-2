@@ -2,6 +2,16 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-07: v0.12 "Level Select" (Bill: pick any level from the start screen)
+- **LEVEL SELECT** on the title menu (under 1 PLAYER / 2 PLAYERS). Six cards in order, each with a number, an icon, the name and the
+  boss: Floor 3: Med-Surg (Turbo Tilly), Breakroom Bonus (fridge thieves), Floor 4: Radiology (Lou + MAGNA-SCAN 3000), Scooter Run
+  (Motorcart Marv), Night Shift (Last Call, lights out), P3: Parking Garage (Vinnie the Valet). Everything is unlocked.
+- Pick a card, choose 1 PLAYER or 2 PLAYERS, choose your nurse, and that stage starts with fresh HP. The run then carries on
+  normally to the following stages and the ending.
+- Controls: arrows / d-pad / stick to move, attack / A to pick, GRAB / B / Escape or the on-screen BACK button to go back, and on
+  touch tap once to select and again to confirm. 3x2 grid (2 columns on narrow 4:3 views); fits 915x412, 844x390 and 667x375 phones.
+- Service worker cache `nbd2-app-v21`. tests/v12.py. Docs: `docs/v12_level_select.png`, `docs/v12_level_select_phone.png`.
+
 ## 2026-10-06: v0.11 "Shift Change" (Bill: save all five level ideas and build the Parking Garage first)
 - **New level: LEVEL P3, THE PARKING GARAGE** (7:30 AM, shift change, "find your car"). It comes **after the Night Shift and before
   the ending**: the night tally leads into a new comic cutscene (sunrise, then a road-rage visitor yelling "I've been circling for 40

@@ -89,6 +89,7 @@ function titleMenu() {
   return Menu(null, [
     { label: '1 PLAYER', act: () => toSelect(1) },
     { label: '2 PLAYERS', act: () => toSelect(2) },
+    { label: 'LEVEL SELECT', act: () => toLevels() },
     { label: 'HOW TO PLAY', act: () => { game.overlay = helpMenu(() => { game.overlay = null; }); } },
     { label: 'HIGH SCORES', act: () => { game.scene = 'scores'; game.t = 0; } },
     { label: 'SETTINGS', act: () => { game.overlay = settingsMenu(() => { game.overlay = null; }); } },
@@ -278,7 +279,7 @@ function nightLights(dt) {
 }
 function toTitle() {
   W.bgHook = null; W.team = null; W.scootOver = false; scootUI(false);
-  game.scene = 'title'; game.t = 0; game.menu = titleMenu(); W.heroes = []; W.enemies = []; W.boss = null; W.shots = []; W.fx = []; game.overlay = null;
+  game.scene = 'title'; game.t = 0; game.pick = null; game.menu = titleMenu(); W.heroes = []; W.enemies = []; W.boss = null; W.shots = []; W.fx = []; game.overlay = null;
   C.split = false; buildLevel(LEVEL1); W.camX = 0; playMusic('title'); setScene('menu');
 }
 function setScene(kind) { document.documentElement.dataset.scene = kind; }
@@ -321,6 +322,80 @@ function selectTap(lx, ly) {
   }
   if (game.backRect && lx < game.backRect[0] + game.backRect[2] && ly > game.backRect[1] && ly < game.backRect[1] + game.backRect[3] && lx > game.backRect[0]) { if (P.locked) P.locked = false; else toTitle(); }
 }
+// ---- v0.12 LEVEL SELECT (title menu): every stage unlocked; pick one -> 1P / 2P -> nurse select -> that stage, then the run goes on as normal
+export const PICKS = [
+  { name: 'FLOOR 3: MED-SURG', boss: 'TURBO TILLY', icon: 'tilly', col: '#3a7ad8', glow: '#8ad8ff' },
+  { name: 'BREAKROOM BONUS', boss: 'FRIDGE THIEVES (BONUS)', icon: 'bonus', col: '#d8a03a', glow: '#ffe84a' },
+  { name: 'FLOOR 4: RADIOLOGY', boss: 'LOU + MAGNA-SCAN 3000', icon: 'mri', col: '#3aa8ff', glow: '#a24dff' },
+  { name: 'SCOOTER RUN', boss: 'MOTORCART MARV', icon: 'marv', col: '#d84a3a', glow: '#ff8a6a' },
+  { name: 'NIGHT SHIFT', boss: 'LAST CALL (LIGHTS OUT)', icon: 'night', col: '#5a3ad8', glow: '#ff3a4a' },
+  { name: 'P3: PARKING GARAGE', boss: 'VINNIE THE VALET', icon: 'valet', col: '#a24dff', glow: '#ff3a4a' },
+];
+function toLevels() { game.scene = 'levels'; game.t = 0; game.pick = null; game.lvCur = game.lvCur || 0; game.lvLock = -1; setScene('menu'); }
+function levelCols() { return G.VW < 340 ? 2 : 3; }
+function pickLevel(i) {
+  game.lvCur = i; game.lvLock = i; sfx('powerup');
+  game.overlay = Menu(PICKS[i].name, [
+    { label: '1 PLAYER', act: () => { game.overlay = null; toSelect(1); game.pick = i; } },
+    { label: '2 PLAYERS', act: () => { game.overlay = null; toSelect(2); game.pick = i; } },
+    { label: 'BACK', act: () => { game.overlay = null; game.lvLock = -1; } },
+  ], { back: () => { game.overlay = null; game.lvLock = -1; }, w: 170 });
+}
+function levelsUpdate() {
+  const n = PICKS.length, cols = levelCols();
+  for (const it of menuIntents()) {
+    if (it.a === 'left') { game.lvCur = (game.lvCur + n - 1) % n; sfx('blip', { vol: 0.5 }); }
+    else if (it.a === 'right') { game.lvCur = (game.lvCur + 1) % n; sfx('blip', { vol: 0.5 }); }
+    else if (it.a === 'up') { game.lvCur = (game.lvCur - cols + n) % n; sfx('blip', { vol: 0.5 }); }
+    else if (it.a === 'down') { game.lvCur = (game.lvCur + cols) % n; sfx('blip', { vol: 0.5 }); }
+    else if (it.a === 'ok' && game.t > 0.25) { pickLevel(game.lvCur); return; }
+    else if (it.a === 'back') { sfx('blip'); toTitle(); return; }
+  }
+}
+function levelsTap(lx, ly) {
+  const R = game.lvRects || [];
+  for (let i = 0; i < R.length; i++) { const r = R[i]; if (lx >= r[0] && lx <= r[0] + r[2] && ly >= r[1] && ly <= r[1] + r[3]) { if (game.lvCur === i) pickLevel(i); else { game.lvCur = i; sfx('blip'); } return; } }
+  const b = game.lvBack; if (b && lx >= b[0] && lx <= b[0] + b[2] && ly >= b[1] && ly <= b[1] + b[3]) { sfx('blip'); toTitle(); }
+}
+function wrapW(s, max) { const out = []; let cur = ''; for (const w of s.split(' ')) { const t = cur ? cur + ' ' + w : w; if (t.length * 6 > max && cur) { out.push(cur); cur = w; } else cur = t; } if (cur) out.push(cur); return out; }
+function drawPickIcon(p, x, y, w, h) {
+  const c = G.ctx; c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip();
+  rect(x, y, w, h, '#080a18'); rect(x, y + h - 9, w, 9, '#1a1c2c'); rect(x, y + h - 10, w, 1, p.col);
+  for (let i = 0; i < 4; i++) rect(x + 6 + i * (w / 4), y + 4, w / 4 - 12, 5, p.glow, 0.35);
+  const cx = x + w / 2, by = y + h - 2;
+  if (p.icon === 'tilly') spr('face_tilly', cx - 12, Math.max(y + 2, by - 26));
+  else if (p.icon === 'valet') { spr('face_valet', cx - 12, Math.max(y + 2, by - 26)); }
+  else if (p.icon === 'mri') { frame('mri', anim('mri', 'idle').s, cx + 10, by, { scale: 0.34 }); spr('face_lou', cx - 34, Math.max(y + 2, by - 22), { scale: 0.8 }); }
+  else if (p.icon === 'marv') frame('marv', anim('marv', 'drive').s, cx, by + 4, { scale: 0.75 });
+  else if (p.icon === 'bonus') { { const iy = Math.max(y + 2, by - 24); spr('pizza', cx - 26, iy); spr('donut', cx - 6, iy); spr('jerky', cx + 12, iy); } }
+  else if (p.icon === 'night') { rect(x, y, w, h, '#000', 0.5); rect(cx - 14, y + 6, 28, 9, '#ff3a4a'); text('EXIT', cx, y + 7, { col: '#fff', align: 'center' }); rect(cx - 2, y + 20, 4, 4, '#ff3a4a'); }
+  c.restore(); frameRect(x, y, w, h, p.col);
+}
+function drawLevels() {
+  const VW = G.VW, VH = G.VH, n = PICKS.length, cols = levelCols(), rows = Math.ceil(n / cols), gap = 4;
+  W.camX = 600; drawBackground(); rect(0, 0, VW, VH, '#0a1030', 0.78);
+  text('LEVEL SELECT', VW / 2, 6, { col: '#ffe84a', align: 'center' });
+  const y0 = 18, cw = Math.min(150, Math.floor((VW - 8) / cols) - gap), ch = Math.floor((VH - y0 - 22) / rows) - gap;
+  const x0 = Math.round((VW - (cw + gap) * cols + gap) / 2); game.lvRects = [];
+  PICKS.forEach((p, i) => {
+    const x = x0 + (i % cols) * (cw + gap), y = y0 + Math.floor(i / cols) * (ch + gap), on = i === game.lvCur;
+    game.lvRects.push([x, y, cw, ch]);
+    panel(x, y, cw, ch, on ? '#2a3a7a' : '#141a3a', on ? '#ffe84a' : '#3a4c92');
+    const ih = Math.max(22, ch - 36); drawPickIcon(p, x + 3, y + 3, cw - 6, ih);
+    text(`${i + 1}`, x + 6, y + 5, { col: '#ffe84a' });
+    const nm = wrapW(p.name, cw - 6), bl = wrapW('BOSS: ' + p.boss, cw - 6); let ty = y + 5 + ih;
+    for (const l of nm.slice(0, 2)) { text(l, x + cw / 2, ty, { col: on ? '#ffffff' : '#c8d4f0', align: 'center', adv: 6 }); ty += 8; }
+    for (const l of bl.slice(0, 3 - Math.min(2, nm.length))) { text(l, x + cw / 2, ty, { col: on ? '#ffe84a' : '#8ad8ff', align: 'center', adv: 6 }); ty += 8; }
+  });
+  const bw = 52, bx = 4, byy = VH - 18; game.lvBack = [bx, byy, bw, 14];
+  panel(bx, byy, bw, 14, '#1a2450', '#8ad8ff'); text('< BACK', bx + bw / 2, byy + 3, { col: '#fff', align: 'center', adv: 7 });
+  text('ALL UNLOCKED  -  PICK A LEVEL', VW / 2 + 28, VH - 15, { col: '#c8d4f0', align: 'center', adv: 6 });
+}
+function startPick(i) {  // v0.12: drop the fresh team straight into a picked stage; afterTally / goNext / goNight carry on from there
+  if (i === 1) { loadLevel(0); buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); playMusic('stage'); }
+  else if (i === 3) { loadLevel(1); enterScooter(); }
+  else loadLevel({ 0: 0, 2: 1, 4: 2, 5: 3 }[i]);
+}
 function startGame() {
   const S = game.sel;
   W.heroes = []; W.stats = { kos: 0, time: 0 }; W.t = 0;
@@ -332,6 +407,8 @@ function startGame() {
     W.heroes.push(h);
   });
   game.creditsUsed = 0; save.plays++; writeSave();
+  if (game.pick !== null && game.pick !== undefined && game.pick > 0) { const i = game.pick; game.pick = null; startPick(i); return; }
+  game.pick = null;
   const li = Math.max(0, Math.min(LEVELS.length - 1, (+Q.get('level') || 1) - 1)), zj = +Q.get('zone') || 0;
   loadLevel(li, zj);
   if (!zj && !li && !noCuts()) startCut('start', () => { game.scene = 'intro'; game.t = 0; setScene('game'); });
@@ -707,6 +784,7 @@ function step(dt) {
   switch (game.scene) {
     case 'title': menuInput(game.menu, menuIntents()); break;
     case 'select': selectUpdate(dt); break;
+    case 'levels': levelsUpdate(); break;
     case 'intro': {
       W.t += dt; for (const h of W.heroes) if (h.st !== 'out') h.update(dt, { mx: 0, my: 0, held: {}, prs: {} }); updateWorld(dt); nightLights(dt);
       if (game.t > 2.4) { game.scene = 'play'; for (const h of W.heroes) if (h.st === 'enter') h.set('idle'); }
@@ -735,6 +813,7 @@ function render() {
   switch (game.scene) {
     case 'title': drawTitle(); break;
     case 'select': drawSelect(); break;
+    case 'levels': drawLevels(); break;
     case 'intro': case 'play': drawWorld(); drawHUD(game); if (game.scene === 'intro') drawIntro(); break;
     case 'tally': drawWorld(); drawTally(); break;
     case 'cutscene': drawCut(game.cut); break;
@@ -800,6 +879,7 @@ async function boot() {
     }
     if (game.scene === 'cutscene') { game.cutSkip = true; return; }
     if (game.scene === 'select') selectTap(lx, ly);
+    else if (game.scene === 'levels') levelsTap(lx, ly);
     else if (['teaser', 'gameover', 'scores', 'ending'].includes(game.scene) && game.t > 1.2) { if (game.scene === 'teaser') toTitle(); else if (game.scene === 'gameover' || game.scene === 'ending') { game.scene = 'scores'; game.t = 0; } else toTitle(); }
     else if (game.scene === 'tally' && game.t > 3) afterTally();
     else if (game.scene === 'btally' && game.t > 3) goNext();
@@ -810,7 +890,7 @@ async function boot() {
   loaded();
   requestAnimationFrame(frameLoop);
   // test hooks
-  window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, Director, display,
+  window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, toLevels, PICKS, Director, display,
     cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext, scooter: enterScooter, goScooter, goNight, goGarage, prepGarageBg, garage: { sendCar, backOut, GARAGE, carDodge }, SC, SCOOT, scootSpawn, ALARM, maybeYeller, pullAlarm, stationFor, alarmAllowed, settingsMenu, applySettings };
   if (Q.get('autostart') || Q.get('zone') || Q.get('level')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } if (Q.get('scene') === 'scooter') { game.cut = null; game.cutDone = null; enterScooter(); } }
 }

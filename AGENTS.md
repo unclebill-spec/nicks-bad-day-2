@@ -8,7 +8,12 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-06, v0.11)
+## Current state (2026-10-07, v0.12)
+- **v0.12 LEVEL SELECT** (title menu item, `toLevels()` in main.js, scene `levels`): `PICKS` lists the six stages (name, boss, icon);
+  `levelsUpdate` / `levelsTap` / `drawLevels` (3x2 grid, 2 columns under VW 340, `game.lvRects`, `game.lvBack`). Picking a card opens a
+  1P / 2P overlay → `toSelect(mode)` with `game.pick` set → `startGame()` → `startPick(i)` (bonus: `loadLevel(0)` + `startBonus`;
+  scooter: `loadLevel(1)` + `enterScooter`; floors: `loadLevel(n)`). The normal flow carries on from there. Everything is unlocked;
+  don't gate it. If you add a stage, add it to `PICKS` + `startPick`. Tests: tests/v12.py.
 - **Backlog:** `docs/LEVEL_IDEAS.md` holds Bill's five approved level ideas (Psych Ward, Cafeteria Lunch Rush, Parking Garage = done,
   Labor & Delivery, Rooftop Helipad at Night). Build the next one from there and mark it done.
 - **v0.11 LEVEL P3: THE PARKING GARAGE (`LEVEL4` in data.js, LEVELS index 3, id 4)**, a TMNT-style street/car level placed **after the
@@ -295,6 +300,7 @@ python3 tests/v07.py        # v0.7: A grab/toss/slam + help pages, B priority/pa
 python3 tests/v08.py        # v0.8: Nasty Nate: A select/title, B phones/touch, C pad, D size/art, E combo/chair, F speech bubbles, G 2P, H cutscene + MRI headroom
 python3 tests/v10.py        # v0.10: Heather: A art/data/Bill's lines, B select+title+HUD, C phones+4:3 grid+touch, D pad, E combo, F clothesline, G bubbles, H 2P, I scooter, J cutscenes+ending, K moves
 python3 tests/v10_1.py      # v0.10.1: nicknames/roles, Bill's lines verbatim, ~30+ lines per trigger, phone-fit bubbles, ginger Nick vs Kim, Will's sweater, Kim's drop line, cutscene takes
+python3 tests/v12.py        # v0.12: level select: every stage starts from it, keys/pad/touch, BACK, phone fit
 python3 tests/v11.py        # v0.11: Parking Garage: A data + art + sizes, B level, C traffic, D bait + alarms, E visitors, F nurse lines, G Valet + ending, H night -> garage flow, I drops + Ativan/Code Blue/grabs, J 2P, K pad, L phone + touch
 python3 tests/v09.py        # v0.9: Scooter Run: A art/sizes, B flow+carry, C keys, D crash/jump, E patients, F pickups, G continue, H Marv, I 2P, J pad, K touch, L cutscene, M pause, N timed bot ride (~85 s)
 python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
@@ -337,7 +343,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/garage.js` | v0.11 Parking Garage traffic: lane cars, back-outs, run-overs / BAITED!, car alarms, lane flash + headlights, bot dodge |
 | `src/valet.js` | v0.11 boss Vinnie the Valet + golf cart (`Valet`, `CartProp`) |
 | `src/scooter.js` | v0.9 Scooter Run driving level: course, riders, hazards, patients, Motorcart Marv, parallax drawing, HUD, tally rows, test bot |
-| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v20: **bump N on every release**) |
+| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v21: **bump N on every release**) |
 
 ## Bill's standing preferences
 - **Outfit style rule (Bill, v0.8.1):** every character's clothes read as a **separate top and bottom with a visible waist**
