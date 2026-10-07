@@ -1,5 +1,5 @@
 # Flow test: boss defeat -> tally -> Breakroom Bonus (bot) -> bonus tally -> Radiology -> v0.9 Scooter Run (the bot rides it all the way,
-# Marv included) -> scooter tally -> Night Shift -> ending -> scores -> title; then a game over -> scores.
+# Marv included) -> scooter tally -> Night Shift -> v0.11 Parking Garage -> ending -> scores -> title; then a game over -> scores.
 # (?bot=1 auto-skips the v0.4 cutscenes; tests/v04.py covers them.)
 import time
 from playwright.sync_api import sync_playwright
@@ -23,7 +23,7 @@ with sync_playwright() as p:
     # v0.5: the bonus leads up to Floor 4 Radiology, then the night shift, then THE END
     print('radiology', pg.evaluate("JSON.stringify([__nbd.game.scene, __nbd.W.lv.id, __nbd.W.heroes[0].score])"))
     pg.screenshot(path='tests/out/f_radiology.png')
-    for lv in (2, 3):
+    for lv in (2, 3, 4):
         pg.wait_for_function(f"__nbd.W.lv.id === {lv} && __nbd.game.scene === 'play'", timeout=10000); pg.evaluate('__nbd.W.cleared = true')
         pg.wait_for_function("__nbd.game.scene === 'tally'", timeout=5000); time.sleep(3.3)
         pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1)
