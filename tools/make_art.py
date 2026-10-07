@@ -208,6 +208,43 @@ add("tipcan", V9.tipped_can()); add("mopbucket", V9.mop_bucket())
 for i in range(3):
     add(f"marvcart{i}", V9.marv_cart(i))
 char_sheet("marv", chars.marv_anims(), chars.marv_body(), cell=(96, 88), anchor=(48, 84))
+# v0.11 PARKING GARAGE AT SHIFT CHANGE: garage tiles + wall pieces, parody cars, cones / carts / pay station, coffee + ticket
+# projectiles, VINNIE THE VALET's golf cart, the garage visitors and the Valet himself (tools/v11_art.py, tools/v11_chars.py)
+import v11_art as V11  # noqa: E402
+import v11_chars as C11  # noqa: E402
+for i in range(4):
+    add(f"gwall{i}", V11.gwall_tile(i))
+add("gceil", V11.gceil_tile(False)); add("gceil_lit", V11.gceil_tile(True))
+for i, t in enumerate(V11.gfloor_tiles()):
+    add(f"gfloor{i}", t)
+for i in range(3):
+    add(f"gopen{i}", V11.opening(i + 3, sun=i == 1))
+add("gpillar", V11.pillar()); add("sodium", V11.sodium()); add("tube", V11.tube()); add("clearance", V11.clearance())
+add("neon_park", V11.neon("PARKING", "#3aa8ff")); add("neon_stairs", V11.neon("STAIRS", "#a24dff")); add("neon_valet", V11.neon("VALET", "#ff3a4a"))
+add("sign_speed", V11.paint_sign("SPEED LIMIT 5", "#2a2c34")); add("sign_lost", V11.paint_sign("LOST? SO ARE WE.", "#2a5aa8"))
+add("sign_compact", V11.paint_sign("COMPACT ONLY", "#2a8a5a")); add("sign_vip", V11.paint_sign("RESERVED: DR. V.I.P.", "#7a3ab8"))
+add("sign_staff", V11.paint_sign("STAFF PARKING", "#c82a2a")); add("sign_validate", V11.paint_sign("VALIDATE YOUR TICKET!", "#c8a01a", "#1a1a20"))
+add("booth", V11.booth()); add("gatearm", V11.gate_arm(False)); add("gatearm_up", V11.gate_arm(True)); add("ramp", V11.ramp()); add("valetstand", V11.valet_stand())
+for m in V11.CAR_MODELS:
+    for ci in range(2):
+        for st in range(3):
+            add(f"car_{m}{ci}_{st}", V11.car(m, ci, st))
+        add(f"car_{m}{ci}_r", V11.car(m, ci, 0, spin=1))
+for st in range(2):
+    add(f"cone{st}", V11.cone(st))
+for st in range(3):
+    add(f"shopcart{st}", V11.shopcart(st)); add(f"paystation{st}", V11.paystation(st))
+for k, S in V11.bits().items():
+    add(k, S)
+add("p_coffee", V11.proj_coffee()); add("p_ticket", V11.proj_ticket()); add("puddle_c", V11.coffee_splat())
+for st in range(3):
+    add(f"valetcart{st}", V11.valet_cart(st)); add(f"valetcartL{st}", V11.valet_cart(st, left=True)); add(f"valetroof{st}", V11.valet_roof(st))
+B11 = C11.bodies()
+for e in ("ragevisitor", "vanmom", "coffeeguy", "bigshot"):
+    char_sheet(e, C11.anims(e), B11[e])
+    b = B11[e]
+    atlas["chars"][e]["pal"] = {"hair": [b["hair_c"], b["hair_s"]], "skin": [b["skin"], b["skin_s"]], "gown": [], "sock": []}
+char_sheet("valet", C11.anims("valet"), B11["valet"], cell=(96, 88), anchor=(48, 84))
 add("p_cup", RA.proj_cup()); add("puddle_w", RA.barium_splat()); add("p_film", RA.proj_film()); add("mri_wave0", RA.mri_wave(0)); add("mri_wave1", RA.mri_wave(1)); add("mri_table", RA.mri_table())
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
              ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
@@ -270,6 +307,10 @@ for k, t, c1, c2 in (("w_pow", "POW!", "#ffe84a", "#ff9a1e"), ("w_wham", "WHAM!"
                      ("w_turbo", "TURBO!", "#8ad8ff", "#a24dff"), ("w_slam", "SLAM!", "#ffe84a", "#ff5a3a"),
                      ("w_sploosh", "SPLOOSH!", "#fff27a", "#e8c82a"), ("w_ding", "DING!", "#ffffff", "#c8d0dc"), ("w_poke", "POKE!", "#8ae8ff", "#3aa0e8")):
     SPR[k] = word(t, 16, c1, c2)
+for k, t, c1, c2 in (("w_weeoo", "WEE-OO!", "#ffb04a", "#ff5a2a"), ("w_beepbeep", "BEEP BEEP!", "#ffffff", "#c8d0dc"), ("w_baited", "BAITED!", "#8ae8ff", "#3a7aff"),
+                     ("w_screech", "SCREECH!", "#ffffff", "#ff8ac0"), ("w_parked", "PARKED!", "#ffe84a", "#ff8a1e"), ("w_towed", "TOWED!", "#ff8a8a", "#e83a3a")):
+    SPR[k] = word(t, 16, c1, c2)
+SPR["w_valet"] = word("VALET RUSH!", 22, "#ff8a8a", "#e83a3a", stroke=3)
 SPR["w_codeblue"] = word("CODE BLUE!", 26, "#9ae0ff", "#3a6aff", stroke=3)
 SPR["w_charge"] = word("CHARGE NURSE!", 28, "#ffffff", "#ffd84a", stroke=3)
 SPR["w_bonus"] = word("BREAKROOM BONUS!", 22, "#ffe84a", "#ff8a1e", stroke=3)
@@ -314,6 +355,7 @@ for h in ("nick", "kim", "will", "jackie", "nate", "heather"):
     SPR[f"face_{h}"] = portrait(B[h])
     SPR[f"face_{h}_hurt"] = portrait(B[h], "hurt")
 SPR["face_tilly"] = portrait(boss.tilly_body(), "grin")
+SPR["face_valet"] = portrait(B11["valet"], "grin", k=1.6)  # v0.11 VINNIE THE VALET (bigger head, so 1.6x)
 SPR["face_lou"] = portrait(B["lou"], "grin", k=1.4)  # v0.7.1: Lou himself (bigger head, so drawn at 1.4x not 2x)
 
 # ---- bitmap font (Press Start 2P, OFL) 8x8, ASCII 32..126, 16 per row

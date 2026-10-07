@@ -4,8 +4,10 @@
 //   lunch: after the floor tally, into the Breakroom Bonus          next: after the bonus, up to Floor 4
 // v0.5: mri: before the MRI boss   night: after Radiology, into the night shift   ending: after the night shift
 // v0.9: scoot: after Radiology, Motorcart Marv busts out and the nurses grab the mobility scooters (then the Scooter Run)
+// v0.11: garage: after the night shift, down to the staff garage at 7:30 AM   valet: before Vinnie the Valet
+//   (the ending now plays in the garage)
 import { G, text, rect, spr, frame, anim, sprSize, tintSheet, textW } from './gfx.js';
-import { LEVEL1, HEROES } from './data.js';
+import { LEVEL1, LEVEL4, HEROES, BREAKABLES } from './data.js';
 import { W } from './world.js';
 import { lookFor } from './enemy.js';
 import { sfx } from './sound.js';
@@ -102,14 +104,37 @@ const SCRIPTS = {
         bubbles: [{ x: 4, y: 4, s: 'WHO SAID THE Q-WORD?!', tail: [w / 2, h - 70], at: 0.25, mw: w - 16, shout: true }] }),
     ];
   },
+  // v0.11: off the night shift and down to Level P3 to find the car
+  garage() {
+    const [a, b] = heroIds(), rage = lookFor('ragevisitor', 1);
+    return [
+      (w, h) => ({ bg: ['hall', 0, 58], sunrise: true, cap: '7:30 AM. SHIFT CHANGE. FINALLY.', acts: [{ s: a, a: 'walk', x: w * 0.22, y: h - 3, mv: 16 }, ...(b ? [{ s: b, a: 'walk', x: w * 0.22 - 26, y: h - 1, mv: 16 }] : [])],
+        bubbles: [{ x: w * 0.34, y: 6, s: lz(a, "Shift's over! Now we just have to find our cars.", "Ugh. My car's on the roof level.", 'Twelve hours, and now I get to fight for my car.', "Someone's gonna key my car, I know it.", "Shift's over! Drive safe, sweeties!", 'Who needs a jump?', 'I always get the closest spot.'), tail: [w * 0.24, h - 52], at: 0.35, mw: Math.min(210, w * 0.6) }] }),
+      (w, h) => ({ bg: ['garage', 560, 58], cap: 'LEVEL P3. STAFF PARKING.', acts: [{ s: rage, a: 'walk', x: w * 0.62, y: h - 2, mv: -16, flip: true, rate: 7 }],
+        bubbles: [{ x: 4, y: 18, s: "I've been circling for 40 minutes!", tail: [w * 0.6, h - 56], at: 0.3, mw: w - 16, shout: true }] }),
+      (w, h) => ({ bg: null, burst: '#3a6aff', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, "It's a parking garage. How bad can it be?", "Ugh. Can't I just nap in the stairwell?", 'Road rage at 7 AM. My favorite.', 'Why is everybody looking at MY car?', 'Ooh, new friends! Buckle up, sweeties!', "I'll handle the angry ones! You find the cars!", 'Relax. The best nurse also parks the best.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
+  valet() {
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['garage', 2330, 58], cap: 'THE VALET STAND.', acts: [{ s: a, a: 'idle', x: w * 0.14, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.14 + 26, y: h - 1 }] : []), { s: 'valet', a: 'honk', ride: 'valetcart', x: w * 1.08, y: h - 2, mv: -70, flip: true, rate: 6 }],
+        bubbles: [{ x: w * 0.3, y: 16, s: "Ticket's validated... NOT!", tail: [w * 0.75, h - 66], at: 0.5, mw: Math.min(220, w * 0.6), shout: true }] }),
+      (w, h) => ({ bg: null, burst: '#e8304a', faces: [{ id: 'valet', x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 6, y: 6, s: 'Keys, please! No tip? NO CAR!', tail: [w / 2, h - 72], at: 0.25, mw: w - 20, shout: true }] }),
+      (w, h) => ({ bg: ['garage', 2200, 58], faces: [{ id: a, x: b ? 6 : w / 2 - 36, y: h - 72, scale: 2 }, ...(b ? [{ id: b, x: w - 78, y: h - 72, scale: 2, flip: true }] : [])],
+        bubbles: [{ x: 4, y: 4, s: lz(a, "We don't even HAVE a valet!", 'Ugh. Can he park ME? On a couch?', "We don't have a valet. We have a guy with a golf cart.", "He's got my keys. I KNEW it.", 'Ooh, a golf cart! Can I have a ride, sweetie?', "I'll handle him! Somebody call security!", 'Valet? Please. I park myself.'), tail: [b ? 40 : w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
   ending() {
     const [a, b] = heroIds(), night = nightNurse();
     return [
-      (w, h) => ({ bg: ['hall', 0, 58], sunrise: true, cap: '7:00 AM. SHIFT CHANGE. AGAIN.', acts: [{ s: a, a: 'win', x: w * 0.24, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.24 + 28, y: h - 1, rate: 3 }] : []), { s: night, a: 'idle', x: w * 0.74, y: h - 3, flip: true }],
+      (w, h) => ({ bg: ['garage', 2560, 58], sunrise: true, cap: '7:45 AM. SHIFT CHANGE. AGAIN.', acts: [{ s: a, a: 'win', x: w * 0.24, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.24 + 28, y: h - 1, rate: 3 }] : []), { s: night, a: 'idle', x: w * 0.74, y: h - 3, flip: true }],
         bubbles: [{ x: w * 0.36, y: 4, s: 'Morning! How was the night shift?', tail: [w * 0.72, h - 52], at: 0.35, mw: Math.min(200, w * 0.55) }] }),
       (w, h) => ({ bg: null, burst: '#ff8a1e', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
-        bubbles: [{ x: 4, y: 4, s: 'A wheelchair drag race, a magnet that ate my IV pole, and a blackout.', tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
-      (w, h) => ({ bg: ['hall', 40, 58], sunrise: true, acts: [{ s: a, a: 'walk', x: w * 0.3, y: h - 3, mv: -30, flip: true }, ...(b ? [{ s: b, a: 'walk', x: w * 0.3 + 26, y: h - 1, mv: -30, flip: true }] : [])],
+        bubbles: [{ x: 4, y: 4, s: 'A drag race, a magnet that ate my IV pole, a blackout... and a VALET.', tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+      (w, h) => ({ bg: ['garage', 2640, 58], sunrise: true, acts: [{ s: a, a: 'walk', x: w * 0.3, y: h - 3, mv: -30, flip: true }, ...(b ? [{ s: b, a: 'walk', x: w * 0.3 + 26, y: h - 1, mv: -30, flip: true }] : [])],
         bubbles: [{ x: 4, y: 4, s: lz(a, 'NOPE! See you tomorrow!', 'NOPE! See you tomorrow!', "NOPE! Here's a rag. See you tomorrow!", "NOPE! Leaving before they float me!", "NOPE! Bye, sweeties! Love you!", "NOPE! ...Do you guys need anything first?", "NOPE! Hold your applause!"), tail: [w * 0.3, h - 52], at: 0.25, mw: w - 16, shout: true }] }),
     ];
   },
@@ -158,6 +183,13 @@ function hallBits(sx, sy, px, py, pw) {  // live parts of the hallway the pre-re
     if (kind === 'elev') { const X = px + wx - sx, Y = py + FLOOR_Y - 82 - sy; spr('elev_door', X + 8, Y + 14); spr('elev_door', X + 40, Y + 14); }
   }
 }
+function garageBits(sx, sy, px, py, pw) {  // v0.11: the parked cars (live props in the game) + the elevator doors
+  for (const [x, y, kind] of LEVEL4.props) {
+    const d = BREAKABLES[kind]; if (!d || !d.car || x < sx - 50 || x > sx + pw + 50) continue;
+    const n = d.spr + '0', [w, h] = sprSize(n); spr(n, px + x - sx - w / 2, py + y - sy - h + 2);
+  }
+  for (const [wx, kind] of LEVEL4.wall) if (kind === 'elev' && wx > sx - 90 && wx < sx + pw + 10) { const X = px + wx - sx, Y = py + FLOOR_Y - 82 - sy; spr('elev_door', X + 8, Y + 14); spr('elev_door', X + 40, Y + 14); }
+}
 function drawPanel(P, px, py, pw, ph, local, idx) {
   const c = G.ctx;
   const k = Math.min(1, local / 0.16), slide = Math.round((1 - k) * (idx === 1 ? -24 : 24));
@@ -168,10 +200,11 @@ function drawPanel(P, px, py, pw, ph, local, idx) {
   rect(px, py, pw, ph, '#2a3060');
   if (P.bg) {
     const [src, x0, y0] = P.bg;
-    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : W.hallBg;
+    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : src === 'garage' ? (W.garageBg || W.nightBg || W.hallBg) : W.hallBg;
     let sx = x0 === 'fridge' ? Math.max(0, (W.breakFridgeX || 300) - pw * 0.55) : x0;
     if (img) { sx = Math.max(0, Math.min(img.width - pw, sx)); c.drawImage(img, sx, y0, pw, ph, px, py, pw, ph); }
     if (src === 'hall') hallBits(sx, y0, px, py, pw);
+    if (src === 'garage') garageBits(sx, y0, px, py, pw);
     if (P.fridge && W.breakFridgeX) spr('fridge_open', px + W.breakFridgeX - sx, py + FLOOR_Y + 3 - 72 - y0);
     if (P.dark) rect(px, py, pw, ph, '#0a1030', 0.45);
     if (P.moon) { rect(px, py, pw, ph, '#04061a', 0.35); for (let i = 0; i < 3; i++) { c.globalAlpha = 0.18; c.fillStyle = '#3aa8ff'; c.beginPath(); c.ellipse(px + pw * (0.2 + i * 0.3), py + ph - 8, 30, 6, 0, 0, Math.PI * 2); c.fill(); } c.globalAlpha = 1; }
@@ -203,6 +236,11 @@ function drawPanel(P, px, py, pw, ph, local, idx) {
   for (const A of P.acts || []) {
     const an = anim(A.s, A.a); if (!an) continue;
     const i = an.s + (Math.floor(local * (A.rate || 8)) % an.n), X = px + A.x + (A.mv || 0) * local, Y = py + A.y;
+    if (A.ride === 'valetcart') {  // v0.11 Vinnie in his golf cart: cart, rider, then the canopy
+      const f = A.flip ? -1 : 1;
+      spr(A.flip ? 'valetcartL0' : 'valetcart0', X, Y, { ax: 44, ay: 93 }); frame(A.s, i, X - 11 * f, Y - 15, { flip: !!A.flip }); spr('valetroof0', X, Y, { ax: 44, ay: 93, flip: !!A.flip });
+      continue;
+    }
     if (A.ride) {  // v0.9: on a vehicle (a nurse's mobility scooter or Motorcart Marv's hot rod), drawn under the rider
       const marv = A.ride === 'marvcart', wh = Math.floor(local * 12) % 2;
       spr(A.ride + wh, X, Y, { ax: marv ? 34 : 22, ay: marv ? 49 : 43, flip: !!A.flip });

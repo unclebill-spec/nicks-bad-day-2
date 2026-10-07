@@ -156,8 +156,13 @@ export class Enemy extends Actor {
   s_enter(dt) {  // walk in from a screen edge, a door or an elevator to (tx, ty)
     const dx = this.tx - this.x, dy = this.ty - this.y, l = Math.hypot(dx, dy);
     const sp = Math.max(40, this.d.speed) * (this.kind === 'escape' ? 1 : 1.2);
-    if (l < 3) { this.set('idle'); return; }
+    if (l < 3) { this.set('idle'); this.arrived(); return; }
     this.x += dx / l * sp * dt; this.y += dy / l * sp * dt; if (Math.abs(dx) > 1) this.face = Math.sign(dx);
+  }
+  arrived() {  // v0.11: the garage's visitors announce themselves (one at a time, so the bubbles stay readable)
+    const d = this.d; if (!d.garage || !d.lines || (W.shoutT || 0) > W.t || W.rnd() > 0.6) return;
+    W.shoutT = W.t + 2.2; this.speechT = 240;
+    floatText(d.lines[Math.floor(W.rnd() * d.lines.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 });
   }
   s_enter_door(dt) { if (this.t > 0.35) { this.st = 'enter'; } }
   s_idle(dt) { this.think(dt); }
@@ -169,7 +174,7 @@ export class Enemy extends Actor {
     if (Math.abs(dx) > 4) this.face = Math.sign(dx);
     const K = this.kind, d = this.d;
     // speech bubbles now and then
-    if (this.speechT <= 0 && W.rnd() < 0.003) { this.speechT = 6; const L = { wanderer: ['Are you my nurse?', 'Where am I?'], spammer: ['NURSE! NURSE!', 'My TV is broken!'], escape: ['Catch me!', "I'm going home!"],
+    if (this.speechT <= 0 && W.rnd() < (d.garage ? 0.005 : 0.003)) { this.speechT = 6; const L = { wanderer: ['Are you my nurse?', 'Where am I?'], spammer: ['NURSE! NURSE!', 'My TV is broken!'], escape: ['Catch me!', "I'm going home!"],
       ivswing: ['I need ice chips!', 'Fore!'], sundowner: ['Who are you?!', 'Get off my lawn!'], visitor: ['Who is in charge?!', 'I know my rights!'],
       crutch: ['Outta my way!', 'I can walk fine!'], bell: ['*DING DING DING*', 'Room service!'], elite: ["I've been here 40 times!", 'I want my usual room!'],
       runner: ['Freedom!', "You can't catch me!", 'I am NOT a fall risk!'], tray: ['This is NOT what I ordered!', 'Cold AGAIN?!', 'Send it back!'], o2: ['Just getting some air!', 'Mind the tank, dear.'] }[K];
@@ -238,8 +243,9 @@ export class Enemy extends Actor {
       this.hitDone = true;
       if (K === 'tray') {
         if (this.throwKind === 'jello' && d.proj) {  // v0.5 Contrast Chugger: a lobbed cup of barium (chalky white puddle)
-          addShot({ kind: 'enemy', spr: 'p_cup', x: this.x + this.face * 8, y: this.y, z: 48, vx: this.face * 120, vz: 165, grav: 330, owner: this, dmg: 6, spin: 7, splash: d.proj, life: 2.4 });
-          sfx('whoosh', { vol: 0.45, rate: 0.9 }); if (W.rnd() < 0.5) floatText(['BOTTOMS UP!', 'DRINK YOUR CONTRAST!', 'BANANA FLAVOR!'][Math.floor(W.rnd() * 3)], this.x, this.y, 62, '#ffffff');
+          addShot({ kind: 'enemy', spr: d.projSpr || 'p_cup', x: this.x + this.face * 8, y: this.y, z: 48, vx: this.face * 120, vz: 165, grav: 330, owner: this, dmg: 6, spin: 7, splash: d.proj, life: 2.4 });
+          const TL = d.throwLines || ['BOTTOMS UP!', 'DRINK YOUR CONTRAST!', 'BANANA FLAVOR!'];  // v0.11 Coffee Guy has his own
+          sfx('whoosh', { vol: 0.45, rate: 0.9 }); if (W.rnd() < 0.5) floatText(TL[Math.floor(W.rnd() * TL.length)], this.x, this.y, 62, '#ffffff');
         } else if (this.throwKind === 'jello') {
           addShot({ kind: 'enemy', spr: 'p_jello', x: this.x + this.face * 8, y: this.y, z: 48, vx: this.face * 115, vz: 165, grav: 330, owner: this, dmg: 6, spin: 6, splash: 'jello', life: 2.4 });
           sfx('whoosh', { vol: 0.45, rate: 0.9 }); if (W.rnd() < 0.5) floatText('HAVE SOME JELLO!', this.x, this.y, 62, '#ffffff');

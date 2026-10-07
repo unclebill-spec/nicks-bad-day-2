@@ -170,6 +170,55 @@ export const JACKIE_LINES = ['Who needs help?', 'What can I do for you?', 'Do yo
 export const BILL_LINES = ["Your hands aren't broke, you can wipe your own ass.", "You don't like being wet? Shouldn't have pissed in your gown.",
   "Here's a rag, you can clean it up yourself.", "This isn't a restaurant. I have sick patients to take care of, your sandwich can wait."];
 
+// v0.11 PARKING GARAGE AT SHIFT CHANGE: each nurse's garage take, in their own voice (Hero.say uses these on a level with
+// garage: true). car = a car hit or buzzed them, alarm = a car alarm went off. Bill's four lines are verbatim (GARAGE_BILL, tests/v11.py).
+export const GARAGE_LINES = {
+  nick: { spawn: ["Someone's gonna key my car, I know it."],
+    idle: ["Someone's gonna key my car, I know it.", "P3? Or was it P4? I'm never getting home.", "My check engine light is on. It's always on.", "Watch, my battery's dead. I just know it."],
+    zone: ["Someone's gonna key my car, I know it.", "That car alarm is mine. I can feel it."],
+    car: ['I almost got hit by a minivan. Of course.', "That was a hatchback. I'm charting that."],
+    alarm: ["That's my car. That's definitely my car.", "Please don't be my car. Please don't be my car."],
+    drop: ['Sorry! Watch out for the cars!', "Stay down! There's traffic!"],
+    clear: ['I made it to my car! ...Where is my car?'] },
+  kim: { spawn: ["Drive safe, everybody! Ten and two!"],
+    idle: ['Drive safe, everybody! Ten and two!', 'Who wants a ride? I have a minivan!'],
+    zone: ['More friends in the garage! Yay!'],
+    car: ['Beep beep! Careful, sweetie!', 'Ooh, a near miss! Good reflexes, me!'],
+    alarm: ["Ooh, someone's car is singing!", "Wee-oo! That's a fun one!"],
+    drop: ['Let me help you to your car, sweetie!', 'Let me help you to your car, sweetie!', 'Buckle up, buttercup! Nap time!', 'Oopsie! Watch out for the cars, hon!'],
+    clear: ["Everyone's buckled in! Drive safe, sweeties!"] },
+  will: { spawn: ['I always get the closest spot.'],
+    idle: ['I always get the closest spot.', "My car's wonderful too. Obviously.", 'They should name a parking spot after me.'],
+    zone: ['I always get the closest spot.', 'Valet? Please. I AM the valet.'],
+    car: ['Nice try, sedan. Nobody hits the legend.', 'Not the sweater! Watch the road!'],
+    alarm: ["Relax. That's not my car. Mine's nicer."],
+    drop: ["Parked. You're welcome."],
+    clear: ['Closest spot, best nurse. Goodnight, everybody.'] },
+  jackie: { spawn: ['Who needs a jump?'],
+    idle: ['Who needs a jump?', "I've got cables in my trunk. Who's dead?", "Need a ride home? I'll drive!"],
+    zone: ['Who needs a jump?', "I'll take the next level, you take a breather."],
+    car: ["I'm okay! Who else needs a jump?", "Cars! I'll direct traffic!"],
+    alarm: ["I'll get that alarm! Who's got the keys?", 'Who needs a jump? ...Nobody? Okay.'],
+    drop: ["I'll walk you to your car!", "I'll call you a ride!"],
+    clear: ["Who needs a jump? I've got cables!"] },
+  nate: { spawn: ["Ugh. My car's on the roof level."],
+    idle: ['Can I just sleep in my car?', 'Ugh. Walking to the car is cardio.', "I'm gonna nap in the back seat."],
+    zone: ['Ugh. More stairs.', 'Is the elevator working? No? Ugh.'],
+    car: ['Ugh. Can the car just drive me home?', "Hit me again. Maybe I'll get a day off."],
+    alarm: ['Ugh. Someone turn that off. Not me.'],
+    drop: ["Stay down. I'm parked right there."],
+    clear: ['Finally. Nap time in the back seat.'] },
+  heather: { spawn: ['Twelve hours, and now I get to fight for my car.'],
+    idle: ['Parking is free. The therapy is extra.', 'Nobody here knows how to use a turn signal.', 'Hospital parking: where hope goes to circle.'],
+    zone: ['Oh good, more people who can\'t park.', 'Next level. Same bad drivers.'],
+    car: ['Turn signal. Look it up.', 'Did you get your license from a cereal box?'],
+    alarm: ['Great. A car alarm. My favorite song.'],
+    drop: ["You're parked. Permanently.", "Here's your ticket. It says NAP."],
+    clear: ["I'm going home. Don't follow me."] },
+};
+for (const [id, L] of Object.entries(GARAGE_LINES)) HEROES[id].garage = L;
+export const GARAGE_BILL = { nick: "Someone's gonna key my car, I know it.", kim: 'Let me help you to your car, sweetie!', will: 'I always get the closest spot.', jackie: 'Who needs a jump?' };
+
 // hit = which frame lands; box = [x0, x1] forward reach, z band [z0, z1]
 export const ATTACKS = {
   atk1: { t: [0.06, 0.1], dur: 0.2, dmg: 6, box: [6, 30], z: [26, 46], kb: 30, stun: 0.32, sfx: 'punch0' },
@@ -245,6 +294,21 @@ export const ENEMIES = {
   yeller: { name: 'FIRE ALARM YELLER', sheet: 'yeller', ai: 'yeller', hp: 30, speed: 72, depth: 40, reach: 22, score: 600, atk: 'slap', cd: [1.3, 2.1],
     ko: ['Was it... not a fire? ...zzz', 'I smelled TOAST! ...zzz', 'False alarm... zzz'], voice: 'voice5', lines: ['FIRE! FIIIRE!', 'I SMELL SMOKE!'] },
   visitor: { name: 'BELLIGERENT VISITOR', sheet: 'visitor', hp: 110, speed: 44, depth: 26, reach: 34, score: 800, atk: 'punch', cd: [1.4, 2.2], armor: 3, ko: ['I want the manager... zzz', 'Visiting hours are over.'], voice: 'voice3', big: true },
+  // v0.11 PARKING GARAGE: visitors and family who couldn't find a spot. Street clothes (top, belt, pants), staff-sized. Their
+  // defeat is a nap like everyone's. ai = the patient brain they borrow; lines = their chatter (the first one shows as they arrive).
+  ragevisitor: { name: 'ROAD-RAGE VISITOR', sheet: 'ragevisitor', ai: 'visitor', hp: 62, speed: 50, depth: 26, reach: 30, score: 500, atk: 'punch', cd: [1.4, 2.2], armor: 1, garage: true,
+    ko: ['Validate... my... ticket... zzz', "Fine. I'll take the bus... zzz"], voice: 'voice3',
+    lines: ["I've been circling for 40 minutes!", 'THIS IS A TWO-HOUR SPOT!', 'Who do I talk to about this ticket?!', 'I was only gone FIVE minutes!'] },
+  vanmom: { name: 'MINIVAN MOM', sheet: 'vanmom', ai: 'ivswing', hp: 48, speed: 42, depth: 24, reach: 50, score: 450, atk: 'sweep', cd: [1.5, 2.3], drop: ['snacks', 0.3], garage: true,
+    ko: ['Five minutes of quiet... zzz', 'Finally, a nap... zzz'], voice: 'voice2',
+    lines: ['Who parks in the stroller spot?!', 'I have THREE kids in the car!', 'Parking a minivan is HARD!'] },
+  coffeeguy: { name: 'COFFEE GUY', sheet: 'coffeeguy', ai: 'tray', proj: 'coffee', projSpr: 'p_coffee', throwLines: ['HAVE A LATTE!', 'EXTRA FOAM!', 'DECAF?! NEVER!'],
+    hp: 34, speed: 36, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.6, 2.6], keep: 118, drop: ['energy', 0.3], garage: true,
+    ko: ['Need... more... espresso... zzz', 'Wake me at nine... zzz'], voice: 'voice1',
+    lines: ["Don't talk to me before coffee.", "I'm late for a 7:15!", 'This is a VENTI, pal!', "I'm on a CALL!"] },
+  bigshot: { name: 'BIG SHOT', sheet: 'bigshot', ai: 'sundowner', hp: 56, speed: 40, depth: 26, reach: 24, score: 500, atk: 'charge', cd: [1.8, 2.8], armor: 1, drop: ['star', 0.3], garage: true,
+    ko: ["Cancel my 8 o'clock... zzz", 'Tell my assistant... zzz'], voice: 'voice3',
+    lines: ['Do you know who I am?', "I'm a VERY important donor!", 'My lawyer will hear about this!', "I'm parking RIGHT HERE."] },
 };
 export const VARIANTS = {};  // v0.2: looks are randomized at runtime instead (src/enemy.js lookFor)
 
@@ -291,6 +355,14 @@ export const BREAKABLES = {
     deb: ['#c8ccd6', '#8a94a4', '#e8a040'], hit: 'clang', brk: 'clang' },
   vending: { name: 'VENDING MACHINE', spr: 'vending', hp: 6, w: 30, h: 64, big: true, mass: 99, loot: 'vending',
     bits: ['deb_glass', 'deb_can', 'deb_glass', 'deb_box'], deb: ['#d83a4a', '#1a2a3a', '#cfe8ff'], hit: 'clang', brk: 'smash' },
+  // v0.11 PARKING GARAGE props: traffic cones (light, carry + throw), runaway shopping carts (roll like crash carts),
+  // the pay station (breaks open into coins + tickets) and the parked cars (hit one and its alarm goes off: src/garage.js)
+  cone: { carry: true, name: 'TRAFFIC CONE', spr: 'cone', hp: 2, w: 12, h: 20, states: 2, move: 'slide', fr: 2.4, push: 1.25, dmg: 6, mass: 0.4, loot: 'small',
+    bits: ['deb_cone', 'deb_cone'], deb: ['#ff7a1a', '#f4f4f4'], hit: 'thunk', brk: 'thunk' },
+  shopcart: { metal: true, name: 'SHOPPING CART', spr: 'shopcart', hp: 4, w: 30, h: 28, move: 'roll', fr: 0.5, push: 1.1, dmg: 13, mass: 1.8, loot: 'cart',
+    bits: ['deb_wire', 'deb_wheel', 'deb_wire'], deb: ['#b8c0cc', '#e83a3a'], hit: 'clang', brk: 'crash' },
+  paystation: { name: 'PAY STATION', spr: 'paystation', hp: 5, w: 22, h: 50, big: true, mass: 99, loot: 'paystation',
+    bits: ['deb_ticket', 'deb_coin', 'deb_ticket', 'deb_coin', 'deb_glass'], deb: ['#3a4a6a', '#ffd84a', '#fff8d8'], hit: 'clang', brk: 'smash' },
 };
 // what a smashed prop coughs up (one roll per break, on top of any authored drops). Odds are per break.
 export const LOOT = {
@@ -300,6 +372,8 @@ export const LOOT = {
   trash: [['pizza', 0.1], ['jerky', 0.05], ['energy', 0.12], ['snacks', 0.05], ['donut', 0.12], ['star', 0.05], ['w:bedpan', 0.04], ['w:clipboard', 0.03], ['zynn', 0.01]],
   small: [['pizza', 0.04], ['jerky', 0.06], ['energy', 0.14], ['snacks', 0.05], ['donut', 0.09], ['star', 0.06], ['w:mop', 0.03], ['w:bedpan', 0.02], ['zynn', 0.01]],
   vending: [['snacks', 0.35], ['energy', 0.3], ['jerky', 0.15], ['star', 0.15], ['zynn', 0.03]],
+  glovebox: [['jerky', 0.12], ['snacks', 0.1], ['energy', 0.18], ['pizza', 0.06], ['star', 0.12], ['donut', 0.08], ['zynn', 0.03]],  // v0.11 a busted parked car
+  paystation: [['star', 0.35], ['energy', 0.2], ['snacks', 0.1], ['zynn', 0.03]],
 };
 
 // ---- Level 1: Floor 3 West, Med-Surg. x in world pixels. Doors / elevators are wall features enemies can come out of.
@@ -453,7 +527,69 @@ export const LEVEL3 = {
     ] },
   ],
 };
-export const LEVELS = [LEVEL1, LEVEL2, LEVEL3];
+// ---- v0.11 parody cars (no real brands): parked ones are big breakables (src/garage.js turns a hit into a car alarm),
+// the same sprites drive through the lanes. ci = colourway (0/1).
+export const CARS = {
+  hatch: { name: 'ZIPPY HATCH', deb: [['#8ad83a', '#5aa01e'], ['#3ab8e8', '#1e80b0']] },
+  sedan: { name: 'COMMUTER LX', deb: [['#d8343a', '#9a1e28'], ['#b8c0cc', '#7c8696']] },
+  van: { name: 'FAMILY HAULER', deb: [['#d8c8a0', '#a8987a'], ['#7a2a4a', '#521a30']] },
+  wagon: { name: 'WOODY WAGON', deb: [['#e8dcb8', '#9a5a2a'], ['#2a8a8a', '#1a5a5a']] },
+};
+for (const [m, c] of Object.entries(CARS)) for (const ci of [0, 1]) {
+  BREAKABLES[`car_${m}${ci}`] = { name: c.name, spr: `car_${m}${ci}_`, hp: 7, w: 66, h: 30, big: true, mass: 99, car: true, alarm: true, model: m, ci, loot: 'glovebox',
+    bits: ['deb_glass', 'deb_bumper', 'deb_wheel', 'deb_glass'], deb: [...c.deb[ci], '#cfe8ff'], hit: 'clang', brk: 'crash' };
+}
+// ---- v0.11 Level 4: THE PARKING GARAGE AT SHIFT CHANGE (after the night shift, before the ending). The crew takes the staff
+// elevator down to Level P3 at dawn: concrete, sodium lamps, neon PARKING / STAIRS / VALET signs, cars backing out and
+// tearing down the lanes (they hit nurses AND visitors: bait them), car alarms, and VINNIE THE VALET in his golf cart.
+// garage: true = the garage systems (src/garage.js), the garage background paint, the nurses' garage lines, no fire alarm.
+export const LEVEL4 = {
+  id: 4, name: 'LEVEL P3: THE PARKING GARAGE', sub: '7:30 AM. SHIFT CHANGE. FIND YOUR CAR.', width: 2960, music: 'garage', bossMusic: 'valet', clock: 7 * 60 + 30, floorNum: 'P3', cutBoss: 'valet',
+  garage: true, noAlarm: true, dark: 0.36, tiles: { wall: 'gwall', ceil: 'gceil', floor: 'gfloor', ceilLit: false }, stalls: 96,
+  wall: [
+    [24, 'elev', 'A'], [118, 'callpanel'], [128, 'neon_stairs'], [180, 'gpillar'], [226, 'gopen0'], [306, 'neon_park'], [372, 'sodium'], [420, 'gpillar'], [466, 'gopen1'],
+    [546, 'sign_speed'], [610, 'sodium'], [660, 'gpillar'], [706, 'gopen2'], [786, 'sign_lost'], [900, 'gpillar'], [946, 'gopen0'], [1026, 'sign_compact'], [1092, 'sodium'],
+    [1140, 'gpillar'], [1170, 'ramp'], [1310, 'neon_park'], [1380, 'gpillar'], [1426, 'gopen1'], [1506, 'sign_vip'], [1620, 'gpillar'], [1660, 'elev', 'B'], [1742, 'callpanel'],
+    [1756, 'neon_stairs'], [1860, 'gpillar'], [1906, 'gopen2'], [1986, 'sign_staff'], [2052, 'sodium'], [2100, 'gpillar'], [2146, 'gopen0'], [2226, 'sign_validate'],
+    [2340, 'gpillar'], [2380, 'valetstand'], [2430, 'neon_valet'], [2500, 'gopen1'], [2580, 'gpillar'], [2620, 'booth'], [2676, 'gatearm'], [2760, 'sign_exit'], [2820, 'gpillar'],
+    [60, 'tube'], [290, 'tube'], [530, 'tube'], [770, 'tube'], [1010, 'tube'], [1250, 'tube'], [1490, 'tube'], [1730, 'tube'], [1970, 'tube'], [2210, 'tube'], [2450, 'tube'], [2690, 'tube'],
+    [560, 'clearance'], [1550, 'clearance'], [2240, 'clearance'],
+  ],
+  props: [
+    // the back row of stalls (parked cars: hit one and its alarm goes off), with a wheelchair someone left in a stall
+    [150, 140, 'car_hatch0', []], [342, 141, 'car_van1', []], [438, 140, 'car_sedan1', []], [630, 141, 'car_wagon0', []], [726, 140, 'wheelchair', []],
+    [822, 141, 'car_sedan0', []], [918, 140, 'car_van0', []], [1206, 141, 'car_hatch1', []], [1398, 140, 'car_wagon1', []], [1494, 141, 'car_sedan1', []],
+    [1782, 140, 'car_van1', []], [1878, 141, 'car_hatch0', []], [2070, 140, 'car_sedan0', ['snacks']], [2166, 141, 'car_wagon0', []], [2262, 140, 'car_van0', ['zynn']],
+    // floor clutter: cones, shopping carts, pay stations
+    [250, 186, 'cone', []], [268, 196, 'cone', []], [400, 176, 'shopcart', ['energy']], [560, 150, 'paystation', ['jerky']], [690, 202, 'cone', []], [840, 186, 'shopcart', []],
+    [1010, 146, 'cone', []], [1060, 200, 'trash', []], [1290, 184, 'shopcart', ['pizza']], [1350, 150, 'cone', []], [1610, 200, 'cone', []], [1700, 150, 'paystation', []],
+    [1960, 190, 'shopcart', []], [2030, 202, 'cone', []], [2200, 186, 'cone', []],
+    // the valet stand (boss): cones and carts to throw at Vinnie
+    [2520, 150, 'cone', []], [2540, 158, 'cone', []], [2700, 196, 'shopcart', []], [2810, 186, 'cone', []], [2640, 206, 'trash', []],
+  ],
+  floorItems: [[620, 196, 'w:clipboard'], [1600, 170, 'w:extinguisher']],
+  zones: [
+    { at: 120, lock: 0, title: 'LEVEL P3', waves: [
+      [['ragevisitor', 'R', 0.6], ['escape', 'L', 1.6]],
+      [['coffeeguy', 'C', 0.3], ['wanderer', 'R', 1.0], ['vanmom', 'R', 1.8]],
+    ] },
+    { at: 620, lock: 520, title: 'PAY STATION', waves: [
+      [['bigshot', 'R', 0.3], ['coffeeguy', 'L', 1.0], ['runner', 'C', 1.8]],
+      [['vanmom', 'C', 0.3], ['ragevisitor', 'R', 1.0], ['sundowner', 'L', 1.8], ['coffeeguy', 'R', 2.6]],
+    ] },
+    { at: 1250, lock: 1160, title: 'THE RAMP', waves: [
+      [['ragevisitor', 'R', 0.4], ['bigshot', 'C', 1.0], ['escape', 'L', 1.8]],
+      [['visitor', 'R', 0.4], ['vanmom', 'C', 1.2], ['coffeeguy', 'L', 2.0]],
+    ] },
+    { at: 1760, lock: 1640, title: 'ELEVATOR LOBBY', waves: [
+      [['coffeeguy', 'EB', 0.6], ['ragevisitor', 'EB', 1.0], ['elite', 'R', 1.8]],
+      [['bigshot', 'C', 0.3], ['vanmom', 'EB', 1.0], ['runner', 'R', 1.8], ['ragevisitor', 'L', 2.4]],
+    ] },
+    { at: 2440, lock: 2420, boss: 'valet', title: 'THE VALET STAND', waves: [] },
+  ],
+  bossArena: 2420, backup: ['ragevisitor', 'coffeeguy', 'vanmom', 'bigshot'],
+};
+export const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4];
 // ---- v0.4 Breakroom bonus round (between Floor 3 and Floor 4): one screen, built to the current view width at start.
 // Thieves come out of the staff door and both screen edges, raid a snack spot for a couple of seconds, then run.
 export const BONUS = { time: 45, every: [1.3, 2.3], cap: 4, raid: 2.3, stop: 500, saved: 150, perfect: 3000,

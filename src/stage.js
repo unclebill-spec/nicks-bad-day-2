@@ -6,6 +6,7 @@ import { W, openDoor, openElev, addFx, addShot, floatText, word, shake, spark, d
 import { Enemy } from './enemy.js';
 import { Tilly } from './boss.js';
 import { MRI, Lou } from './mri.js';
+import { Valet } from './valet.js';
 import { sfx, playMusic } from './sound.js';
 import { resetAlarm, maybeYeller, updateAlarm, alarmPending } from './alarm.js';
 
@@ -28,6 +29,12 @@ export function spawn(kind, where) {
     const ex = e ? e.x + 40 : W.camX + G.VW / 2;
     if (e) openElev(where.slice(1));
     x = ex + rr(-14, 14); y = 122; tx = ex + rr(-50, 50); ty = rr(Y_MIN + 10, Y_MAX - 10); st = 'enter_door';
+  } else if (where === 'C') {  // v0.11 parking garage: climbs out of a parked car on screen (falls back to an edge)
+    const cars = W.props.filter((p) => p.def.car && p.st < 2 && p.x > W.camX + 30 && p.x < W.camX + G.VW - 30);
+    if (!cars.length) return spawn(kind, W.rnd() < 0.5 ? 'L' : 'R');
+    const c = cars[Math.floor(W.rnd() * cars.length)];
+    x = c.x + rr(-14, 14); y = c.y + 2; tx = x + rr(-30, 30); ty = rr(Y_MIN + 24, Y_MAX - 10); st = 'enter_door';
+    sfx('door', { vol: 0.45, rate: 1.4 }); c.shake = 0.25; floatText('*SLAM*', c.x, c.y, 40, '#c8ccd6');
   }
   const e = new Enemy(kind, x, y, vcount);
   e.tx = Math.max(W.camX + 14, Math.min(W.camX + G.VW - 14, tx)); e.ty = ty; e.set(st); e.face = Math.sign(e.tx - x) || 1;
@@ -50,6 +57,13 @@ function splashAt(s, h) {
     word('w_splat', s.x, s.y, h ? 20 : 4); sfx('splat', { vol: 0.7 });
     if (h) floatText(['JIGGLY!', 'NOT THE JELLO!', 'LIME? REALLY?'][Math.floor(W.rnd() * 3)], h.x, h.y, 66, '#8ae87a');
     addShot({ kind: 'puddle', spr: 'puddle_g', x: s.x, y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
+    return;
+  }
+  if (s.splash === 'coffee') {  // v0.11 Coffee Guy's latte: a brown splat and a slippery coffee puddle
+    for (const vx of [-50, 40, 10]) addFx({ type: 'chunk', spr: null, col: vx > 20 ? '#f4e8d0' : '#7a4a22', sz: 3, x: s.x, y: s.y, z: 6, vx, vy: 0, vz: 120, spin: 0, dur: 0.8 });
+    word('w_splat', s.x, s.y, h ? 20 : 4); sfx('splash', { vol: 0.55, rate: 1.2 });
+    if (h) floatText(['HOT HOT HOT!', 'IS THIS OAT MILK?!', 'MY SCRUBS! LATTE STAINS!'][Math.floor(W.rnd() * 3)], h.x, h.y, 66, '#f4c890');
+    addShot({ kind: 'puddle', spr: 'puddle_c', x: s.x, y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
     return;
   }
   addFx({ type: 'splash', x: s.x, y: s.y, z: h ? Math.max(10, s.z) : 0, dur: 0.45 });
@@ -96,14 +110,15 @@ export const Director = {
   },
   startBoss(z = W.lv.zones[W.zone]) {
     W.bossOn = true; const kind = z.boss || 'tilly';
-    if (kind === 'lou') { W.boss = new Lou(W.lockX + G.VW + 50, 170); playMusic('boss'); }
+    if (kind === 'valet') { W.boss = new Valet(W.lockX + G.VW + 70, 178); playMusic(W.lv.bossMusic || 'boss'); }
+    else if (kind === 'lou') { W.boss = new Lou(W.lockX + G.VW + 50, 170); playMusic('boss'); }
     else if (kind === 'mri') { W.boss = new MRI(z.lock); playMusic(W.lv.bossMusic || 'boss'); }
     else { W.boss = new Tilly(W.lockX + G.VW + 60, 176); playMusic(W.lv.bossMusic || 'boss'); }
     floatText(z.title || 'DAYROOM', W.lockX + G.VW / 2, 150, 70, '#d8b4f4');
   },
   backup() {  // a boss's call for help: two patients answer
     const kinds = W.lv.backup || ['wanderer', 'escape', 'crutch', 'bell', 'tray', 'o2'];
-    spawn(kinds[Math.floor(W.rnd() * kinds.length)], W.doors[314] ? 'D314' : 'L'); spawn(kinds[Math.floor(W.rnd() * kinds.length)], W.rnd() < 0.5 ? 'L' : 'R');
+    spawn(kinds[Math.floor(W.rnd() * kinds.length)], W.doors[314] ? 'D314' : W.lv.garage ? 'C' : 'L'); spawn(kinds[Math.floor(W.rnd() * kinds.length)], W.rnd() < 0.5 ? 'L' : 'R');
   },
   // ------------------------------------------------------------ projectiles
   shots(dt) {

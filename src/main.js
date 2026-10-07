@@ -2,7 +2,7 @@
 // teaser, game over, high scores), pause / settings / how-to menus, saves, display presets and fullscreen / install.
 // v0.4 flow: select -> [cutscene start] -> intro -> play -> [cutscene boss] -> Tilly -> tally -> [cutscene lunch] ->
 // Breakroom Bonus -> bonus tally -> [cutscene next] -> Floor 4 Radiology (Lou mini-boss, [cutscene mri] -> MRI boss) ->
-// tally -> [cutscene scoot] -> v0.9 SCOOTER RUN (Motorcart Marv) -> scooter tally -> [cutscene night] -> Night Shift -> tally -> [cutscene ending] -> THE END (v0.5). Scores, lives, continues and
+// tally -> [cutscene scoot] -> v0.9 SCOOTER RUN (Motorcart Marv) -> scooter tally -> [cutscene night] -> Night Shift -> tally -> v0.11 [cutscene garage] -> Level P3: THE PARKING GARAGE (Vinnie the Valet, [cutscene valet]) -> tally -> [cutscene ending] -> THE END. Scores, lives, continues and
 // 2P carry from floor to floor. Cutscenes skip with any button / tap (auto-skipped with ?bot / ?nocut).
 import { G, initGfx, resize, present, text, spr, rect, panel, frame, anim, textW, sprSize, frameRect, ellipse, heroName } from './gfx.js';
 import { loaded, Q, audio } from '../kit/common.js';
@@ -18,6 +18,7 @@ import { ALARM, drawStations, drawWetFloor, drawAlarmFront, maybeYeller, pullAla
 import { drawHUD } from './hud.js';
 import { makeCut, updateCut, drawCut } from './cutscene.js';
 import { B as BONUS_STATE, buildBreakroom, startBonus, updateBonus, drawBonusHUD, bonusRows } from './bonus.js';
+import { resetGarage, updateGarage, garageList, drawGarageFloor, drawGarageFront, garageLights, carDodge, sendCar, backOut, GARAGE } from './garage.js';
 import { SC, SCOOT, startScooter, updateScooter, drawScooter, drawScooterHUD, scootRows, drawScootTally, scootBot, continueRider, scootSpawn } from './scooter.js';
 
 // ------------------------------------------------------------------ save
@@ -230,17 +231,26 @@ function afterTally() {
   const i = W.lv.id;
   if (i === 1) return goLunch();
   if (i === 2) return goScooter();  // v0.9: Radiology -> the Scooter Run -> the night shift
-  finishRun(true); save.best = Math.max(save.best, 3); writeSave();
+  if (i === 3) return goGarage();  // v0.11: the night shift -> 7:30 AM, the parking garage -> the ending
+  finishRun(true); save.best = Math.max(save.best, 4); writeSave();
   const go = () => { game.scene = 'ending'; game.t = 0; setScene('menu'); playMusic('clear'); };
   if (noCuts()) go(); else startCut('ending', go);
+}
+function goGarage() { const go = () => loadLevel(3); if (noCuts()) go(); else { prepGarageBg(); startCut('garage', go); } }
+export function prepGarageBg() {  // the cutscenes' garage panel needs the garage background before the level loads
+  if (W.garageBg) return W.garageBg;
+  const keep = { lv: W.lv, bg: W.bg, doors: W.doors, elevs: W.elevs, lights: W.lights, decor: W.decor, dark: W.dark, props: W.props, items: W.items, zynn: W.zynnProps };
+  buildLevel(LEVELS[3]); W.garageBg = W.bg;
+  Object.assign(W, { lv: keep.lv, bg: keep.bg, doors: keep.doors, elevs: keep.elevs, lights: keep.lights, decor: keep.decor, dark: keep.dark, props: keep.props, items: keep.items, zynnProps: keep.zynn });
+  return W.garageBg;
 }
 // v0.5: put the team on floor idx (0-based) with everything they've earned: score, lives, meter, continues used, 2P
 function loadLevel(idx, zone = 0) {
   const lv = LEVELS[idx];
   W.enemies = []; W.boss = null; W.shots = []; W.fx = []; W.items = []; W.decor = []; W.t = 0; W.finalT = 0; W.vc = 0; W.bgHook = null; W.team = null;
-  W.forceYeller = !!Q.get('yeller'); W.noAlarm = !!Q.get('noalarm'); W.scoot = false; W.scootOver = false; scootUI(false);
-  buildLevel(lv); Director.reset(); W.camX = 0; W.camMin = 0; W.clock = lv.clock || 7 * 60; W.stats.time = 0;
-  if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else W.nightBg = W.bg;
+  W.forceYeller = !!Q.get('yeller'); W.noAlarm = !!Q.get('noalarm') || !!lv.noAlarm; W.scoot = false; W.scootOver = false; scootUI(false);
+  buildLevel(lv); resetGarage(lv); Director.reset(); W.camX = 0; W.camMin = 0; W.clock = lv.clock || 7 * 60; W.stats.time = 0;
+  if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else if (lv.garage) W.garageBg = W.bg; else W.nightBg = W.bg;
   W.heroes.forEach((h, i) => {
     h.kos = 0; h.maxCombo = 0; h.combo = 0; h.weapon = null; h.carry = null; h.held = null; h.grabber = null; h.ride = null; h.z = 0; h.vx = h.vy = h.vz = 0; h.inv = 0;
     if (h.st === 'out') { if (game.continuesLeft() > 0) h.continueT = 10; h.x = 56 + i * 22; return; }  // a KO'd partner can still continue here
@@ -365,6 +375,7 @@ function playUpdate(dt) {
   for (const e of W.enemies) e.update(dt);
   if (W.boss) W.boss.update(dt);
   Director.update(dt);
+  updateGarage(dt);  // v0.11 cars + car alarms (garage only)
   updateWorld(dt);
   updateCamera(dt);
   if (W.cleared) { toTally(); return; }
@@ -373,6 +384,7 @@ function playUpdate(dt) {
 // test-only bot: walk to the nearest patient (or the boss / the GO arrow) and mash attack, sometimes grab or special
 function botInput(h) {
   const o = { mx: 0, my: 0, held: {}, prs: {}, run: false };
+  const dodge = carDodge(h); if (dodge) { o.my = dodge; return o; }  // v0.11: step out of a car's lane
   const foes = [...W.enemies.filter((e) => e.alive && e.st !== 'down' && e.x > W.camX - 10 && e.x < W.camX + G.VW + 10), ...(W.boss && W.boss.st !== 'defeat' ? [W.boss] : [])];
   if (!foes.length) { o.mx = 1; o.run = W.go > 0; return o; }
   foes.sort((a, b) => Math.abs(a.x - h.x) + Math.abs(a.y - h.y) - Math.abs(b.x - h.x) - Math.abs(b.y - h.y));
@@ -414,6 +426,7 @@ function drawWorld() {
   const sx = W.shakeAmt > 0 ? Math.round((Math.random() - 0.5) * W.shakeAmt) : 0, sy = W.shakeAmt > 0 ? Math.round((Math.random() - 0.5) * W.shakeAmt) : 0;
   c.save(); c.translate(sx, sy);
   drawBackground();
+  drawGarageFloor();  // v0.11 lane warnings + hazard lights under everyone
   drawStations(G.VH - 224); drawWetFloor(G.VH - 224);  // v0.6 fire-alarm pull stations + wet-floor sheen
   drawTeamBack();
   const list = [];
@@ -424,10 +437,12 @@ function drawWorld() {
   for (const a of actors) if (a.st !== 'out') a.drawShadow();
   for (const a of actors) list.push({ y: a.y + (a.st === 'held' ? 0.6 : 0), d: () => a.draw() });
   for (const a of W.decor || []) list.push({ y: a.y, d: () => a.draw() });  // a beaten mini-boss napping on the floor
+  garageList(list);  // v0.11 cars in the lanes
   list.sort((a, b) => a.y - b.y);
   for (const o of list) o.d();
   if (W.dark > 0.01) { drawLighting(); drawEyes(); }
   for (const f of W.fx) drawFx(f);
+  drawGarageFront();  // v0.11 the CAR! arrows
   // gurney hint: RIDE! over a gurney a nurse is standing next to
   for (const h of W.heroes) { if (!h.canAct()) continue; const g = h.nearGurney(); if (g && Math.floor(W.t * 3) % 2) text('RIDE!', g.x - W.camX, g.y + offY() - 44, { col: '#8ad8ff', align: 'center' }); }
   // v0.6 lift hint: PICK UP over the prop a nurse would lift with GRAB
@@ -446,6 +461,7 @@ function drawWorld() {
 // v0.5 light sources that move: nurses' flashlights on the night shift (a little glow around them on Radiology), the MRI
 W.lightHook = (L) => {
   if (W.boss && W.boss.light) W.boss.light(L);
+  garageLights(L);
   for (const h of W.heroes) {
     if (!h.alive || h.st === 'out') continue;
     const Y = h.y - h.z - 30;
@@ -795,7 +811,7 @@ async function boot() {
   requestAnimationFrame(frameLoop);
   // test hooks
   window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, Director, display,
-    cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext, scooter: enterScooter, goScooter, goNight, SC, SCOOT, scootSpawn, ALARM, maybeYeller, pullAlarm, stationFor, alarmAllowed, settingsMenu, applySettings };
+    cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext, scooter: enterScooter, goScooter, goNight, goGarage, prepGarageBg, garage: { sendCar, backOut, GARAGE, carDodge }, SC, SCOOT, scootSpawn, ALARM, maybeYeller, pullAlarm, stationFor, alarmAllowed, settingsMenu, applySettings };
   if (Q.get('autostart') || Q.get('zone') || Q.get('level')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } if (Q.get('scene') === 'scooter') { game.cut = null; game.cutDone = null; enterScooter(); } }
 }
 boot().catch((e) => { const t = document.getElementById('loadtxt'); if (t) t.textContent = 'Could not load: ' + e.message; console.error(e); });

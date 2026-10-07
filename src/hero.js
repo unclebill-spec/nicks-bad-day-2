@@ -15,6 +15,7 @@ import { sfx } from './sound.js';
 export const TIER = 100 / 3;  // v0.6 Code Blue meter tiers: 1/3 = Ativan jab, full = defib super
 const CARRY_OK = new Set(['idle', 'walk', 'jump', 'land', 'lift', 'toss']);  // states a nurse can hold a prop overhead in
 
+const GARAGE_MIX = { idle: 0.7, zone: 0.75, drop: 0.6, hurt: 0 };  // v0.11: how often a garage line wins over the usual one
 export class Hero extends Actor {
   constructor(id, slot, x, y) {
     super(id, x, y);
@@ -629,7 +630,10 @@ export class Hero extends Actor {
   // ---- v0.8 speech bubbles: heroes with d.lines say something in character (Nasty Nate: lazy). ev = spawn, idle, grab, food,
   // weapon, hurt, ko, revive, codeblue, special, zone, clear (v0.10.1: + throw, drop = a patient you knocked down). A line shows ~2.6 s; `force` skips the cooldown (big moments).
   say(ev, force = false) {
-    const L = this.d.lines && this.d.lines[ev];
+    let L = this.d.lines && this.d.lines[ev];
+    // v0.11 parking garage: each nurse's garage lines (data.js GARAGE_LINES) take over most of the time down there
+    const GL = W.lv && W.lv.garage && this.d.garage && this.d.garage[ev];
+    if (GL && GL.length && (!L || W.rnd() < (GARAGE_MIX[ev] ?? 1))) L = GL;
     if (!L || !L.length || (!force && W.t < this.sayCd)) return null;
     let i = Math.floor(W.rnd() * L.length);
     if (L.length > 1 && i === this.sayLast[ev]) i = (i + 1) % L.length;
@@ -639,7 +643,7 @@ export class Hero extends Actor {
     return L[i];
   }
   sayTick(dt, I) {  // spawn line (once per floor, when he can first act) + the idle line after ~6 s doing nothing
-    if (!this.d.lines) return;
+    if (!this.d.lines && !this.d.garage) return;
     if (this.hiLv !== W.lv && this.canAct()) { this.hiLv = W.lv; this.say('spawn', true); }
     const busy = Math.hypot(I.mx, I.my) > 0.15 || I.atk || I.jmp || I.prs.sp || I.prs.grab || this.st !== 'idle';
     this.idleT = busy ? 0 : this.idleT + dt;

@@ -52,5 +52,17 @@
   "start": 2.723,
   "end": 24.511,
   "tempo": 176
+ },
+ "garage": {
+  "loop": true,
+  "start": 4.202,
+  "end": 37.815,
+  "tempo": 114
+ },
+ "valet": {
+  "loop": true,
+  "start": 1.706,
+  "end": 28.998,
+  "tempo": 140
  }
 }

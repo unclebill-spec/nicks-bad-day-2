@@ -23,7 +23,7 @@ export function placeStations(lv) {
   for (let x = 200; x < lv.width - 120; x += 8) if (x - last >= 320 && free(x)) { out.push({ x, pulled: false, shake: 0 }); last = x; }
   return out;
 }
-export function resetAlarm(lv) { W.alarm = null; W.alarmUses = 0; W.alarmNext = ALARM.first; W.wet = 0; W.alarms = placeStations(lv); W.yellers = 0; }
+export function resetAlarm(lv) { W.alarm = null; W.alarmUses = 0; W.alarmNext = ALARM.first; W.wet = 0; W.alarms = lv.noAlarm ? [] : placeStations(lv); W.yellers = 0; }  // v0.11: the open-air garage has none (lv.noAlarm)
 function inView(x, m = 24) { return x > W.camX + m && x < W.camX + G.VW - m; }
 export function stationFor(e) {  // the nearest station on screen (one is put up if none is in view)
   let best = null, bd = 1e9;
@@ -33,7 +33,7 @@ export function stationFor(e) {  // the nearest station on screen (one is put up
 }
 export function alarmAllowed() {
   const z = W.lv && W.lv.zones && W.lv.zones[W.zone];
-  return !!(W.zoneOn && !W.bossOn && z && !z.boss && !W.lv.bonus && !W.alarm && (W.alarmUses || 0) < ALARM.perLevel);
+  return !!(W.zoneOn && !W.bossOn && z && !z.boss && !W.lv.bonus && !W.lv.noAlarm && !W.alarm && (W.alarmUses || 0) < ALARM.perLevel);
 }
 // called when a wave starts: maybe add a yeller to it
 export function maybeYeller(force = false) {

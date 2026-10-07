@@ -21,6 +21,10 @@ const LAYER = {  // wall features: vertical placement by kind
   // v0.4 breakroom pieces
   // v0.5 radiology + night pieces
   warnlamp: () => 38, trefoil: () => 40, poster_nometal: () => 30, monitor: (w, h) => 70 - h + 2, calllamp: () => 42, nlight: () => FLOOR_Y - 12,
+  // v0.11 parking garage pieces
+  gpillar: () => 14, gopen0: () => 24, gopen1: () => 24, gopen2: () => 24, sodium: () => 34, tube: () => 14, clearance: () => 14,
+  neon_park: () => 26, neon_stairs: () => 26, neon_valet: () => 24, booth: (w, h) => FLOOR_Y + 2 - h, gatearm: (w, h) => FLOOR_Y + 2 - h, gatearm_up: (w, h) => FLOOR_Y + 2 - h,
+  valetstand: (w, h) => FLOOR_Y + 2 - h, ramp: (w, h) => FLOOR_Y + 1 - h,
   fridge: (w, h) => FLOOR_Y + 3 - h, counter: (w, h) => FLOOR_Y + 3 - h, vend_wall: (w, h) => FLOOR_Y + 3 - h, btable: (w, h) => FLOOR_Y + 5 - h, cabinets: () => 30, note_food: () => 46, sign_breakroom: () => 37,
 };
 function wallY(kind, w, h) {
@@ -41,7 +45,11 @@ const GLOW = {
   sign_exit: { col: '#ff3a4a', r: 26, dx: 12, dy: 5, pool: 30 }, calllamp: { col: '#ff4a3a', r: 20, dx: 5, dy: 3, blink: 2.4, pool: 26 },
   monitor: { col: '#3aa8ff', r: 22, dx: 10, dy: 7, pool: 28 }, nwindow: { col: '#7a9ae8', r: 34, dx: 32, dy: 20, a: 0.55 },
   nlight: { col: '#3aa8ff', r: 6, dx: 0, dy: 2, pool: 30 }, sign_mri: { col: '#a24dff', r: 30, dx: 40, dy: 5 }, sign_radiology: { col: '#3aa8ff', r: 26, dx: 24, dy: 5 },
-  sign_imaging: { col: '#3ad8c8', r: 22, dx: 30, dy: 5 }, sign_xray: { col: '#3aa8ff', r: 22, dx: 40, dy: 5 }, trefoil: { col: '#ffd83a', r: 10, dx: 7, dy: 7, a: 0.6 },
+  sign_imaging: { col: '#3ad8c8', r: 22, dx: 30, dy: 5 },
+  // v0.11 garage: sodium-orange wall packs, cool fluorescent tubes, the dawn through the open sides, neon blue / violet / red signs
+  sodium: { col: '#ffa040', r: 26, dx: 7, dy: 7, pool: 44 }, tube: { col: '#d8f0ff', r: 30, dx: 17, dy: 6, pool: 50, a: 0.75 },
+  gopen: { col: '#ff8a6a', r: 44, dx: 36, dy: 34, pool: 54, a: 0.6 }, neon_park: { col: '#3aa8ff', r: 34, dx: 32, dy: 9 },
+  neon_stairs: { col: '#a24dff', r: 30, dx: 28, dy: 9 }, neon_valet: { col: '#ff3a4a', r: 32, dx: 26, dy: 9, pool: 40 }, booth: { col: '#bfe0ff', r: 22, dx: 25, dy: 26, a: 0.6 }, sign_xray: { col: '#3aa8ff', r: 22, dx: 40, dy: 5 }, trefoil: { col: '#ffd83a', r: 10, dx: 7, dy: 7, a: 0.6 },
 };
 const glowOf = (kind) => GLOW[kind] || GLOW[kind.replace(/\d+$/, '')];
 export function buildLevel(lv) {
@@ -65,8 +73,9 @@ export function buildLevel(lv) {
   // soft shadow along the baseboard + a polish shine stripe
   x.fillStyle = 'rgba(30,40,60,0.22)'; x.fillRect(0, FLOOR_Y, lv.width, 4);
   x.fillStyle = 'rgba(255,255,255,0.10)'; x.fillRect(0, FLOOR_Y + 40, lv.width, 2); x.fillRect(0, FLOOR_Y + 70, lv.width, 1);
+  if (lv.garage) paintGarage(x, lv);
   // dayroom: a different floor tint past the boss line
-  if (lv.bossArena) { x.fillStyle = 'rgba(160,120,220,0.12)'; x.fillRect(lv.bossArena - 40, FLOOR_Y, lv.width, 106); }
+  if (lv.bossArena && !lv.garage) { x.fillStyle = 'rgba(160,120,220,0.12)'; x.fillRect(lv.bossArena - 40, FLOOR_Y, lv.width, 106); }
   if (lv.tint) { x.fillStyle = lv.tint; x.fillRect(0, 0, lv.width, 224); }
   for (const [wx, kind, extra] of lv.wall) {
     if (kind === 'door') {  // door frame drawn live (it opens); room number plate drawn into the wall
@@ -87,6 +96,31 @@ export function buildLevel(lv) {
   // breakables + floor items
   W.props = lv.props.map(([px, py, kind, drops]) => makeProp(kind, px, py, drops)); W.zynnProps = 0;
   W.items = []; for (const [ix, iy, k] of lv.floorItems || []) dropItem(k, ix, iy, false);
+}
+
+// v0.11 parking garage floor paint: the back row of stalls (white lines, wheel stops, oil stains), the dashed yellow lane
+// line, white lane arrows, the front row's stall lines at the bottom edge and red VALET hatching by the boss's stand.
+function paintGarage(x, lv) {
+  const W2 = lv.width, st = lv.stalls || 96, R = (n) => { const v = Math.sin(n * 91.7) * 4371.3; return v - Math.floor(v); };
+  x.fillStyle = 'rgba(20,24,34,0.28)'; x.fillRect(0, FLOOR_Y, W2, 22);  // the back-row stalls sit a touch darker
+  for (let sx = 54; sx < W2; sx += st) {
+    x.fillStyle = '#e8e8e0'; for (let k = 0; k < 22; k++) x.fillRect(Math.round(sx - k * 0.35), FLOOR_Y + 1 + k, 2, 1);  // stall line
+    x.fillStyle = '#9a968c'; x.fillRect(sx + 26, FLOOR_Y + 3, 40, 3); x.fillStyle = '#c8c4b8'; x.fillRect(sx + 26, FLOOR_Y + 3, 40, 1);  // wheel stop
+    if (R(sx) < 0.6) { x.fillStyle = 'rgba(16,14,20,0.35)'; x.beginPath(); x.ellipse(sx + 44 + R(sx + 1) * 10, FLOOR_Y + 15, 9 + R(sx + 2) * 6, 3, 0, 0, Math.PI * 2); x.fill(); }
+    x.fillStyle = '#e8e8e0'; for (let k = 0; k < 14; k++) x.fillRect(Math.round(sx + 20 + k * 0.4), 210 + k, 2, 1);  // front-row stall lines
+  }
+  x.fillStyle = '#e8e8e0'; x.fillRect(0, FLOOR_Y + 22, W2, 1);  // edge of the stall row
+  for (let lx = 0; lx < W2; lx += 28) { x.fillStyle = '#e8c02a'; x.fillRect(lx, 176, 16, 2); x.fillStyle = '#a8861a'; x.fillRect(lx, 178, 16, 1); }  // lane line
+  for (let ax = 200; ax < W2 - 200; ax += 380) {  // lane arrows (traffic flows right, to the exit)
+    x.fillStyle = 'rgba(232,232,224,0.85)'; x.fillRect(ax, 195, 26, 3);
+    for (let k = 0; k < 7; k++) x.fillRect(ax + 26 + k, 190 + k, 1, 13 - k * 2);
+  }
+  for (let k = 0; k < 40; k++) { const ox = R(k * 7.3) * W2, oy = 146 + R(k * 3.1) * 60; x.fillStyle = 'rgba(16,14,20,0.18)'; x.beginPath(); x.ellipse(ox, oy, 6 + R(k) * 10, 2 + R(k + 9) * 2, 0, 0, Math.PI * 2); x.fill(); }  // oil stains
+  if (lv.bossArena) {  // red VALET zone hatching in front of the stand
+    x.fillStyle = 'rgba(208,36,58,0.55)';
+    for (let hx = lv.bossArena - 30; hx < lv.bossArena + 140; hx += 10) for (let k = 0; k < 16; k++) x.fillRect(hx + k, FLOOR_Y + 23 + k, 2, 1);
+    x.fillRect(lv.bossArena - 30, FLOOR_Y + 23, 176, 1); x.fillRect(lv.bossArena - 30, FLOOR_Y + 39, 176, 1);
+  }
 }
 
 function drawDoor(d) {
@@ -139,6 +173,7 @@ export function hitProp(p, dmg, { dir = 1, kb = 60, from = null, quiet = false }
   p.hp -= dmg >= 18 ? 3 : dmg >= 10 ? 2 : 1; p.shake = 0.22; p.flash = 0.1;
   if (from && from.isHero) p.kicker = from; else if (from && from.kicker) p.kicker = from.kicker;
   burst(p, 2 + Math.floor(W.rnd() * 3), 0.5);
+  if (d.alarm && W.onCarHit) W.onCarHit(p, from);  // v0.11: a parked car's alarm goes off (src/garage.js)
   if (p.hp <= 0) { smashProp(p); return true; }
   if (p.hp <= Math.ceil(d.hp / 2)) p.st = Math.min(1, (d.states || 3) - 2);
   if (!quiet) { sfx(d.hit || 'clang', { vol: 0.65 }); spark(p.x, p.y, 22, 'spark'); W.stop = Math.max(W.stop, 0.035); shake(2); }
