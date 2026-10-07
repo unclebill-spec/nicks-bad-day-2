@@ -8,7 +8,41 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-06, v0.10.3)
+## Current state (2026-10-06, v0.11)
+- **Backlog:** `docs/LEVEL_IDEAS.md` holds Bill's five approved level ideas (Psych Ward, Cafeteria Lunch Rush, Parking Garage = done,
+  Labor & Delivery, Rooftop Helipad at Night). Build the next one from there and mark it done.
+- **v0.11 LEVEL P3: THE PARKING GARAGE (`LEVEL4` in data.js, LEVELS index 3, id 4)**, a TMNT-style street/car level placed **after the
+  Night Shift and before the ending** (7:30 AM, shift change, "find your car").
+  - **Flow:** night tally → `afterTally()` (id 3) → `goGarage()` → `prepGarageBg()` (pre-renders the garage into `W.garageBg` for the
+    comic) → cutscene `garage` → `loadLevel(3)` → zones → cutscene `valet` (boss) → tally → `ending` cutscene → THE END. `save.best` max is 4.
+  - **Look:** `lv.garage` → `paintGarage()` in world.js (stall lines, wheel stops, oil stains, dashed yellow lane at y 176, arrows, red
+    hatching in the boss arena), tiles `gwall`/`gceil`/`gfloor`, `W.dark` 0.36, wall pieces (pillars, ramp openings with dawn light,
+    EXIT signs, elevator A/B, pay booth, gate arm, valet stand) with GLOW entries: sodium #ffa040, tubes #d8f0ff, `neon_park` blue,
+    `neon_stairs` violet, `neon_valet` red. Art in `tools/v11_art.py`, characters in `tools/v11_chars.py`, audio in `tools/v11_audio.py`
+    (music `garage`, `valet`; sfx carhorn, caralarm, screech, rev, keys, meep, valet, valet_ko).
+  - **Cars (`src/garage.js`, tuning `GARAGE`):** every 6.5-10 s a car drives the lane (`sendCar`) after a 1.25 s lane flash + CAR! arrow +
+    horn + headlights, or a parked car backs out of its stall (`backOut`, reverse lights + beeps). Cars hit **nurses (16) and enemies
+    (38, knockdown)**; a foe flattened after a nurse hit it scores BAITED! +300 (`runOver`, `W.stats.baited`). A nurse in the air
+    (`z > GARAGE.hop`) clears a car. No cars during the boss / final / cleared states. Parked cars are `car_{model}{n}` BREAKABLES
+    (`car: true, alarm: true`, `CARS` = parody models ZIPPY HATCH, COMMUTER LX, FAMILY HAULER, WOODY WAGON; never real brands); hitting
+    one calls `W.onCarHit` → car alarm (dizzies foes within 120 px, +100). Glovebox loot when one breaks. The bot uses `carDodge(h)`.
+  - **Enemies (all `garage: true`, staff-sized, normal street clothes, separate top + bottom):** `ragevisitor` (road rage, parking ticket,
+    ai visitor, "I've been circling for 40 minutes!"), `vanmom` (diaper-bag swing, ai ivswing), `coffeeguy` (throws coffee `p_coffee` →
+    brown puddle, ai tray), `bigshot` (charges, ai sundowner, "Do you know who I am?"), plus escaped patients. Spawn `where: 'C'` = climbs
+    out of a parked car on screen. Garage foes shout on arrival (`arrived()`, gated by `W.shoutT`). KO lines nap (zzz).
+  - **Props:** traffic cones (carry/throw), shopping carts (roll like crash carts), pay stations (loot), wheelchair in a stall, trash cans.
+  - **No fire alarm** (open-air garage): `lv.noAlarm` → `resetAlarm` places no stations and `alarmAllowed()` is false.
+  - **Nurse lines:** `GARAGE_LINES` in data.js → `HEROES[id].garage` (spawn, idle, zone, car, alarm, drop, clear). `say()` mixes them in on
+    garage levels (`GARAGE_MIX`). Bill's lines are in `GARAGE_BILL` and must stay verbatim (Nick "Someone's gonna key my car, I know it.",
+    Kim "Let me help you to your car, sweetie!" (drop), Will "I always get the closest spot.", Jackie "Who needs a jump?").
+  - **Boss: VINNIE THE VALET (`src/valet.js`, tuning `VALET`)** in a golf cart, 440 HP (x1.35 in 2P), ~1.2x a nurse standing (71 px vs
+    Nick's 59; cart + canopy taller). States: enter → cidle → rev (lane telegraph) → pass (charge, honk; flattens foes too) x2-3 → park → hop
+    out → foot (swing, ticket throw, taunt) → return/climb back in. In the cart he takes 30%; on foot full damage, knocked down by a hard
+    hit or every 4 hits. Phase 2 "RUSH HOUR!" (faster passes, calls visitor backup). Defeat: cart wrecks (stays as decor), he naps:
+    "Keep... the change... zzz". Sprites `valet` sheet, `valetcart0-2`/`valetcartL0-2` (pre-mirrored so "VALET" reads both ways),
+    `valetroof0-2` (canvas 88x94, anchor 44,93). Intro cutscene `valet`: "Ticket's validated... NOT!".
+  - Debug: `?level=4` (zones 0-4, 4 = boss), `__nbd.goGarage()`, `__nbd.garage.sendCar({y, dir, model})` / `.backOut(prop)` / `.GARAGE`.
+    Tests: `tests/v11.py` A-L. Docs: docs/v11_garage.gif, docs/v11_garage.png, docs/v11_valet.png.
 - **v0.10.1 nicknames + personalities (Bill).** `HEROES[id].name` is the nickname, `.short` the plain name (HUD / END fall back to it
   when space is tight), `.role` the personality shown on the select card: NERVOUS NICK (Pessimist), KILLER KIM (Cheerful), WONDERFUL
   WILL (Top Dog), CHARGE JACKIE (Helpful), NASTY NATE (Lazy), HEATHER (Tough). Don't rename them back.
@@ -213,9 +247,9 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
   - Phase 1: horn honk shock ring (dizzies), rev and charge. After a charge her battery panel opens as the weak point; she takes only 30% damage otherwise.
   - Phase 2 (turbo): faster charges, drops puddles and yarn, and calls patients for backup.
 - **Flow:** title, 1P/2P select, stage intro, waves, boss, tally, then the next floor (`afterTally()`; v0.9: Radiology → Scooter Run → night), and THE END (`ending` scene) after the
-  night shift. The tally total becomes the hero's score (ON TIME bonus = 2 game-hours from the floor's start clock). High scores are recorded at the end
+  night shift (v0.11: Night → garage cut → Parking Garage → ending). The tally total becomes the hero's score (ON TIME bonus = 2 game-hours from the floor's start clock). High scores are recorded at the end
   of the run or on game over. A KO'd 2P partner gets a fresh continue countdown on the next floor. Continues (3 / 5 / free play), lives,
-  top-5 high scores, and settings saved in localStorage (`nbd2.save`, `nbd2.display`, `nbd2.input`). `save.best` = floors cleared (max 3).
+  top-5 high scores, and settings saved in localStorage (`nbd2.save`, `nbd2.display`, `nbd2.input`). `save.best` = floors cleared (max 4 since v0.11).
 - **Local 2-player co-op:**
   - Split keyboard: P1 uses WASD + H/J/K/L, P2 uses arrows + M , . /
   - Or keyboard + pad, or two pads.
@@ -236,7 +270,7 @@ python3 -m http.server 8731          # then open http://localhost:8731/
 Debug query params:
 - `?autostart=1&hero=kim` skips the menus.
 - `?zone=5` jumps to the boss (zones 0–5; 2 is the elevator bank).
-- `?level=2` / `?level=3` starts on Radiology / the night shift (combine with `&zone=N`: Radiology 2 = Lou, 5 = MRI; night 3 = the last zone).
+- `?level=2` / `?level=3` / `?level=4` starts on Radiology / the night shift / the Parking Garage (combine with `&zone=N`: Radiology 2 = Lou, 5 = MRI; night 3 = the last zone; garage 4 = the Valet).
 - `?god=1` keeps P1 at full HP.
 - `?bot=1` lets a simple bot drive P1 (used for tests and GIFs).
 - `?nocut=1` skips the cutscenes, and `&cuts=1` forces them back on for autostart/zone URLs.
@@ -261,6 +295,7 @@ python3 tests/v07.py        # v0.7: A grab/toss/slam + help pages, B priority/pa
 python3 tests/v08.py        # v0.8: Nasty Nate: A select/title, B phones/touch, C pad, D size/art, E combo/chair, F speech bubbles, G 2P, H cutscene + MRI headroom
 python3 tests/v10.py        # v0.10: Heather: A art/data/Bill's lines, B select+title+HUD, C phones+4:3 grid+touch, D pad, E combo, F clothesline, G bubbles, H 2P, I scooter, J cutscenes+ending, K moves
 python3 tests/v10_1.py      # v0.10.1: nicknames/roles, Bill's lines verbatim, ~30+ lines per trigger, phone-fit bubbles, ginger Nick vs Kim, Will's sweater, Kim's drop line, cutscene takes
+python3 tests/v11.py        # v0.11: Parking Garage: A data + art + sizes, B level, C traffic, D bait + alarms, E visitors, F nurse lines, G Valet + ending, H night -> garage flow, I drops + Ativan/Code Blue/grabs, J 2P, K pad, L phone + touch
 python3 tests/v09.py        # v0.9: Scooter Run: A art/sizes, B flow+carry, C keys, D crash/jump, E patients, F pickups, G continue, H Marv, I 2P, J pad, K touch, L cutscene, M pause, N timed bot ride (~85 s)
 python3 tests/props_video.py   # webm for docs/props.gif (ffmpeg converts)
 python3 tests/before_after.py <old art dir> docs/art_before_after.png   # art comparison sheet
@@ -277,7 +312,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
   - `tools/rig.py` is the side-view pixel puppet rig. `tools/chars.py` holds the heroes and patients (v0.5: `barium`, `apron`, `lou`), `tools/boss.py` Tilly, `tools/props.py` the hospital art, `tools/breakables.py` the v0.3 kickable props (3 states each) and debris bits, and `tools/radiology.py` the v0.5 art, `tools/v08_art.py` Nate's office chair, `tools/v09_art.py` the Scooter Run vehicles + floor junk, and `tools/v06_art.py` the v0.6 art (pizza, BEEF JERKY bag, Ativan syringe, skeleton, fire-alarm station; the `yeller` patient is in chars.py) (radiology tiles, lightboxes, warning lamps, signs, night windows/call lamps/monitors, radiology props, MRI sheet `art/mri.png`, waves/table/cup/film, words).
   - It uses vendored copies of Master Builder's Gravewake `sprite_writer`/`pixel_writer` and brileta-sprites (plants, via node).
   - Never edit `/workspace/gravewake` itself. It belongs to another bot.
-- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, defib, crackle, clear, alarm, yell, sprinkler, stink); `tools/v07_audio.py` the v0.7 ones (jerky, slam, toss); `tools/v08_audio.py` the v0.8 ones (ativan_nate, yawn); `tools/v10_audio.py` the v0.10 ones (ativan_heather, huff, clothesline); `tools/v09_audio.py` the v0.9 `scooter` music + pew, skid, scoot, beepbeep, marv, marv_ko.
+- `python3 tools/prop_sfx.py` rewrites only the prop sounds (crash, rattle, thunk, shatter), and `tools/v04_sfx.py` the v0.4 ones (beep, hiss, splat, fling, charge shout, fanfare, raid). `make_audio.py` calls both. `tools/v05_audio.py` writes the v0.5 music (`radiology`, `mri`, `night`) and SFX (hum, bang, quench, table, powerdown, click, lightsout, film, stomp, clunk, mri_voice, lou, scared). `tools/v06_audio.py` writes the v0.6 SFX (ativan, defib, crackle, clear, alarm, yell, sprinkler, stink); `tools/v07_audio.py` the v0.7 ones (jerky, slam, toss); `tools/v08_audio.py` the v0.8 ones (ativan_nate, yawn); `tools/v10_audio.py` the v0.10 ones (ativan_heather, huff, clothesline); `tools/v09_audio.py` the v0.9 `scooter` music + pew, skid, scoot, beepbeep, marv, marv_ko; `tools/v11_audio.py` the v0.11 `garage` / `valet` music + car sfx.
 - `python3 tools/make_audio.py` rewrites `audio/music/*.mp3` (with loop points in `music.json`) and `audio/sfx/*.wav`, using the N64 suite in `/workspace/n64-suite` (music.compose with the chiptune fallback, sfx.make, babble).
 - All art is original. There are no copyrighted characters or sprites.
 
@@ -290,7 +325,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/sound.js` | WebAudio music with loop points and SFX; unlocks on first gesture |
 | `src/controls.js` | devices `kb`/`kb1`/`kb2`/`padN`/`touch` → per-player input, double-tap run, menu intents |
 | `kit/input.js`, `kit/display.js` | copied unchanged from the N64 suite's Mossgnome runtime (pad detection, display presets, fullscreen, install, rotate prompt); `kit/common.js` is a 2D shim |
-| `src/data.js` | heroes, attacks, weapons, items, enemies, difficulty, `LEVEL1`/`LEVEL2`/`LEVEL3` layouts + zones/waves, `LEVELS` |
+| `src/data.js` | heroes, attacks, weapons, items, enemies, difficulty, `LEVEL1`-`LEVEL4` layouts, `CARS`, `GARAGE_LINES` + zones/waves, `LEVELS` |
 | `src/world.js` | world state `W`, background pre-render (per-level tiles), doors/elevators, props/items/shots/fx, camera (no scrolling back), v0.5 lights + `drawLighting()` |
 | `src/actor.js`, `src/hero.js`, `src/enemy.js`, `src/boss.js` | actor base + `strike()` hit logic, hero state machine, patient AI, Turbo Tilly |
 | `src/alarm.js` | v0.6 Fire Alarm Yeller event: stations, caps, pull, sprinklers/wet floor, enrage, extra wave, strobe / reduced pulse |
@@ -299,8 +334,10 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/hud.js` | portraits, HP/meter (half-meter team tick), lives, score, combo, last-hit foe bar, boss bar, toasts, continue prompts |
 | `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
 | `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
+| `src/garage.js` | v0.11 Parking Garage traffic: lane cars, back-outs, run-overs / BAITED!, car alarms, lane flash + headlights, bot dodge |
+| `src/valet.js` | v0.11 boss Vinnie the Valet + golf cart (`Valet`, `CartProp`) |
 | `src/scooter.js` | v0.9 Scooter Run driving level: course, riders, hazards, patients, Motorcart Marv, parallax drawing, HUD, tally rows, test bot |
-| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v19: **bump N on every release**) |
+| `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v20: **bump N on every release**) |
 
 ## Bill's standing preferences
 - **Outfit style rule (Bill, v0.8.1):** every character's clothes read as a **separate top and bottom with a visible waist**
@@ -318,8 +355,8 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 ## Known issues / caveats
 - Tested on emulated phones (Chromium, Pixel-size landscape) and desktop Chromium with a mocked gamepad. It has not been tested on real iPhone or Android hardware yet.
 - The heroes' skin tones and hair styles were guessed from Bill's short descriptions (they may be real coworkers). They are easy to change in `tools/chars.py` `bodies()`, followed by `python3 tools/make_art.py`.
-- Three floors exist (Med-Surg, Radiology, Night Shift) plus the Breakroom Bonus and (v0.9) the Scooter Run driving level. The ending says "SEE YOU NEXT SHIFT...".
-- Boss sizes follow Bill's v0.7 override (1.2-1.5x a nurse's height): Tilly 1.46x, MRI 1.48x, Lou 1.43x, Motorcart Marv (with his cart) 1.22x.
+- Four floors exist (Med-Surg, Radiology, Night Shift, v0.11 Parking Garage) plus the Breakroom Bonus and (v0.9) the Scooter Run driving level. The ending says "SEE YOU NEXT SHIFT...".
+- Boss sizes follow Bill's v0.7 override (1.2-1.5x a nurse's height): Tilly 1.46x, MRI 1.48x, Lou 1.43x, Motorcart Marv (with his cart) 1.22x, Vinnie the Valet 1.2x standing (taller in his cart).
 - Balance is first-pass: Tilly has 420 HP, the MRI 560, Lou 300 (x1.35 in 2P) and patient damage scales by difficulty in `DIFF`. The elite waves make zones 2–4 noticeably harder.
 - The gown check pattern is drawn on a fixed pixel grid, so it doesn't move with the body. It shimmers very slightly during animation.
 - Online co-op is not implemented. That was optional in the spec.
@@ -328,4 +365,4 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 1. Bill plays on his phone and gives feedback on feel, difficulty and hero looks.
 2. **Size rule from Bill (v0.7 override for this game):** bosses only **~1.2-1.5x a nurse's height**; patients **the same size as the nurses**.
 3. More voice barks (Nate and Heather have speech bubbles via `say()`; the others could get lines too), plus an attract-mode demo on the title screen using the bot.
-4. More stages per the spec: lobby/ER, ICU, cafeteria, roof helipad.
+4. More stages: build the next one from **`docs/LEVEL_IDEAS.md`** (Psych Ward, Cafeteria Lunch Rush, Labor & Delivery, Rooftop Helipad at Night).

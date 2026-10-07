@@ -2,6 +2,39 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-06: v0.11 "Shift Change" (Bill: save all five level ideas and build the Parking Garage first)
+- **New level: LEVEL P3, THE PARKING GARAGE** (7:30 AM, shift change, "find your car"). It comes **after the Night Shift and before
+  the ending**: the night tally leads into a new comic cutscene (sunrise, then a road-rage visitor yelling "I've been circling for 40
+  minutes!"), the garage, the Valet's intro comic, the tally, and then the ending (the recap now mentions the VALET). A full run is
+  now 4 floors (`save.best` max 4).
+- **The look:** a 1990s street-level garage. Concrete levels with stall lines, wheel stops, oil stains, pillars, ramps with dawn
+  light coming in, EXIT signs, elevators, a pay booth with a gate arm and a valet stand. Lit by orange sodium lamps and fluorescent
+  tubes in the gloom, plus blue PARK, violet STAIRS and red VALET neon.
+- **Traffic:** cars drive the lane and back out of stalls. Each one gives a warning first: a flashing lane, a CAR! arrow, a horn and
+  headlights (or reverse lights and beeps). They flatten nurses *and* enemies, so bait the visitors into traffic for BAITED! +300.
+  Jump to clear a car. Smacking a parked car sets off its alarm, which dizzies nearby enemies. Broken cars drop glovebox loot.
+  Parody models only: ZIPPY HATCH, COMMUTER LX, FAMILY HAULER and WOODY WAGON.
+- **Angry visitors** (staff-sized, everyday clothes with a separate top and bottom): the Road-Rage Visitor with his parking ticket,
+  the Minivan Mom with her diaper bag, the Coffee Guy (throws lattes that leave puddles) and the Big Shot ("Do you know who I am?"),
+  plus escaped patients. Some climb out of parked cars. They all nap when beaten.
+- **Props:** traffic cones you can throw, shopping carts that roll like crash carts, pay stations with loot, a wheelchair parked in
+  a stall, trash cans.
+- **Boss: VINNIE THE VALET** in a golf cart, about 1.2x a nurse's height, with a health bar and his own intro comic ("Ticket's
+  validated... NOT!"). He revs, flashes your lane and makes charge passes (honk honk!), which also run over his own visitors. Then he
+  screeches to a stop, hops out to fight on foot and climbs back in. The cart is armoured (30% damage), so hit him when he's on foot.
+  At half health it's RUSH HOUR!: faster passes plus visitor backup. When he's beaten, his cart wrecks and he naps ("Keep... the
+  change... zzz").
+- **Garage lines for all six nurses**, including Bill's: Nick "Someone's gonna key my car, I know it.", Kim "Let me help you to your
+  car, sweetie!" (after a knockdown), Will "I always get the closest spot.", Jackie "Who needs a jump?", plus lazy Nate and snarky
+  Heather takes.
+- **No fire alarm** in the open-air garage. Everything else works there: 2P, touch, gamepad, keyboard, the phone layout, Ativan, Code
+  Blue, grabs and throws, specials, and the pizza, BEEF JERKY, energy drink, fruit snacks and ZYNN drops.
+- **Backlog:** `docs/LEVEL_IDEAS.md` saves all five ideas (Psych Ward, Cafeteria Lunch Rush, Parking Garage (done), Labor & Delivery,
+  Rooftop Helipad at Night).
+- New files: `src/garage.js`, `src/valet.js`, `tools/v11_art.py`, `tools/v11_chars.py`, `tools/v11_audio.py`, `tests/v11.py` (A-L).
+  New music `garage` and `valet`; new sfx carhorn, caralarm, screech, rev, keys, meep, valet, valet_ko. Service worker cache
+  `nbd2-app-v20`. Docs: `docs/v11_garage.gif`, `docs/v11_garage.png`, `docs/v11_valet.png`.
+
 ## 2026-10-06: v0.10.3 "Flat Front" (Bill: "it looks like he's got a blob at the belly because of how the lines are done on the sweater.")
 - **No more belly blob on Wonderful Will:** his sweater front is now straight from chest to hem, like Nick, Nate and Heather's tops
   but a bit broader for his stocky build. The old belly bulge (a curved outline and curved shading around the stomach) is gone; the
