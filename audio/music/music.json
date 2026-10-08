@@ -64,5 +64,17 @@
   "start": 1.706,
   "end": 28.998,
   "tempo": 140
+ },
+ "psych": {
+  "loop": true,
+  "start": 4.902,
+  "end": 44.118,
+  "tempo": 97
+ },
+ "philin": {
+  "loop": true,
+  "start": 1.723,
+  "end": 29.285,
+  "tempo": 139
  }
 }

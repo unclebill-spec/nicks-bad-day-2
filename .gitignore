@@ -5,3 +5,4 @@ __pycache__/
 /tests/out/
 .DS_Store
 .env
+/refs/

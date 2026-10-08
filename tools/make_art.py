@@ -245,6 +245,25 @@ for e in ("ragevisitor", "vanmom", "coffeeguy", "bigshot"):
     b = B11[e]
     atlas["chars"][e]["pal"] = {"hair": [b["hair_c"], b["hair_s"]], "skin": [b["skin"], b["skin_s"]], "gown": [], "sock": []}
 char_sheet("valet", C11.anims("valet"), B11["valet"], cell=(96, 88), anchor=(48, 84))
+# v0.13 PSYCH WARD: padded walls, ward pieces + props, projectiles, the ward patients (GREG too) and "DR." PHIL-IN (tools/v13_*.py)
+import v13_art as V13  # noqa: E402
+import v13_chars as C13  # noqa: E402
+for i in range(4):
+    add(f"pwall{i}", V13.pwall_tile(i))
+add("pceil", V13.pceil_tile(False)); add("pceil_lit", V13.pceil_tile(True))
+for i, t in enumerate(V13.pfloor_tiles()):
+    add(f"pfloor{i}", t)
+for k, S in {**V13.wall_pieces(), **V13.bits()}.items():
+    add(k, S)
+for st in range(3):
+    add(f"foamchair{st}", V13.foamchair(st)); add(f"puzzletable{st}", V13.puzzletable(st)); add(f"pillcart{st}", V13.pillcart(st))
+add("p_foil", V13.proj_foil()); add("p_pillow", V13.proj_pillow(0)); add("p_pillow1", V13.proj_pillow(1)); add("p_order", V13.proj_order()); add("note", V13.note())
+B13 = C13.bodies()
+for e in ("escapee", "capeguy", "tinfoil", "puppet", "greg"):
+    char_sheet(e, C13.anims(e), B13[e])
+    b = B13[e]
+    atlas["chars"][e]["pal"] = {"hair": [b["hair_c"], b["hair_s"]], "skin": [b["skin"], b["skin_s"]], "gown": [], "sock": []}
+char_sheet("philin", C13.anims("philin"), B13["philin"], cell=(96, 92), anchor=(48, 88))
 add("p_cup", RA.proj_cup()); add("puddle_w", RA.barium_splat()); add("p_film", RA.proj_film()); add("mri_wave0", RA.mri_wave(0)); add("mri_wave1", RA.mri_wave(1)); add("mri_table", RA.mri_table())
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
              ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
@@ -355,7 +374,9 @@ for h in ("nick", "kim", "will", "jackie", "nate", "heather"):
     SPR[f"face_{h}"] = portrait(B[h])
     SPR[f"face_{h}_hurt"] = portrait(B[h], "hurt")
 SPR["face_tilly"] = portrait(boss.tilly_body(), "grin")
-SPR["face_valet"] = portrait(B11["valet"], "grin", k=1.6)  # v0.11 VINNIE THE VALET (bigger head, so 1.6x)
+SPR["face_valet"] = portrait(B11["valet"], "grin", k=1.6)
+SPR["face_philin"] = portrait(B13["philin"], "grin", k=1.6)  # v0.13 "DR." PHIL-IN
+SPR["face_greg"] = portrait(B13["greg"], "norm", k=2)  # v0.11 VINNIE THE VALET (bigger head, so 1.6x)
 SPR["face_lou"] = portrait(B["lou"], "grin", k=1.4)  # v0.7.1: Lou himself (bigger head, so drawn at 1.4x not 2x)
 
 # ---- bitmap font (Press Start 2P, OFL) 8x8, ASCII 32..126, 16 per row
