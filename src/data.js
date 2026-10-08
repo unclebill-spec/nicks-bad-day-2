@@ -349,7 +349,7 @@ export const ENEMIES = {
     ko: ['Mr. Socks... sleepy... zzz', 'Shh, Mr. Socks is napping... zzz'], lines: ['Mr. Socks says you are mean!', 'Talk to the sock!', 'Mr. Socks BITES!'] },
   // GREG (Bill): the ward's frequent flyer. Deadpan, neck pillow worn like a crown, croons made-up Sinatra-style bits (no real
   // lyrics), throws his neck pillow like a boomerang. Bill's lines are verbatim (GREG_BILL, tests/v13.py).
-  greg: { name: 'GREG', sheet: 'greg', ai: 'tray', boom: true, hp: 80, speed: 34, depth: 26, reach: 150, score: 900, atk: 'throw', cd: [1.5, 2.4], keep: 110, armor: 1, elite: true,
+  greg: { name: 'GREG', sheet: 'greg', ai: 'tray', boom: true, hp: 80, speed: 34, depth: 26, reach: 150, score: 900, atk: 'throw', cd: [1.5, 2.4], keep: 110, armor: 1, elite: true, fixed: true,
     ward: true, voice: 'greg', drop: ['zynn', 0.08], throwLines: ["I'm gonna knock you one!", 'Catch!', 'Pillow fight!'],
     lines: ['Wanna get outta here?', "Let's get outta here.", "You can't keep me locked up in here!", "I'm gonna knock you one!", 'I know a way out.', 'Meet me by the laundry chute.'],
     grabLines: ["Don't touch my dick!"],
@@ -681,7 +681,7 @@ export const LEVEL5 = {
   zones: [
     { at: 120, lock: 0, title: 'BHU 5', waves: [
       [['escapee', 'D501', 0.5], ['wanderer', 'R', 1.4]],
-      [['tinfoil', 'R', 0.3], ['puppet', 'D502', 1.2], ['escapee', 'L', 2.0]],
+      [['tinfoil', 'R', 0.3], ['puppet', 'D502', 1.2], ['greg', 'D501', 2.0]],
     ] },
     { at: 640, lock: 560, title: 'MED PASS', waves: [
       [['capeguy', 'D503', 0.3], ['tinfoil', 'R', 1.0], ['spammer', 'L', 1.8]],
@@ -689,7 +689,7 @@ export const LEVEL5 = {
     ] },
     { at: 1180, lock: 1100, title: 'NURSES STATION', waves: [
       [['puppet', 'D504', 0.3], ['capeguy', 'R', 1.0], ['sundowner', 'L', 1.8]],
-      [['tinfoil', 'D503', 0.4], ['escapee', 'R', 1.0], ['capeguy', 'L', 1.8], ['runner', 'D504', 2.4]],
+      [['tinfoil', 'D503', 0.4], ['escapee', 'R', 1.0], ['capeguy', 'L', 1.8], ['greg', 'D504', 2.4]],
     ] },
     { at: 1760, lock: 1660, title: 'DAYROOM', waves: [
       [['capeguy', 'D506', 0.3], ['greg', 'R', 0.9], ['tinfoil', 'L', 1.8]],

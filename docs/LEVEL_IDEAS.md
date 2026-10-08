@@ -9,7 +9,7 @@ Code Blue, grabs/throws, specials and the drops (pizza, BEEF JERKY, energy drink
 | # | Level | Status |
 |---|---|---|
 | 1 | Parking Garage at Shift Change | **DONE (v0.11)**: Level P3, after the Night Shift, before the ending |
-| 2 | Psych Ward | idea |
+| 2 | Psych Ward | **DONE (v0.13)**: Floor 5, after the Scooter Run, before the Night Shift |
 | 3 | Cafeteria Lunch Rush | idea |
 | 4 | Labor & Delivery | idea |
 | 5 | Rooftop Helipad at Night | idea |
@@ -23,7 +23,9 @@ visitor with a parking ticket, minivan mom with a diaper bag, coffee guy, the "D
 patients. Boss: **Vinnie the Valet** in a golf cart (charge passes, honks, hops out to fight, climbs back in).
 See `src/garage.js`, `src/valet.js`, `LEVEL4` in `src/data.js`.
 
-## 2. Psych Ward
+## 2. Psych Ward (DONE, v0.13)
+Built as FLOOR 5: THE PSYCH WARD with GREG and boss "Dr." Phil-in. See `src/ward.js`, `src/philin.js`, `LEVEL5` in `src/data.js`.
+
 - **Look:** padded walls (quilted panels), flickering fluorescent lights (use the night-shift flicker + `W.dark`), a
   locked nurses' station behind glass, a dayroom with a TV on a bracket.
 - **Enemies:** patients loose from their restraints (loose straps flapping from their sleeves, not a straitjacket

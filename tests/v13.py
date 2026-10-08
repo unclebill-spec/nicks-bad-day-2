@@ -14,6 +14,20 @@ def page(b, q, w=960, h=540):
     pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.goto(U + q); pg.wait_for_function('window.__loaded === true', timeout=30000); return pg
 SC = '__nbd.game.scene'
+FREEZE = "(()=>{const W=__nbd.W; W.enemies.forEach(e=>{e.alive=false}); W.enemies.length=0; W.queue && (W.queue.length=0); W.items.length=0; W.shots.length=0; W.zone=99; W.zoneOn=false; W.lockX=W.camX; W.cars=[]; W.carAlarms=[]; W.carNext=999; W.heroes.forEach((h,i)=>{h.x=W.camX+150; h.y=176+i*20; h.z=0; h.vz=0; h.inv=0; h.face=1; h.carry=null; h.weapon=null; h.held=null; h.ride=null; h.set('idle');}); W.props=W.props.filter(p=>p.x<W.camX-60||p.x>W.camX+__nbd.G.VW+60);})()"
+UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36'
+DOWN = ('fall', 'down', 'getup', 'dead', 'thrown')
+MOCK = """(() => { const pad = { id: 'Xbox Wireless Controller (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0,
+  axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0, touched: false })) };
+  window.__pad = pad; navigator.getGamepads = () => [window.__padOn ? pad : null, null, null, null];
+  window.__padSet = (i, on) => { pad.buttons[i].pressed = on; pad.buttons[i].value = on ? 1 : 0; pad.timestamp++; };
+  window.__padConnect = () => { window.__padOn = true; const e = new Event('gamepadconnected'); e.gamepad = pad; dispatchEvent(e); }; })();"""
+def ready(pg):
+    pg.wait_for_function(f"window.__nbd && {SC}==='play' && __nbd.W.heroes.length>0 && __nbd.W.heroes[0].st==='idle'", timeout=30000); time.sleep(0.3)
+def foe(pg, kind, dx, dy=0, st='idle'):
+    return pg.evaluate(f"(()=>{{const W=__nbd.W,h=W.heroes[0]; const e=__nbd.spawn('{kind}','R'); e.x=h.x+{dx}; e.y=h.y+{dy}; e.tx=e.x; e.ty=e.y; e.set('{st}'); e.cd=99; e.atkCd=99; window.F=window.F||[]; F.push(e); return F.length-1;}})()")
+def prop(pg, kind, dx, dy=0):
+    return pg.evaluate(f"(()=>{{const W=__nbd.W,h=W.heroes[0]; const i=__nbd.prop('{kind}',0,0); const p=W.props[i]; p.x=h.x+{dx}; p.y=Math.max(136,Math.min(212,h.y+{dy})); return i;}})()")
 BOUNDS = """((sheet, an) => { const G = __nbd.G, A = G.atlas.chars[sheet], [cw, ch] = A.cell, i = A.anims[an].s, sx = (i % A.cols) * cw, sy = Math.floor(i / A.cols) * ch;
   const c = document.createElement('canvas'); c.width = cw; c.height = ch; const x = c.getContext('2d'); x.drawImage(G.img[sheet], sx, sy, cw, ch, 0, 0, cw, ch);
   const d = x.getImageData(0, 0, cw, ch).data; let x0 = cw, x1 = 0, y0 = ch, y1 = 0, n = 0;
@@ -112,8 +126,66 @@ with sync_playwright() as p:
         pg.wait_for_function("__nbd.W.lv && __nbd.W.lv.id===5", timeout=8000)
         check('-> the psych ward loads', pg.evaluate("__nbd.W.lv.name").startswith('FLOOR 5'))
         pg.close()
-        pg = page(b, '', 740, 360); time.sleep(1.5)
-        L = pg.evaluate("(async()=>{const m=await import('./src/main.js'); return null})()")
+    if 'G' in ONLY:
+        pg = page(b, '?level=5&nocut=1&hero=nick'); ready(pg); pg.evaluate(FREEZE); time.sleep(0.2)
+        got = []
+        for k in ('pizza', 'jerky', 'energy', 'snacks', 'zynn'):
+            pg.evaluate("(()=>{const h=__nbd.W.heroes[0]; h.hp=20; window.L0=h.lives;})()"); pg.evaluate(f"__nbd.drop('{k}')"); time.sleep(0.4)
+            r = pg.evaluate("(()=>{const h=__nbd.W.heroes[0]; return {hp:h.hp, lives:h.lives};})()")
+            got.append([k, r['hp'] > 20 or r['lives'] > pg.evaluate('L0')]); pg.evaluate("__nbd.W.items.length=0")
+        check('all five drops work on the ward', all(g[1] for g in got), got)
+        pg.evaluate(FREEZE); pg.evaluate("window.F=[]"); time.sleep(0.2); foe(pg, 'capeguy', 26)
+        pg.evaluate("__nbd.W.heroes[0].meter=40"); key(pg, 'KeyL', after=0.7)
+        check('Ativan puts the blanket-cape hero to sleep', pg.evaluate("F[0].sleepT > __nbd.W.t || F[0].st==='down' || F[0].st==='sleep'"), pg.evaluate("F[0].st"))
+        pg.evaluate(FREEZE); pg.evaluate("window.F=[]"); time.sleep(0.2); foe(pg, 'tinfoil', 60); foe(pg, 'greg', 120)
+        pg.evaluate("__nbd.W.heroes[0].meter=100"); key(pg, 'KeyL', after=1.6)
+        check('Code Blue zaps the tinfoil guy and Greg', all(s in DOWN or s == 'zapped' for s in pg.evaluate("F.map(e=>e.st)")), pg.evaluate("F.map(e=>e.st)"))
+        pg.evaluate(FREEZE); pg.evaluate("window.F=[]"); time.sleep(0.2); foe(pg, 'puppet', 18, st='dizzy'); time.sleep(0.05)
+        key(pg, 'KeyH', after=0.3); g = pg.evaluate("!!__nbd.W.heroes[0].held"); key(pg, 'KeyD', 0.05, 0.0); key(pg, 'KeyJ', after=0.8)
+        check('grab + toss the sock-puppet guy', g and pg.evaluate("F[0].st") in DOWN, [g, pg.evaluate("F[0].st")])
+        pg.evaluate(FREEZE); time.sleep(0.2); prop(pg, 'linen', 16); time.sleep(0.05)
+        key(pg, 'KeyH', after=0.4); c = pg.evaluate("__nbd.W.heroes[0].carry ? __nbd.W.heroes[0].carry.kind : null")
+        check('pick up a linen hamper to throw', c == 'linen', c)
         pg.close()
+        pg = page(b, '?level=5&nocut=1&hero=kim&god=1'); ready(pg)
+        a = pg.evaluate("(async()=>{const m=await import('./src/alarm.js'); const W=__nbd.W; const ok=m.pullAlarm(W.alarms[0], W.heroes[0]); await new Promise(r=>setTimeout(r,1500)); return [ok, !!W.alarm, W.alarms.length];})()")
+        check('the fire alarm works on the ward (pull -> alarm)', a[0] is not False and a[1] and a[2] > 0, a)
+        pg.screenshot(path='tests/out/v13_alarm.png'); pg.close()
+    if 'H' in ONLY:
+        pg = page(b, '?level=5&nocut=1'); time.sleep(0.5)
+        pg.evaluate("(()=>{__nbd.toSelect(2); const S=__nbd.game.sel; S.p[0].cur=1; S.p[0].locked=true; S.p.push({dev:'kb2', cur:3, locked:true}); __nbd.startGame();})()")
+        pg.wait_for_function(f"{SC}==='play' && __nbd.W.heroes.length===2 && __nbd.W.heroes[1].st==='idle'", timeout=30000); time.sleep(0.3)
+        ids = pg.evaluate("[__nbd.W.lv.id, ...__nbd.W.heroes.map(h=>h.id)]"); check('2P on the ward', ids[0] == 5 and len(ids) == 3, ids)
+        pg.evaluate(FREEZE); time.sleep(0.2)
+        pg.evaluate("(()=>{const h=__nbd.W.heroes[1]; const e=__nbd.spawn('escapee','R'); e.x=h.x+26; e.y=h.y; e.tx=e.x; e.ty=e.y; e.set('dizzy'); e.cd=99; window.F=[e];})()")
+        key(pg, 'Comma', 0.06, 0.3); check('P2 fights on the ward', pg.evaluate("F[0].hp < F[0].maxHp"))
+        pg.close()
+        pg = b.new_page(viewport={'width': 960, 'height': 540}); pg.on('pageerror', lambda e: errs.append(str(e))); pg.add_init_script(MOCK)
+        pg.goto(U + '?level=5&nocut=1&hero=heather'); pg.wait_for_function('window.__loaded === true', timeout=30000); ready(pg); pg.evaluate('__padConnect()'); time.sleep(0.3)
+        pg.evaluate(FREEZE); pg.evaluate("window.F=[]"); time.sleep(0.2); foe(pg, 'tinfoil', 26, st='dizzy')
+        pg.evaluate('__padSet(2, true)'); time.sleep(0.1); pg.evaluate('__padSet(2, false)'); time.sleep(0.25)
+        check('pad: X attacks on the ward', pg.evaluate("F[0].hp < F[0].maxHp")); pg.close()
+        ctx = b.new_context(viewport={'width': 915, 'height': 412}, device_scale_factor=2.6, is_mobile=True, has_touch=True, user_agent=UA)
+        pg = ctx.new_page(); cdp = ctx.new_cdp_session(pg); pg.on('pageerror', lambda e: errs.append(str(e)))
+        def touch(kind, pts): cdp.send('Input.dispatchTouchEvent', {'type': kind, 'touchPoints': [{'x': x, 'y': y, 'id': i} for i, x, y in pts]})
+        pg.goto(U + '?level=5&nocut=1&hero=kim&god=1'); pg.wait_for_function('window.__loaded === true', timeout=30000); ready(pg); time.sleep(0.5)
+        lay = pg.evaluate("(()=>{const pad=document.getElementById('pad'); return {VW:__nbd.G.VW, pad:!!pad && getComputedStyle(pad).display!=='none'};})()")
+        jx, jy = 915 * 0.18, 412 * 0.7; x0 = pg.evaluate("__nbd.W.heroes[0].x")
+        touch('touchStart', [(1, jx, jy)]); time.sleep(0.05)
+        for k in range(10): touch('touchMove', [(1, jx + k * 5, jy)]); time.sleep(0.02)
+        time.sleep(0.8); touch('touchEnd', []); time.sleep(0.2)
+        check('phone: wide view + touch pad moves the nurse on the ward', lay['VW'] >= 400 and lay['pad'] and pg.evaluate("__nbd.W.heroes[0].x") > x0 + 20, lay)
+        pg.screenshot(path='tests/out/v13_phone.png'); ctx.close()
+        ctx = b.new_context(viewport={'width': 915, 'height': 412}, has_touch=True, is_mobile=True); pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
+        pg.goto(U + '?nocut=1'); pg.wait_for_function('window.__loaded === true', timeout=30000); time.sleep(0.6); pg.evaluate("__nbd.toLevels()"); time.sleep(0.5)
+        R = pg.evaluate("[__nbd.game.lvRects, __nbd.G.VW, __nbd.G.VH, __nbd.PICKS[4].name]")
+        fit = all(r[0] >= 0 and r[1] >= 0 and r[0] + r[2] <= R[1] and r[1] + r[3] <= R[2] for r in R[0]) and len(R[0]) == 7
+        check('level select (phone): FLOOR 5 PSYCH WARD card, all cards fit', fit and 'PSYCH' in R[3], R)
+        pg.screenshot(path='tests/out/v13_levels_phone.png')
+        box = pg.evaluate("(()=>{const c=document.querySelector('canvas').getBoundingClientRect();return [c.left,c.top,c.width/__nbd.G.VW,c.height/__nbd.G.VH]})()")
+        r = R[0][4]; tap = lambda: pg.touchscreen.tap(box[0] + (r[0] + r[2] / 2) * box[2], box[1] + (r[1] + r[3] / 2) * box[3])
+        tap(); time.sleep(0.3); tap(); time.sleep(0.3)
+        check('tap, tap: the psych ward card is picked', pg.evaluate("__nbd.game.lvCur") == 4 and pg.evaluate("!!__nbd.game.overlay"), pg.evaluate("[__nbd.game.lvCur, !!__nbd.game.overlay]"))
+        ctx.close()
     b.close()
 print('console errors:', errs[:3] if errs else 'none'); print('ALL PASS' if not fails and not errs else 'SOME FAILED'); sys.exit(1 if fails or errs else 0)

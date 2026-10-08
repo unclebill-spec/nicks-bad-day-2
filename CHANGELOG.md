@@ -2,6 +2,23 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-08: v0.13 "Psych Ward" (Bill: "let's add the next level" + GREG)
+- **New level: FLOOR 5, THE PSYCH WARD (BHU 5)**, 6:00 PM, placed **after the Scooter Run and before the Night Shift**. Padded
+  quilted walls, a locked STAFF ONLY double door with a buzzer, a nurses' station behind plexiglass, a dayroom with a caged TV and
+  puzzle tables, call strips, feelings posters and blue / violet / red neon. The lights flicker and black out every 10-15 s.
+- **Ward patients** (staff-sized, sweats / pajamas / gowns with a visible waist; they nap when beaten): the restraint escapee
+  (strap whip), the blanket-cape superhero (charge), the tinfoil-hat guy (foil lobs, "The TV's talking to me again!"), the sock-puppet
+  talker, plus wanderers, sundowners and spammers.
+- **GREG** (elite, from Bill's reference): neck-pillow crown, glasses, stubble, polka-dot gown. He shows up 3 times plus once in the
+  dayroom. He throws his neck pillow as a boomerang and croons Sinatra-style title parodies with music notes (no real lyrics).
+  Bill's lines verbatim, including "Don't touch my dick!" when a nurse grabs him. Side-by-side: `docs/v13_greg.png`.
+- **Props / hazards:** foam chairs, kickable puzzle tables, med carts with pill cups, throwable linen hampers, blackouts.
+- **Boss: "DR." PHIL-IN** (~1.24x a nurse): writes orders (patients come running), clipboard bonk, stethoscope lasso that yanks
+  a nurse in, phase 2 STAT!. Lines include "I'm the doctor here!" and "Nurse, I'm ordering 10 of Dilaudid!".
+- Cutscenes: `psych` (intro, with Greg), `philin` (boss intro), `psychout` (Phil-in naps, then on to the night shift).
+- Every nurse has ward lines. Level Select has a 7th card (FLOOR 5: PSYCH WARD), 4 columns on wide views. Music `psych` + `philin`.
+- Service worker cache `nbd2-app-v22`. tests/v13.py (A-H). Docs: `docs/v13_psych.gif`, `docs/v13_psych.png`, `docs/v13_greg.png`.
+
 ## 2026-10-07: v0.12 "Level Select" (Bill: pick any level from the start screen)
 - **LEVEL SELECT** on the title menu (under 1 PLAYER / 2 PLAYERS). Six cards in order, each with a number, an icon, the name and the
   boss: Floor 3: Med-Surg (Turbo Tilly), Breakroom Bonus (fridge thieves), Floor 4: Radiology (Lou + MAGNA-SCAN 3000), Scooter Run

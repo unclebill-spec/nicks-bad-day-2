@@ -231,7 +231,7 @@ with sync_playwright() as p:
         check('Radiology tally -> v0.9 scooter cutscene', pg.evaluate("__nbd.game.cut.id") == 'scoot')
         time.sleep(1.0); key(pg, 'KeyK', after=0.6); pg.wait_for_function(f"{SC}==='scoot'", timeout=6000); time.sleep(1.0)
         pg.evaluate(SKIP_SCOOT); pg.wait_for_function(f"{SC}==='stally'", timeout=8000); time.sleep(3.3); key(pg, 'KeyJ', after=0.4)
-        check('scooter tally -> night cutscene', pg.evaluate("__nbd.game.cut.id") == 'night')
+        check('scooter tally -> psych cutscene (v0.13)', pg.evaluate("__nbd.game.cut.id") == 'psych')
         time.sleep(6.6); pg.screenshot(path='tests/out/v05_cut_night.png'); key(pg, 'KeyK', after=0.4)
         check('-> Night Shift', pg.evaluate("__nbd.W.lv.id") == 3 and pg.evaluate(SC) in ('intro', 'play'))
         pg.wait_for_function(f"{SC}==='play'", timeout=6000); pg.evaluate("__nbd.W.cleared = true")

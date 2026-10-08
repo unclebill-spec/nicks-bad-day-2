@@ -85,7 +85,7 @@ with sync_playwright() as p:
         rows = pg.evaluate("__nbd.game.stally[0].rows.map(r=>r[0])")
         check('scooter tally adds its bonus (sedated, snacks, crashes, Marv)', s1 == s0 + tot and tot > 0 and any('MARV' in x for x in rows), [s0, tot, s1, rows])
         pg.screenshot(path='tests/out/v09_tally.png'); key(pg, 'KeyJ', after=0.6)
-        check('scooter tally -> Night Shift (score + lives still there)', pg.evaluate("__nbd.W.lv.id") == 3 and pg.evaluate("__nbd.W.heroes[0].score") == s1 and pg.evaluate("__nbd.W.heroes[0].lives") == 2)
+        check('scooter tally -> Psych Ward (v0.13; score + lives still there)', pg.evaluate("__nbd.W.lv.id") == 5 and pg.evaluate("__nbd.W.heroes[0].score") == s1 and pg.evaluate("__nbd.W.heroes[0].lives") == 2)
         check('touch layout back to normal on foot', pg.evaluate("document.getElementById('b_atk').textContent") == 'HIT' and pg.evaluate("document.documentElement.dataset.mode") == '' and pg.evaluate("__nbd.W.scoot") is False)
         pg.close()
     # ================================================================ C: keyboard: steer, speed, jump, shoot

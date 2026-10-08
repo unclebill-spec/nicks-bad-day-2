@@ -20,7 +20,7 @@ const POOL = {}, POOL_N = 6;
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 export function lookFor(kind, n) {
   const d = ENEMIES[kind], A = G.atlas.chars[d.sheet], P = G.atlas.palettes;
-  if (!A || !A.pal || !P) return d.sheet;
+  if (!A || !A.pal || !P || d.fixed) return d.sheet;  // v0.13: named characters (GREG) keep their reference look
   const pool = POOL[kind] || (POOL[kind] = []);
   const i = n % POOL_N;
   if (!pool[i]) {

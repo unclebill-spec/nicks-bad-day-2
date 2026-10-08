@@ -8,13 +8,22 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-07, v0.12)
+## Current state (2026-10-08, v0.13)
+- **v0.13 FLOOR 5: THE PSYCH WARD (`LEVEL5` in data.js, LEVELS index 4, id 5; `?level=5`)**, placed **after the Scooter Run and
+  before the Night Shift**. Flow: scooter tally → `goPsych()` → cutscene `psych` (`prepLevelBg(4, 'wardBg')`) → ward → boss cut
+  `philin` → tally → `afterTally()` (id 5) → cutscene `psychout` → `goNight()`. `?level=3/4` still mean night / garage.
+  - **Blackouts (`src/ward.js`, tuning `WARD`):** `resetWard`, `blackout()`, `updateWard` (flicker → dark → flicker back; quiet once
+    cleared or at the boss). Ward lines per nurse: `WARD_LINES` (`HEROES[id].ward`), chosen by `say()` when `W.lv.ward`.
+  - **Patients:** escapee, capeguy, tinfoil, puppet, **greg** (elite, `boom` pillow boomerang handled in stage.js shots, `croon()`,
+    `grabLines`, `GREG_BILL` = Bill's verbatim lines). Art in `tools/v13_chars.py` / `tools/v13_art.py`, audio `tools/v13_audio.py`.
+  - **Boss "DR." PHIL-IN (`src/philin.js`, tuning `PHIL`, lines `PHIL_LINES`):** write (orders + `W.director.backup()`), swing, lasso
+    (yank), taunt, phase 2 `stat`, defeat (naps, patients nap). Tests: tests/v13.py.
 - **v0.12 LEVEL SELECT** (title menu item, `toLevels()` in main.js, scene `levels`): `PICKS` lists the six stages (name, boss, icon);
   `levelsUpdate` / `levelsTap` / `drawLevels` (3x2 grid, 2 columns under VW 340, `game.lvRects`, `game.lvBack`). Picking a card opens a
   1P / 2P overlay → `toSelect(mode)` with `game.pick` set → `startGame()` → `startPick(i)` (bonus: `loadLevel(0)` + `startBonus`;
   scooter: `loadLevel(1)` + `enterScooter`; floors: `loadLevel(n)`). The normal flow carries on from there. Everything is unlocked;
   don't gate it. If you add a stage, add it to `PICKS` + `startPick`. Tests: tests/v12.py.
-- **Backlog:** `docs/LEVEL_IDEAS.md` holds Bill's five approved level ideas (Psych Ward, Cafeteria Lunch Rush, Parking Garage = done,
+- **Backlog:** `docs/LEVEL_IDEAS.md` holds Bill's five approved level ideas (Psych Ward = done, Cafeteria Lunch Rush, Parking Garage = done,
   Labor & Delivery, Rooftop Helipad at Night). Build the next one from there and mark it done.
 - **v0.11 LEVEL P3: THE PARKING GARAGE (`LEVEL4` in data.js, LEVELS index 3, id 4)**, a TMNT-style street/car level placed **after the
   Night Shift and before the ending** (7:30 AM, shift change, "find your car").
@@ -251,7 +260,7 @@ and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.git
 - **Boss: Turbo Tilly** in an electric wheelchair.
   - Phase 1: horn honk shock ring (dizzies), rev and charge. After a charge her battery panel opens as the weak point; she takes only 30% damage otherwise.
   - Phase 2 (turbo): faster charges, drops puddles and yarn, and calls patients for backup.
-- **Flow:** title, 1P/2P select, stage intro, waves, boss, tally, then the next floor (`afterTally()`; v0.9: Radiology → Scooter Run → night), and THE END (`ending` scene) after the
+- **Flow:** title, 1P/2P select, stage intro, waves, boss, tally, then the next floor (`afterTally()`; v0.9: Radiology → Scooter Run → v0.13 Psych Ward → night), and THE END (`ending` scene) after the
   night shift (v0.11: Night → garage cut → Parking Garage → ending). The tally total becomes the hero's score (ON TIME bonus = 2 game-hours from the floor's start clock). High scores are recorded at the end
   of the run or on game over. A KO'd 2P partner gets a fresh continue countdown on the next floor. Continues (3 / 5 / free play), lives,
   top-5 high scores, and settings saved in localStorage (`nbd2.save`, `nbd2.display`, `nbd2.input`). `save.best` = floors cleared (max 4 since v0.11).
@@ -288,7 +297,7 @@ python3 tests/smoke.py      # desktop keyboard: title, select, first fight
 python3 tests/moves.py      # every hero: jump, kick, special cost, super, run/dash, weapon pickup + swing
 python3 tests/pad.py        # mocked gamepad: menus, select, move, attack, pause; 2P keyboard + pad
 python3 tests/touch.py      # emulated Pixel phone landscape: taps, floating joystick, buttons, pause, rotate prompt
-python3 tests/flow.py       # boss defeat -> tally -> bonus round -> bonus tally -> Radiology -> Scooter Run (bot) -> Night -> ending -> scores -> title; continue; game over
+python3 tests/flow.py       # boss defeat -> tally -> bonus round -> bonus tally -> Radiology -> Scooter Run (bot) -> Psych Ward -> Night -> ending -> scores -> title; continue; game over
 python3 tests/will.py       # Will's look on title, select, in-game HUD, tally
 python3 tests/patients.py   # all patient types + random looks, elite syringe/urinal throws, splash + puddle, KO drops, new pickups
 python3 tests/props.py      # v0.3 breakables: roll/plow/bounce/break, every kind, patients into props, loot odds, 2P pad, touch, bot to boss
@@ -300,6 +309,7 @@ python3 tests/v07.py        # v0.7: A grab/toss/slam + help pages, B priority/pa
 python3 tests/v08.py        # v0.8: Nasty Nate: A select/title, B phones/touch, C pad, D size/art, E combo/chair, F speech bubbles, G 2P, H cutscene + MRI headroom
 python3 tests/v10.py        # v0.10: Heather: A art/data/Bill's lines, B select+title+HUD, C phones+4:3 grid+touch, D pad, E combo, F clothesline, G bubbles, H 2P, I scooter, J cutscenes+ending, K moves
 python3 tests/v10_1.py      # v0.10.1: nicknames/roles, Bill's lines verbatim, ~30+ lines per trigger, phone-fit bubbles, ginger Nick vs Kim, Will's sweater, Kim's drop line, cutscene takes
+python3 tests/v13.py        # v0.13: psych ward, Greg, blackouts, Dr. Phil-in, cuts, drops/Ativan/Code Blue/alarm, 2P/pad/phone
 python3 tests/v12.py        # v0.12: level select: every stage starts from it, keys/pad/touch, BACK, phone fit
 python3 tests/v11.py        # v0.11: Parking Garage: A data + art + sizes, B level, C traffic, D bait + alarms, E visitors, F nurse lines, G Valet + ending, H night -> garage flow, I drops + Ativan/Code Blue/grabs, J 2P, K pad, L phone + touch
 python3 tests/v09.py        # v0.9: Scooter Run: A art/sizes, B flow+carry, C keys, D crash/jump, E patients, F pickups, G continue, H Marv, I 2P, J pad, K touch, L cutscene, M pause, N timed bot ride (~85 s)
@@ -331,7 +341,7 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/sound.js` | WebAudio music with loop points and SFX; unlocks on first gesture |
 | `src/controls.js` | devices `kb`/`kb1`/`kb2`/`padN`/`touch` → per-player input, double-tap run, menu intents |
 | `kit/input.js`, `kit/display.js` | copied unchanged from the N64 suite's Mossgnome runtime (pad detection, display presets, fullscreen, install, rotate prompt); `kit/common.js` is a 2D shim |
-| `src/data.js` | heroes, attacks, weapons, items, enemies, difficulty, `LEVEL1`-`LEVEL4` layouts, `CARS`, `GARAGE_LINES` + zones/waves, `LEVELS` |
+| `src/data.js` | heroes, attacks, weapons, items, enemies, difficulty, `LEVEL1`-`LEVEL5` layouts, `WARD_LINES`, `GREG_BILL`, `CARS`, `GARAGE_LINES` + zones/waves, `LEVELS` |
 | `src/world.js` | world state `W`, background pre-render (per-level tiles), doors/elevators, props/items/shots/fx, camera (no scrolling back), v0.5 lights + `drawLighting()` |
 | `src/actor.js`, `src/hero.js`, `src/enemy.js`, `src/boss.js` | actor base + `strike()` hit logic, hero state machine, patient AI, Turbo Tilly |
 | `src/alarm.js` | v0.6 Fire Alarm Yeller event: stations, caps, pull, sprinklers/wet floor, enrage, extra wave, strobe / reduced pulse |
@@ -341,6 +351,8 @@ Screenshots go to `tests/out/`, which is git-ignored. `docs/screenshots.png`, `d
 | `src/cutscene.js` | v0.4 shift-change comic cutscenes (`makeCut`/`updateCut`/`drawCut`, scripts start/boss/lunch/next) |
 | `src/bonus.js` | v0.4 Breakroom Bonus round: `buildBreakroom`, `startBonus`, thief AI, `updateBonus`, bonus HUD, `bonusRows` for the tally |
 | `src/garage.js` | v0.11 Parking Garage traffic: lane cars, back-outs, run-overs / BAITED!, car alarms, lane flash + headlights, bot dodge |
+| `src/ward.js` | v0.13 Psych Ward flicker blackouts (`WARD`, `blackout`, `updateWard`) |
+| `src/philin.js` | v0.13 boss "Dr." Phil-in (`PhilIn`, `PHIL`, `PHIL_LINES`) |
 | `src/valet.js` | v0.11 boss Vinnie the Valet + golf cart (`Valet`, `CartProp`) |
 | `src/scooter.js` | v0.9 Scooter Run driving level: course, riders, hazards, patients, Motorcart Marv, parallax drawing, HUD, tally rows, test bot |
 | `sw.js`, `app.webmanifest`, `icons/` | PWA (cache name `nbd2-app-vN`, now v21: **bump N on every release**) |
