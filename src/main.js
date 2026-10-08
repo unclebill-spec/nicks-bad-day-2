@@ -228,20 +228,27 @@ function toScootTally() {
   game.stally = W.heroes.map((h) => { const r = scootRows(h); h.score += r.total; return { h, ...r }; });
 }
 // v0.13: the Scooter Run -> the PSYCH WARD (floor 5, LEVELS[4]) -> the night shift
-function goPsych() { W.scootOver = false; loadLevel(4); }
+function goPsych() { W.scootOver = false; const go = () => loadLevel(4); if (noCuts()) go(); else { prepLevelBg(4, 'wardBg'); startCut('psych', go); } }
 function goNight() { W.scootOver = false; const go = () => loadLevel(2); if (noCuts()) go(); else startCut('night', go); }
 // v0.5: after a floor's tally. Floor 4 -> night shift -> the ending.
 function afterTally() {
   const i = W.lv.id;
   if (i === 1) return goLunch();
   if (i === 2) return goScooter();  // v0.9: Radiology -> the Scooter Run -> the night shift
-  if (i === 5) return goNight();  // v0.13: the psych ward -> the night shift
+  if (i === 5) { if (noCuts()) return goNight(); return startCut('psychout', goNight); }  // v0.13: the psych ward (Phil-in's outro) -> the night shift
   if (i === 3) return goGarage();  // v0.11: the night shift -> 7:30 AM, the parking garage -> the ending
   finishRun(true); save.best = Math.max(save.best, 4); writeSave();
   const go = () => { game.scene = 'ending'; game.t = 0; setScene('menu'); playMusic('clear'); };
   if (noCuts()) go(); else startCut('ending', go);
 }
 function goGarage() { const go = () => loadLevel(3); if (noCuts()) go(); else { prepGarageBg(); startCut('garage', go); } }
+export function prepLevelBg(idx, key) {  // v0.13: pre-render a level's background for a cutscene panel before the level loads
+  if (W[key]) return W[key];
+  const keep = { lv: W.lv, bg: W.bg, doors: W.doors, elevs: W.elevs, lights: W.lights, decor: W.decor, dark: W.dark, props: W.props, items: W.items, zynn: W.zynnProps };
+  buildLevel(LEVELS[idx]); W[key] = W.bg;
+  Object.assign(W, { lv: keep.lv, bg: keep.bg, doors: keep.doors, elevs: keep.elevs, lights: keep.lights, decor: keep.decor, dark: keep.dark, props: keep.props, items: keep.items, zynnProps: keep.zynn });
+  return W[key];
+}
 export function prepGarageBg() {  // the cutscenes' garage panel needs the garage background before the level loads
   if (W.garageBg) return W.garageBg;
   const keep = { lv: W.lv, bg: W.bg, doors: W.doors, elevs: W.elevs, lights: W.lights, decor: W.decor, dark: W.dark, props: W.props, items: W.items, zynn: W.zynnProps };

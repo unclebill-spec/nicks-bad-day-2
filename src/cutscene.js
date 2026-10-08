@@ -127,13 +127,45 @@ const SCRIPTS = {
         bubbles: [{ x: 4, y: 4, s: lz(a, "We don't even HAVE a valet!", 'Ugh. Can he park ME? On a couch?', "We don't have a valet. We have a guy with a golf cart.", "He's got my keys. I KNEW it.", 'Ooh, a golf cart! Can I have a ride, sweetie?', "I'll handle him! Somebody call security!", 'Valet? Please. I park myself.'), tail: [b ? 40 : w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
     ];
   },
+  // v0.13: after the Scooter Run, up to Floor 5, the psych ward (BHU 5)
+  psych() {
+    const [a, b] = heroIds(), greg = lookFor('greg', 0);
+    return [
+      (w, h) => ({ bg: ['hall', 0, 58], cap: '6:00 PM. FLOOR 5: BEHAVIORAL HEALTH.', acts: [{ s: a, a: 'walk', x: w * 0.22, y: h - 3, mv: 16 }, ...(b ? [{ s: b, a: 'walk', x: w * 0.22 - 26, y: h - 1, mv: 16 }] : [])],
+        bubbles: [{ x: w * 0.34, y: 6, s: lz(a, 'Psych is short a nurse. Guess who volunteered?', 'Psych? Do they have a comfy chair up there?', 'Psych floor. Finally, people who make sense.', 'Psych? Is it true the TV talks up there?', 'Psych! I love those guys! So many hugs!', "Psych needs help? I'm on my way!", 'Psych asked for the best. So, obviously, me.'), tail: [w * 0.24, h - 52], at: 0.35, mw: Math.min(210, w * 0.6) }] }),
+      (w, h) => ({ bg: ['ward', 200, 58], cap: '*BZZZT* LOCKED.', acts: [{ s: greg, a: 'idle', x: w * 0.64, y: h - 2, flip: true, rate: 3 }],
+        bubbles: [{ x: 4, y: 18, s: 'Wanna get outta here?', tail: [w * 0.62, h - 60], at: 0.3, mw: w - 16 }] }),
+      (w, h) => ({ bg: null, burst: '#7a3ad8', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, "Nobody's getting out. Except me, at 7.", 'Can I stay locked in? Is there a nap room?', "Greg. Sit. I'm not asking.", 'Why does he look so calm? Why am I not calm?', "Hi Greg! No, sweetie, nobody's leaving!", 'Need anything, Greg? Besides an exit?', 'Escape? On MY watch? Cute.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
+  philin() {
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['ward', 2330, 58], cap: 'THE GROUP ROOM.', acts: [{ s: a, a: 'idle', x: w * 0.14, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.14 + 26, y: h - 1 }] : []), { s: 'philin', a: 'walk', x: w * 1.05, y: h - 2, mv: -40, flip: true, rate: 7 }],
+        bubbles: [{ x: w * 0.3, y: 14, s: "I'm the doctor here!", tail: [w * 0.75, h - 70], at: 0.5, mw: Math.min(220, w * 0.6), shout: true }] }),
+      (w, h) => ({ bg: null, burst: '#a24dff', faces: [{ id: 'philin', x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 6, y: 6, s: "Nurse, I'm ordering 10 of Dilaudid!", tail: [w / 2, h - 72], at: 0.25, mw: w - 20, shout: true }] }),
+      (w, h) => ({ bg: ['ward', 2200, 58], faces: [{ id: a, x: b ? 6 : w / 2 - 36, y: h - 72, scale: 2 }, ...(b ? [{ id: b, x: w - 78, y: h - 72, scale: 2, flip: true }] : [])],
+        bubbles: [{ x: 4, y: 4, s: lz(a, "That's not a doctor. That's Phil in a lab coat.", 'Fine by me. Phil can chart tonight.', "Nice badge, Phil. Is that crayon?", "He has a stethoscope. Why does he have a stethoscope?!", "Ooh, Dr. Phil! Love the coat, sweetie! Now give it back!", 'Phil, I can help you hang that coat back up.', "There's only one doctor of nursing here. Me."), tail: [b ? 40 : w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
+  psychout() {  // v0.13: Phil-in's outro, then on to the night shift
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['ward', 2440, 58], dark: true, cap: 'LIGHTS OUT ON BHU 5.', acts: [{ s: 'philin', a: 'sleep', x: w * 0.62, y: h - 2 }, { s: a, a: 'win', x: w * 0.24, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.24 + 28, y: h - 1, rate: 3 }] : [])],
+        bubbles: [{ x: w * 0.42, y: 8, s: 'Discharge... me... zzz', tail: [w * 0.64, h - 30], at: 0.3, mw: Math.min(200, w * 0.5) }] }),
+      (w, h) => ({ bg: null, burst: '#3a6aff', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, "Coat's back in the doctors' lounge. Night shift, here we come.", "Can I go home now? No? Night shift? Ugh.", 'Psych: done. Next, the night shift. Joy.', "We survived psych. The night shift can't be worse. ...Right?", 'Nighty night, Dr. Phil! On to the night shift!', "I'll take the night shift too! Who's with me?", 'Psych handled. Night shift, prepare to be impressed.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
   ending() {
     const [a, b] = heroIds(), night = nightNurse();
     return [
       (w, h) => ({ bg: ['garage', 2560, 58], sunrise: true, cap: '7:45 AM. SHIFT CHANGE. AGAIN.', acts: [{ s: a, a: 'win', x: w * 0.24, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.24 + 28, y: h - 1, rate: 3 }] : []), { s: night, a: 'idle', x: w * 0.74, y: h - 3, flip: true }],
         bubbles: [{ x: w * 0.36, y: 4, s: 'Morning! How was the night shift?', tail: [w * 0.72, h - 52], at: 0.35, mw: Math.min(200, w * 0.55) }] }),
       (w, h) => ({ bg: null, burst: '#ff8a1e', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
-        bubbles: [{ x: 4, y: 4, s: 'A drag race, a magnet that ate my IV pole, a blackout... and a VALET.', tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+        bubbles: [{ x: 4, y: 4, s: 'A drag race, a psych ward, a blackout... and a VALET.', tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
       (w, h) => ({ bg: ['garage', 2640, 58], sunrise: true, acts: [{ s: a, a: 'walk', x: w * 0.3, y: h - 3, mv: -30, flip: true }, ...(b ? [{ s: b, a: 'walk', x: w * 0.3 + 26, y: h - 1, mv: -30, flip: true }] : [])],
         bubbles: [{ x: 4, y: 4, s: lz(a, 'NOPE! See you tomorrow!', 'NOPE! See you tomorrow!', "NOPE! Here's a rag. See you tomorrow!", "NOPE! Leaving before they float me!", "NOPE! Bye, sweeties! Love you!", "NOPE! ...Do you guys need anything first?", "NOPE! Hold your applause!"), tail: [w * 0.3, h - 52], at: 0.25, mw: w - 16, shout: true }] }),
     ];
@@ -200,7 +232,7 @@ function drawPanel(P, px, py, pw, ph, local, idx) {
   rect(px, py, pw, ph, '#2a3060');
   if (P.bg) {
     const [src, x0, y0] = P.bg;
-    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : src === 'garage' ? (W.garageBg || W.nightBg || W.hallBg) : W.hallBg;
+    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : src === 'garage' ? (W.garageBg || W.nightBg || W.hallBg) : src === 'ward' ? (W.wardBg || W.hallBg) : W.hallBg;
     let sx = x0 === 'fridge' ? Math.max(0, (W.breakFridgeX || 300) - pw * 0.55) : x0;
     if (img) { sx = Math.max(0, Math.min(img.width - pw, sx)); c.drawImage(img, sx, y0, pw, ph, px, py, pw, ph); }
     if (src === 'hall') hallBits(sx, y0, px, py, pw);

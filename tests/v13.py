@@ -14,6 +14,11 @@ def page(b, q, w=960, h=540):
     pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.goto(U + q); pg.wait_for_function('window.__loaded === true', timeout=30000); return pg
 SC = '__nbd.game.scene'
+BOUNDS = """((sheet, an) => { const G = __nbd.G, A = G.atlas.chars[sheet], [cw, ch] = A.cell, i = A.anims[an].s, sx = (i % A.cols) * cw, sy = Math.floor(i / A.cols) * ch;
+  const c = document.createElement('canvas'); c.width = cw; c.height = ch; const x = c.getContext('2d'); x.drawImage(G.img[sheet], sx, sy, cw, ch, 0, 0, cw, ch);
+  const d = x.getImageData(0, 0, cw, ch).data; let x0 = cw, x1 = 0, y0 = ch, y1 = 0, n = 0;
+  for (let y = 0; y < ch; y++) for (let k = 0; k < cw; k++) if (d[(y * cw + k) * 4 + 3] > 20) { n++; x0 = Math.min(x0, k); x1 = Math.max(x1, k); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  return [x1 - x0 + 1, y1 - y0 + 1, n]; })"""
 FOE = "((k,dx,dy)=>{const h=__nbd.W.heroes[0]; const e=__nbd.spawn(k,'R'); e.x=h.x+dx; e.y=h.y+(dy||0); e.tx=e.x; e.ty=e.y; e.set('idle'); return __nbd.W.enemies.length-1;})"
 with sync_playwright() as p:
     b = p.chromium.launch()
@@ -66,5 +71,49 @@ with sync_playwright() as p:
             res[hero] = pg.evaluate("(()=>{const h=__nbd.W.heroes[0]; const out=[]; for (let i=0;i<8;i++){ h.sayCd=0; const s=h.say('zone', true); if (s) out.push(s);} return [out, h.d.ward.zone]})()")
             check(f'{hero}: ward lines on the ward', any(s in res[hero][1] for s in res[hero][0]), res[hero])
             pg.close()
+    if 'E' in ONLY:
+        pg = page(b, '?level=5&zone=4&hero=kim&god=1&cuts=1')
+        pg.wait_for_function(f"{SC}==='cutscene' || (__nbd.W.boss && __nbd.W.boss.name)", timeout=30000)
+        check('a comic intro cutscene for Dr. Phil-in', pg.evaluate("__nbd.game.cut && __nbd.game.cut.id") == 'philin')
+        time.sleep(3.4); pg.screenshot(path='tests/out/v13_cut_philin.png'); key(pg, 'KeyK', after=0.5)
+        pg.wait_for_function("__nbd.W.boss && __nbd.W.boss.greeted", timeout=10000); time.sleep(0.3)
+        B = pg.evaluate("(()=>{const B=window.B=__nbd.W.boss; const BD=" + BOUNDS + "; return {name:B.name, r:BD('philin','idle')[1]/BD('nick','idle')[1], said:__nbd.W.fx.filter(f=>f.type==='txt').map(f=>f.s), music:__nbd.W.lv.bossMusic};})()")
+        check('"DR." PHIL-IN walks in: "I\'m the doctor here!" (1.2-1.5x a nurse)', 'PHIL-IN' in B['name'] and "I'm the doctor here!" in B['said'] and 1.2 <= B['r'] <= 1.5 and B['music'] == 'philin', B)
+        pg.screenshot(path='tests/out/v13_philin_enter.png')
+        n0 = pg.evaluate("__nbd.W.enemies.length")
+        pg.evaluate("(()=>{B.set('write'); B.hitDone=false;})()"); time.sleep(1.4)
+        w = pg.evaluate(f"[__nbd.W.stats.orders||0, __nbd.W.enemies.length-{n0}]")
+        check('he writes orders and patients come running', w[0] >= 1 and w[1] >= 1, w)
+        pg.evaluate("(()=>{__nbd.W.enemies.forEach(e=>{e.hp=0; e.st='dead'; e.alive=false}); const h=__nbd.W.heroes[0]; B.x=h.x+75; B.y=h.y; B.face=-1; B.set('lasso'); B.hitDone=false;})()"); time.sleep(1.1)
+        check('stethoscope lasso yanks a nurse', pg.evaluate("__nbd.W.stats.lassoed||0") >= 1)
+        pg.evaluate("(()=>{const h=__nbd.W.heroes[0]; B.set('chase'); B.x=h.x+30; B.y=h.y; h.inv=0; B.set('swing'); B.hitDone=false;})()"); time.sleep(0.8)
+        pg.evaluate("(()=>{B.hp=B.maxHp*0.45; B.takeHit({dmg:1, dir:1, from:__nbd.W.heroes[0], force:true}); B.set('chase'); B.cd=0;})()"); time.sleep(0.6)
+        check('phase 2: STAT!', pg.evaluate("B.phase===2 && B.p2label==='STAT!'"))
+        pg.evaluate("(()=>{B.set('chase'); B.hp=1; B.takeHit({dmg:5, dir:1, from:__nbd.W.heroes[0], force:true});})()"); time.sleep(0.8)
+        d = pg.evaluate("({st:B.st, said:__nbd.W.fx.filter(f=>f.type==='txt').map(f=>f.s)})")
+        check('defeat: he naps ("Discharge... me... zzz")', d['st'] == 'defeat' and any('Discharge' in s for s in d['said']), d)
+        time.sleep(1.0); pg.screenshot(path='tests/out/v13_philin_ko.png')
+        pg.wait_for_function(f"{SC}==='tally'", timeout=14000); time.sleep(3.4); key(pg, 'KeyJ', after=0.5)
+        check('ward tally -> Phil-in outro cutscene', pg.evaluate("__nbd.game.cut && __nbd.game.cut.id") == 'psychout')
+        time.sleep(2.5); pg.screenshot(path='tests/out/v13_cut_out.png')
+        for _ in range(3): key(pg, 'KeyK', after=0.6)
+        pg.wait_for_function("__nbd.game.cut && __nbd.game.cut.id==='night' || (__nbd.W.lv && __nbd.W.lv.id===3)", timeout=8000)
+        check('-> on to the night shift', True)
+        pg.close()
+    if 'F' in ONLY:
+        pg = page(b, '?level=2&hero=nick&god=1&cuts=1'); time.sleep(2.5)
+        T = pg.evaluate("(async()=>{const m=await import('./src/cutscene.js'); const o={}; for (const id of ['psych','philin','psychout']) o[id]=m.makeCut(id).panels.map(f=>(f(398,160).bubbles||[]).map(b=>b.s)).flat(); return o;})()")
+        check('psych intro: Greg asks "Wanna get outta here?"', 'Wanna get outta here?' in T['psych'], T['psych'])
+        check('boss intro: "Nurse, I\'m ordering 10 of Dilaudid!"', "Nurse, I'm ordering 10 of Dilaudid!" in T['philin'], T['philin'])
+        pg.evaluate("__nbd.goPsych()"); time.sleep(0.3)
+        check('scooter tally -> psych cutscene', pg.evaluate("__nbd.game.cut && __nbd.game.cut.id") == 'psych')
+        time.sleep(3.6); pg.screenshot(path='tests/out/v13_cut_psych.png')
+        for _ in range(4): key(pg, 'KeyK', after=0.6)
+        pg.wait_for_function("__nbd.W.lv && __nbd.W.lv.id===5", timeout=8000)
+        check('-> the psych ward loads', pg.evaluate("__nbd.W.lv.name").startswith('FLOOR 5'))
+        pg.close()
+        pg = page(b, '', 740, 360); time.sleep(1.5)
+        L = pg.evaluate("(async()=>{const m=await import('./src/main.js'); return null})()")
+        pg.close()
     b.close()
 print('console errors:', errs[:3] if errs else 'none'); print('ALL PASS' if not fails and not errs else 'SOME FAILED'); sys.exit(1 if fails or errs else 0)
