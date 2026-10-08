@@ -18,6 +18,7 @@ import { ALARM, drawStations, drawWetFloor, drawAlarmFront, maybeYeller, pullAla
 import { drawHUD } from './hud.js';
 import { makeCut, updateCut, drawCut } from './cutscene.js';
 import { B as BONUS_STATE, buildBreakroom, startBonus, updateBonus, drawBonusHUD, bonusRows } from './bonus.js';
+import { resetWard, updateWard, blackout, WARD } from './ward.js';
 import { resetGarage, updateGarage, garageList, drawGarageFloor, drawGarageFront, garageLights, carDodge, sendCar, backOut, GARAGE } from './garage.js';
 import { SC, SCOOT, startScooter, updateScooter, drawScooter, drawScooterHUD, scootRows, drawScootTally, scootBot, continueRider, scootSpawn } from './scooter.js';
 
@@ -226,12 +227,15 @@ function toScootTally() {
   game.scene = 'stally'; game.t = 0; setScene('menu'); scootUI(false); W.scootOver = true; playMusic('clear'); sfx('fanfare', { vol: 0.7 });
   game.stally = W.heroes.map((h) => { const r = scootRows(h); h.score += r.total; return { h, ...r }; });
 }
+// v0.13: the Scooter Run -> the PSYCH WARD (floor 5, LEVELS[4]) -> the night shift
+function goPsych() { W.scootOver = false; loadLevel(4); }
 function goNight() { W.scootOver = false; const go = () => loadLevel(2); if (noCuts()) go(); else startCut('night', go); }
 // v0.5: after a floor's tally. Floor 4 -> night shift -> the ending.
 function afterTally() {
   const i = W.lv.id;
   if (i === 1) return goLunch();
   if (i === 2) return goScooter();  // v0.9: Radiology -> the Scooter Run -> the night shift
+  if (i === 5) return goNight();  // v0.13: the psych ward -> the night shift
   if (i === 3) return goGarage();  // v0.11: the night shift -> 7:30 AM, the parking garage -> the ending
   finishRun(true); save.best = Math.max(save.best, 4); writeSave();
   const go = () => { game.scene = 'ending'; game.t = 0; setScene('menu'); playMusic('clear'); };
@@ -250,8 +254,8 @@ function loadLevel(idx, zone = 0) {
   const lv = LEVELS[idx];
   W.enemies = []; W.boss = null; W.shots = []; W.fx = []; W.items = []; W.decor = []; W.t = 0; W.finalT = 0; W.vc = 0; W.bgHook = null; W.team = null;
   W.forceYeller = !!Q.get('yeller'); W.noAlarm = !!Q.get('noalarm') || !!lv.noAlarm; W.scoot = false; W.scootOver = false; scootUI(false);
-  buildLevel(lv); resetGarage(lv); Director.reset(); W.camX = 0; W.camMin = 0; W.clock = lv.clock || 7 * 60; W.stats.time = 0;
-  if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else if (lv.garage) W.garageBg = W.bg; else W.nightBg = W.bg;
+  buildLevel(lv); resetGarage(lv); resetWard(lv); Director.reset(); W.camX = 0; W.camMin = 0; W.clock = lv.clock || 7 * 60; W.stats.time = 0;
+  if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else if (lv.garage) W.garageBg = W.bg; else if (lv.ward) W.wardBg = W.bg; else W.nightBg = W.bg;
   W.heroes.forEach((h, i) => {
     h.kos = 0; h.maxCombo = 0; h.combo = 0; h.weapon = null; h.carry = null; h.held = null; h.grabber = null; h.ride = null; h.z = 0; h.vx = h.vy = h.vz = 0; h.inv = 0;
     if (h.st === 'out') { if (game.continuesLeft() > 0) h.continueT = 10; h.x = 56 + i * 22; return; }  // a KO'd partner can still continue here
@@ -328,11 +332,12 @@ export const PICKS = [
   { name: 'BREAKROOM BONUS', boss: 'FRIDGE THIEVES (BONUS)', icon: 'bonus', col: '#d8a03a', glow: '#ffe84a' },
   { name: 'FLOOR 4: RADIOLOGY', boss: 'LOU + MAGNA-SCAN 3000', icon: 'mri', col: '#3aa8ff', glow: '#a24dff' },
   { name: 'SCOOTER RUN', boss: 'MOTORCART MARV', icon: 'marv', col: '#d84a3a', glow: '#ff8a6a' },
+  { name: 'FLOOR 5: PSYCH WARD', boss: '"DR." PHIL-IN', icon: 'philin', col: '#7a6ab8', glow: '#3aa8ff' },
   { name: 'NIGHT SHIFT', boss: 'LAST CALL (LIGHTS OUT)', icon: 'night', col: '#5a3ad8', glow: '#ff3a4a' },
   { name: 'P3: PARKING GARAGE', boss: 'VINNIE THE VALET', icon: 'valet', col: '#a24dff', glow: '#ff3a4a' },
 ];
 function toLevels() { game.scene = 'levels'; game.t = 0; game.pick = null; game.lvCur = game.lvCur || 0; game.lvLock = -1; setScene('menu'); }
-function levelCols() { return G.VW < 340 ? 2 : 3; }
+function levelCols() { return G.VW >= 380 ? 4 : 3; }  // v0.13: 7 stages -> 4 x 2 on 16:9 / phones, 3 x 3 on 4:3
 function pickLevel(i) {
   game.lvCur = i; game.lvLock = i; sfx('powerup');
   game.overlay = Menu(PICKS[i].name, [
@@ -363,7 +368,8 @@ function drawPickIcon(p, x, y, w, h) {
   rect(x, y, w, h, '#080a18'); rect(x, y + h - 9, w, 9, '#1a1c2c'); rect(x, y + h - 10, w, 1, p.col);
   for (let i = 0; i < 4; i++) rect(x + 6 + i * (w / 4), y + 4, w / 4 - 12, 5, p.glow, 0.35);
   const cx = x + w / 2, by = y + h - 2;
-  if (p.icon === 'tilly') spr('face_tilly', cx - 12, Math.max(y + 2, by - 26));
+  if (p.icon === 'philin') { rect(x, y, w, h, '#b8b4d8', 0.25); spr('face_philin', cx - 12, Math.max(y + 2, by - 26)); }
+  else if (p.icon === 'tilly') spr('face_tilly', cx - 12, Math.max(y + 2, by - 26));
   else if (p.icon === 'valet') { spr('face_valet', cx - 12, Math.max(y + 2, by - 26)); }
   else if (p.icon === 'mri') { frame('mri', anim('mri', 'idle').s, cx + 10, by, { scale: 0.34 }); spr('face_lou', cx - 34, Math.max(y + 2, by - 22), { scale: 0.8 }); }
   else if (p.icon === 'marv') frame('marv', anim('marv', 'drive').s, cx, by + 4, { scale: 0.75 });
@@ -394,7 +400,7 @@ function drawLevels() {
 function startPick(i) {  // v0.12: drop the fresh team straight into a picked stage; afterTally / goNext / goNight carry on from there
   if (i === 1) { loadLevel(0); buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); playMusic('stage'); }
   else if (i === 3) { loadLevel(1); enterScooter(); }
-  else loadLevel({ 0: 0, 2: 1, 4: 2, 5: 3 }[i]);
+  else loadLevel({ 0: 0, 2: 1, 4: 4, 5: 2, 6: 3 }[i]);
 }
 function startGame() {
   const S = game.sel;
@@ -453,6 +459,7 @@ function playUpdate(dt) {
   if (W.boss) W.boss.update(dt);
   Director.update(dt);
   updateGarage(dt);  // v0.11 cars + car alarms (garage only)
+  updateWard(dt);  // v0.13 psych ward flicker blackouts
   updateWorld(dt);
   updateCamera(dt);
   if (W.cleared) { toTally(); return; }
@@ -799,7 +806,7 @@ function step(dt) {
     }
     case 'btally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) goNext(); break;
     case 'scoot': scootPlay(dt); break;
-    case 'stally': W.t += dt; updateWorld(dt); if (game.t > 3 && any) goNight(); break;
+    case 'stally': W.t += dt; updateWorld(dt); if (game.t > 3 && any) goPsych(); break;
     case 'tally': W.t += dt; for (const h of W.heroes) h.t += dt; updateWorld(dt); if (game.t > 3 && any) afterTally(); break;
     case 'teaser': if (game.t > 1.5 && any) toTitle(); break;
     case 'ending': if (game.t > 1.5 && any) { game.scene = 'scores'; game.t = 0; } break;
@@ -883,14 +890,14 @@ async function boot() {
     else if (['teaser', 'gameover', 'scores', 'ending'].includes(game.scene) && game.t > 1.2) { if (game.scene === 'teaser') toTitle(); else if (game.scene === 'gameover' || game.scene === 'ending') { game.scene = 'scores'; game.t = 0; } else toTitle(); }
     else if (game.scene === 'tally' && game.t > 3) afterTally();
     else if (game.scene === 'btally' && game.t > 3) goNext();
-    else if (game.scene === 'stally' && game.t > 3) goNight();
+    else if (game.scene === 'stally' && game.t > 3) goPsych();
   });
   view.addEventListener('pointermove', (e) => { const m = activeMenu(); if (!m || e.pointerType !== 'mouse') return; const [lx, ly] = toLogical(e); const i = hitMenu(m, lx, ly); if (i >= 0 && i !== m.sel) m.sel = i; });
   toTitle();
   loaded();
   requestAnimationFrame(frameLoop);
   // test hooks
-  window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, toLevels, PICKS, Director, display,
+  window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, toLevels, PICKS, ward: { blackout, WARD, resetWard }, goPsych: () => goPsych(), Director, display,
     cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext, scooter: enterScooter, goScooter, goNight, goGarage, prepGarageBg, garage: { sendCar, backOut, GARAGE, carDodge }, SC, SCOOT, scootSpawn, ALARM, maybeYeller, pullAlarm, stationFor, alarmAllowed, settingsMenu, applySettings };
   if (Q.get('autostart') || Q.get('zone') || Q.get('level')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } if (Q.get('scene') === 'scooter') { game.cut = null; game.cutDone = null; enterScooter(); } }
 }

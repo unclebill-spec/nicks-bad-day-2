@@ -125,14 +125,18 @@ export function text(s, x, y, { col = '#fff', shadow = '#1a1020', align = 'left'
   x0 = Math.round(x0); y = Math.round(y);
   const c = G.ctx; c.save(); c.globalAlpha = alpha;
   const nar = adv <= 6, tint = nar ? tintedN : tinted;
-  const draw = (img, dx, dy) => {
+  const draw = (img, dx, dy, col) => {
     for (let i = 0; i < s.length; i++) {
+      if (s.charCodeAt(i) === 9834) {  // v0.13 a music note (Greg's crooning bubbles)
+        const X = x0 + i * adv * scale + dx, Y = y + dy, k = scale; c.fillStyle = col;
+        c.fillRect(X + 5 * k, Y, k, 6 * k); c.fillRect(X + 5 * k, Y, 2 * k, k); c.fillRect(X + 6 * k, Y + k, k, k); c.fillRect(X + 2 * k, Y + 5 * k, 3 * k, 2 * k); continue;
+      }
       const code = s.charCodeAt(i) - 32; if (code <= 0 || code > 94) continue;
       c.drawImage(img, (code % 16) * 8, Math.floor(code / 16) * 8, 8, 8, x0 + i * adv * scale + dx, y + dy, 8 * scale, 8 * scale);
     }
   };
-  if (shadow) draw(tint(shadow), scale, scale);
-  draw(tint(col), 0, 0);
+  if (shadow) draw(tint(shadow), scale, scale, shadow);
+  draw(tint(col), 0, 0, col);
   c.restore();
   return w;
 }

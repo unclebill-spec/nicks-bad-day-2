@@ -167,6 +167,9 @@ export const Director = {
         const out = s.t < 0.62;
         if (out) s.x += s.vx * dt;
         else { const o = s.owner; const dx = o.x - s.x, dy = o.y - s.y, l = Math.hypot(dx, dy) || 1; s.x += dx / l * 320 * dt; s.y += dy / l * 160 * dt; if (l < 14) s.life = 0; if (!s.back) { s.back = true; s.hit = new Set(); } }
+      } else if (s.boom) {  // v0.13 Greg's neck pillow: flies out, then curves back to him
+        if (s.t < 0.6) s.x += s.vx * dt;
+        else { const o = s.owner; const dx = o.x - s.x, dy = o.y - s.y, l = Math.hypot(dx, dy) || 1; s.vx = dx / l * 230; s.x += s.vx * dt; s.y += dy / l * 120 * dt; if (l < 14 || !o.alive) s.life = 0; }
       } else {
         s.x += s.vx * dt;
         if (s.grav) { s.vz -= s.grav * dt; s.z += s.vz * dt; }

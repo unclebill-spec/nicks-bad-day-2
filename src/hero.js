@@ -264,6 +264,7 @@ export class Hero extends Actor {
     this.held = e; e.set('held'); e.holder = this; this.set('grab'); this.knees = 0; this.pushT = 0;
     this.dirArmed = false; this.dirHeld = 0;  // a direction only counts once the stick has been neutral (or is held on purpose)
     e.face = -this.face; e.rot = 0; sfx('punch0', { vol: 0.3 }); W.stats.grabs = (W.stats.grabs || 0) + 1; this.say('grab');
+    if (e.d && e.d.grabLines) { floatText(e.d.grabLines[Math.floor(W.rnd() * e.d.grabLines.length)], e.x, e.y, 70, '#ffffff'); sfx(e.d.voice || 'voice1', { vol: 0.4 }); (W.said || (W.said = [])).push(e.d.grabLines[0]); }  // v0.13 Greg
   }
   // v0.7 holding a patient: FORWARD (tap, hold, or with ATK) = toss them forward; AWAY = over-the-shoulder body slam
   // behind you; ATK alone = knees (the third one tosses); JUMP or GRAB again = toss forward (GRAB + AWAY = slam).
@@ -632,7 +633,8 @@ export class Hero extends Actor {
   say(ev, force = false) {
     let L = this.d.lines && this.d.lines[ev];
     // v0.11 parking garage: each nurse's garage lines (data.js GARAGE_LINES) take over most of the time down there
-    const GL = W.lv && W.lv.garage && this.d.garage && this.d.garage[ev];
+    const LS = W.lv && (W.lv.garage ? 'garage' : W.lv.ward ? 'ward' : null);  // v0.13: the psych ward has its own set (WARD_LINES)
+    const GL = LS && this.d[LS] && this.d[LS][ev];
     if (GL && GL.length && (!L || W.rnd() < (GARAGE_MIX[ev] ?? 1))) L = GL;
     if (!L || !L.length || (!force && W.t < this.sayCd)) return null;
     let i = Math.floor(W.rnd() * L.length);
@@ -643,7 +645,7 @@ export class Hero extends Actor {
     return L[i];
   }
   sayTick(dt, I) {  // spawn line (once per floor, when he can first act) + the idle line after ~6 s doing nothing
-    if (!this.d.lines && !this.d.garage) return;
+    if (!this.d.lines && !this.d.garage && !this.d.ward) return;
     if (this.hiLv !== W.lv && this.canAct()) { this.hiLv = W.lv; this.say('spawn', true); }
     const busy = Math.hypot(I.mx, I.my) > 0.15 || I.atk || I.jmp || I.prs.sp || I.prs.grab || this.st !== 'idle';
     this.idleT = busy ? 0 : this.idleT + dt;

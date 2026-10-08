@@ -217,6 +217,47 @@ export const GARAGE_LINES = {
     clear: ["I'm going home. Don't follow me."] },
 };
 for (const [id, L] of Object.entries(GARAGE_LINES)) HEROES[id].garage = L;
+// v0.13 PSYCH WARD lines (each nurse in their own voice), attached as HEROES[id].ward. dark = the lights just flickered out.
+export const WARD_LINES = {
+  nick: { spawn: ["Is the door supposed to buzz like that? It's not, is it?"],
+    idle: ["I'm pretty sure that TV just looked at me.", 'If the lights go out again I am hiding in the med room.', 'Great. Now I can hear the TV too.'],
+    zone: ['Okay. Okay. Nobody bit me. That counts as a good day.', 'Every door on this unit buzzes at me.'],
+    dark: ['Nope. Nope nope nope.', "The lights. Of course it's the lights."],
+    drop: ['Sorry! Back to bed, please!', "Nap time. Doctor's orders. Well, nurse's."],
+    clear: ["I survived the psych ward. Nobody's gonna believe me."] },
+  kim: { spawn: ['Hi everybody! Who wants a puzzle?'],
+    idle: ['Deep breaths, honey! There you go!', 'Who wants to watch my cooking show?'],
+    zone: ['Back to your room, sweetie! Nighty night!', 'All tucked in! Next!'],
+    dark: ['Ooh, spooky! Hold my hand, hon!', 'Lights out? I can still find you, sweetie!'],
+    drop: ["Let's get you tucked in, hon!", 'Sweet dreams, sugar!', 'Ooh, sorry about that! Nap time!'],
+    clear: ['What a lovely group! See you tomorrow!'] },
+  will: { spawn: ['Relax, everybody. I run this ward.'],
+    idle: ['I was voted Best Nurse three years running.', 'Nobody escapes on my watch.'],
+    zone: ["Superhero? Buddy, I'm WONDERFUL Will.", 'Another dayroom handled. By me.'],
+    dark: ['I work better in the dark anyway.', "Don't worry, I've got night vision. Probably."],
+    drop: ['And stay seated.', 'Group therapy is over, pal.'],
+    clear: ['Ward secured. You can thank me later.'] },
+  jackie: { spawn: ['Anybody need help finding their room?'],
+    idle: ['I\'ll grab the meds, you grab the patient!', 'Need a hand with that restraint? I got it.'],
+    zone: ["Who needs a snack? I'll get it!", 'Everybody okay? Let me help.'],
+    dark: ['I got the light switch! ...Somebody got the light switch?', 'Everybody stay put, I\'ll fix it!'],
+    drop: ['Let me help you back to bed!', 'Here, take my arm. And a nap.'],
+    clear: ['Charting done, meds passed, everybody tucked in!'] },
+  nate: { spawn: ['I was gonna watch that TV, honestly.'],
+    idle: ['Can we just let him have the remote?', 'Wake me up when the puzzle is done.'],
+    zone: ['That was a lot of standing up.', 'Somebody chart that. Not me.'],
+    dark: ['Oh nice, nap lighting.', 'Lights out? Finally.'],
+    drop: ['Nap. Good idea. Same.', "You can have my chair. I'm not using it. ...I am."],
+    clear: ['Cool. Back to my phone.'] },
+  heather: { spawn: ['The TV is not talking to you. I am. Sit.'],
+    idle: ['Cute cape. Sit down.', 'Tinfoil. Bold choice. Still sitting down.'],
+    zone: ['Next.', 'I have been on this unit four years. Try harder.'],
+    dark: ['Wow. Scary. Anyway.', 'The dark does not scare me. Neither do you.'],
+    drop: ['Stay down.', 'Bed. Now.'],
+    clear: ['Ward is quiet. Do not touch anything.'] },
+};
+for (const [id, L] of Object.entries(WARD_LINES)) HEROES[id].ward = L;
+export const GREG_BILL = ['Wanna get outta here?', "Let's get outta here.", "You can't keep me locked up in here!", "I'm gonna knock you one!", "Don't touch my dick!"];
 export const GARAGE_BILL = { nick: "Someone's gonna key my car, I know it.", kim: 'Let me help you to your car, sweetie!', will: 'I always get the closest spot.', jackie: 'Who needs a jump?' };
 
 // hit = which frame lands; box = [x0, x1] forward reach, z band [z0, z1]
@@ -296,6 +337,24 @@ export const ENEMIES = {
   visitor: { name: 'BELLIGERENT VISITOR', sheet: 'visitor', hp: 110, speed: 44, depth: 26, reach: 34, score: 800, atk: 'punch', cd: [1.4, 2.2], armor: 3, ko: ['I want the manager... zzz', 'Visiting hours are over.'], voice: 'voice3', big: true },
   // v0.11 PARKING GARAGE: visitors and family who couldn't find a spot. Street clothes (top, belt, pants), staff-sized. Their
   // defeat is a nap like everyone's. ai = the patient brain they borrow; lines = their chatter (the first one shows as they arrive).
+  // v0.13 PSYCH WARD patients (ward: true = they announce themselves on arrival). Funny, never cruel; everyday clothes.
+  escapee: { name: 'RESTRAINT ESCAPEE', sheet: 'escapee', ai: 'bell', hp: 40, speed: 40, depth: 24, reach: 60, score: 400, atk: 'whip', cd: [1.5, 2.3], ward: true, voice: 'voice5',
+    ko: ['Fine... strap me in... zzz', 'Houdini... needs a nap... zzz'], lines: ["I'm not supposed to be here!", 'These things slipped right off!', 'Wanna see a trick?'] },
+  capeguy: { name: 'BLANKET-CAPE HERO', sheet: 'capeguy', ai: 'sundowner', hp: 46, speed: 38, depth: 26, reach: 24, score: 400, atk: 'charge', cd: [2.0, 3.0], ward: true, voice: 'voice4',
+    ko: ['Hero... needs... a nap... zzz', 'To be continued... zzz'], lines: ['UP, UP AND... hold on.', 'Stand back, citizen!', 'This blanket is a CAPE!'] },
+  tinfoil: { name: 'TINFOIL TOM', sheet: 'tinfoil', ai: 'tray', proj: 'foil', projSpr: 'p_foil', throwLines: ['FOIL BALL!', 'BLOCK THE SIGNAL!', 'THEY CANT TRACK THIS!'],
+    hp: 36, speed: 34, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.6, 2.6], keep: 118, drop: ['snacks', 0.3], ward: true, voice: 'voice2',
+    ko: ['Tell... the birds... zzz', 'Recalibrating... zzz'], lines: ["The TV's talking to me again!", "They're listening through the vents!", 'Foil blocks the Wi-Fi, man!'] },
+  puppet: { name: 'SOCK-PUPPET SAM', sheet: 'puppet', ai: 'escape', hp: 32, speed: 104, depth: 60, reach: 22, score: 350, atk: 'slap', cd: [1.2, 2.0], ward: true, voice: 'voice1',
+    ko: ['Mr. Socks... sleepy... zzz', 'Shh, Mr. Socks is napping... zzz'], lines: ['Mr. Socks says you are mean!', 'Talk to the sock!', 'Mr. Socks BITES!'] },
+  // GREG (Bill): the ward's frequent flyer. Deadpan, neck pillow worn like a crown, croons made-up Sinatra-style bits (no real
+  // lyrics), throws his neck pillow like a boomerang. Bill's lines are verbatim (GREG_BILL, tests/v13.py).
+  greg: { name: 'GREG', sheet: 'greg', ai: 'tray', boom: true, hp: 80, speed: 34, depth: 26, reach: 150, score: 900, atk: 'throw', cd: [1.5, 2.4], keep: 110, armor: 1, elite: true,
+    ward: true, voice: 'greg', drop: ['zynn', 0.08], throwLines: ["I'm gonna knock you one!", 'Catch!', 'Pillow fight!'],
+    lines: ['Wanna get outta here?', "Let's get outta here.", "You can't keep me locked up in here!", "I'm gonna knock you one!", 'I know a way out.', 'Meet me by the laundry chute.'],
+    grabLines: ["Don't touch my dick!"],
+    sing: ['\u266a Doo-be-doo-be-doo \u266a', "\u266a Start spreadin' the news... I'm checkin' out! \u266a", '\u266a Fly me outta this ward \u266a', '\u266a I did it MY way... out the window \u266a', '\u266a Strangers in the dayroom \u266a'],
+    ko: ['Okay... I\'ll stay... zzz', 'Wake me for dinner... zzz', '\u266a Doo-be-doo... zzz \u266a'] },
   ragevisitor: { name: 'ROAD-RAGE VISITOR', sheet: 'ragevisitor', ai: 'visitor', hp: 62, speed: 50, depth: 26, reach: 30, score: 500, atk: 'punch', cd: [1.4, 2.2], armor: 1, garage: true,
     ko: ['Validate... my... ticket... zzz', "Fine. I'll take the bus... zzz"], voice: 'voice3',
     lines: ["I've been circling for 40 minutes!", 'THIS IS A TWO-HOUR SPOT!', 'Who do I talk to about this ticket?!', 'I was only gone FIVE minutes!'] },
@@ -357,6 +416,14 @@ export const BREAKABLES = {
     bits: ['deb_glass', 'deb_can', 'deb_glass', 'deb_box'], deb: ['#d83a4a', '#1a2a3a', '#cfe8ff'], hit: 'clang', brk: 'smash' },
   // v0.11 PARKING GARAGE props: traffic cones (light, carry + throw), runaway shopping carts (roll like crash carts),
   // the pay station (breaks open into coins + tickets) and the parked cars (hit one and its alarm goes off: src/garage.js)
+  // v0.13 PSYCH WARD props: a molded foam chair (light, throwable), the dayroom puzzle table (kick it: puzzle pieces everywhere),
+  // a med cart with a paper cup of pills on top (rolls; breaks into loot). The linen hamper is the old rolling, throwable one.
+  foamchair: { carry: true, name: 'FOAM CHAIR', spr: 'foamchair', hp: 3, w: 20, h: 22, move: 'slide', fr: 2.6, push: 0.95, dmg: 7, mass: 0.8, loot: 'small',
+    bits: ['deb_foam', 'deb_foam'], deb: ['#3ab8a8', '#e8f0a0'], hit: 'thunk', brk: 'thunk' },
+  puzzletable: { name: 'PUZZLE TABLE', spr: 'puzzletable', hp: 4, w: 42, h: 22, move: 'slide', fr: 4.0, push: 0.6, dmg: 10, mass: 2.4, loot: 'puzzle',
+    bits: ['deb_puzzle0', 'deb_puzzle1', 'deb_puzzle2', 'deb_puzzle0', 'deb_puzzle1'], deb: ['#a87a4a', '#ff8a4a', '#3aa8ff'], hit: 'thunk', brk: 'crash' },
+  pillcart: { carry: true, metal: true, name: 'PILL CART', spr: 'pillcart', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.6, push: 1.0, dmg: 12, mass: 1.8, loot: 'pills',
+    bits: ['deb_cup', 'deb_pill', 'deb_wheel'], deb: ['#e8eef4', '#3a8ae8', '#e84a5a'], hit: 'clang', brk: 'crash' },
   cone: { carry: true, name: 'TRAFFIC CONE', spr: 'cone', hp: 2, w: 12, h: 20, states: 2, move: 'slide', fr: 2.4, push: 1.25, dmg: 6, mass: 0.4, loot: 'small',
     bits: ['deb_cone', 'deb_cone'], deb: ['#ff7a1a', '#f4f4f4'], hit: 'thunk', brk: 'thunk' },
   shopcart: { metal: true, name: 'SHOPPING CART', spr: 'shopcart', hp: 4, w: 30, h: 28, move: 'roll', fr: 0.5, push: 1.1, dmg: 13, mass: 1.8, loot: 'cart',
@@ -373,6 +440,8 @@ export const LOOT = {
   small: [['pizza', 0.04], ['jerky', 0.06], ['energy', 0.14], ['snacks', 0.05], ['donut', 0.09], ['star', 0.06], ['w:mop', 0.03], ['w:bedpan', 0.02], ['zynn', 0.01]],
   vending: [['snacks', 0.35], ['energy', 0.3], ['jerky', 0.15], ['star', 0.15], ['zynn', 0.03]],
   glovebox: [['jerky', 0.12], ['snacks', 0.1], ['energy', 0.18], ['pizza', 0.06], ['star', 0.12], ['donut', 0.08], ['zynn', 0.03]],  // v0.11 a busted parked car
+  puzzle: [['star', 0.3], ['snacks', 0.15], ['donut', 0.15], ['jerky', 0.06], ['zynn', 0.02]],
+  pills: [['energy', 0.3], ['snacks', 0.15], ['candy', 0.15], ['pizza', 0.05], ['zynn', 0.02]],
   paystation: [['star', 0.35], ['energy', 0.2], ['snacks', 0.1], ['zynn', 0.03]],
 };
 
@@ -589,7 +658,48 @@ export const LEVEL4 = {
   ],
   bossArena: 2420, backup: ['ragevisitor', 'coffeeguy', 'vanmom', 'bigshot'],
 };
-export const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4];
+// ---- v0.13 Level 5: THE PSYCH WARD (BHU 5), after the Scooter Run and before the Night Shift: padded walls, a locked double
+// door with a buzzer, the nurses' station behind plexiglass, a dayroom with a caged TV + puzzle table; the lights flicker and
+// black out now and then (ward: true -> src/ward.js). Boss: "DR." PHIL-IN in the group room. The fire alarm works here.
+export const LEVEL5 = {
+  id: 5, name: 'FLOOR 5: THE PSYCH WARD', sub: '6:00 PM. THE TV IS TALKING AGAIN.', width: 2900, music: 'psych', bossMusic: 'philin', clock: 18 * 60, floorNum: '5', cutBoss: 'philin',
+  ward: true, dark: 0.3, tiles: { wall: 'pwall', ceil: 'pceil', floor: 'pfloor' },
+  wall: [
+    [24, 'elev', 'A'], [118, 'callpanel'], [140, 'sign_bhu'], [250, 'pwall_door'], [318, 'buzzer'], [360, 'neon_bhu'], [440, 'door', 501], [470, 'poster_feelings'],
+    [540, 'callstrip'], [620, 'door', 502], [700, 'sign_elope'], [780, 'sign_exit'], [830, 'nstation'], [960, 'door', 503], [1040, 'callstrip'], [1130, 'door', 504],
+    [1210, 'poster_group'], [1270, 'sign_quiet'], [1380, 'pwall_door'], [1448, 'buzzer'], [1480, 'neon_calm'], [1580, 'door', 505], [1660, 'callstrip'], [1740, 'door', 506],
+    [1830, 'neon_dayroom'], [1900, 'tvcage'], [1980, 'poster_feelings'], [2060, 'tvcage'], [2140, 'sign_exit'], [2200, 'door', 507], [2290, 'callstrip'], [2380, 'poster_group'],
+    [2440, 'neon_calm'], [2540, 'tvcage'], [2620, 'door', 508], [2720, 'sign_exit'], [2780, 'callstrip'],
+  ],
+  props: [
+    [180, 196, 'foamchair', []], [380, 150, 'pillcart', ['energy']], [560, 200, 'linen', []], [700, 186, 'foamchair', []], [900, 202, 'chair', []],
+    [1060, 150, 'pillcart', []], [1240, 196, 'linen', ['w:bedpan']], [1330, 150, 'foamchair', ['jerky']], [1500, 200, 'trash', []], [1700, 186, 'linen', []],
+    [1880, 172, 'puzzletable', ['pizza']], [1960, 150, 'foamchair', []], [2010, 200, 'foamchair', ['snacks']], [2120, 186, 'puzzletable', ['zynn']], [2250, 150, 'pillcart', []],
+    [2480, 200, 'foamchair', []], [2560, 160, 'puzzletable', []], [2700, 196, 'linen', []], [2800, 150, 'foamchair', []],
+  ],
+  floorItems: [[600, 196, 'w:clipboard'], [1600, 170, 'w:extinguisher']],
+  zones: [
+    { at: 120, lock: 0, title: 'BHU 5', waves: [
+      [['escapee', 'D501', 0.5], ['wanderer', 'R', 1.4]],
+      [['tinfoil', 'R', 0.3], ['puppet', 'D502', 1.2], ['escapee', 'L', 2.0]],
+    ] },
+    { at: 640, lock: 560, title: 'MED PASS', waves: [
+      [['capeguy', 'D503', 0.3], ['tinfoil', 'R', 1.0], ['spammer', 'L', 1.8]],
+      [['greg', 'R', 0.3], ['puppet', 'D502', 1.2], ['escapee', 'L', 2.0]],
+    ] },
+    { at: 1180, lock: 1100, title: 'NURSES STATION', waves: [
+      [['puppet', 'D504', 0.3], ['capeguy', 'R', 1.0], ['sundowner', 'L', 1.8]],
+      [['tinfoil', 'D503', 0.4], ['escapee', 'R', 1.0], ['capeguy', 'L', 1.8], ['runner', 'D504', 2.4]],
+    ] },
+    { at: 1760, lock: 1660, title: 'DAYROOM', waves: [
+      [['capeguy', 'D506', 0.3], ['greg', 'R', 0.9], ['tinfoil', 'L', 1.8]],
+      [['puppet', 'D505', 0.3], ['escapee', 'R', 0.9], ['elite', 'L', 1.6], ['capeguy', 'D506', 2.4]],
+    ] },
+    { at: 2440, lock: 2420, boss: 'philin', title: 'GROUP ROOM', waves: [] },
+  ],
+  bossArena: 2420, backup: ['escapee', 'capeguy', 'tinfoil', 'puppet'],
+};
+export const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5];
 // ---- v0.4 Breakroom bonus round (between Floor 3 and Floor 4): one screen, built to the current view width at start.
 // Thieves come out of the staff door and both screen edges, raid a snack spot for a couple of seconds, then run.
 export const BONUS = { time: 45, every: [1.3, 2.3], cap: 4, raid: 2.3, stop: 500, saved: 150, perfect: 3000,
