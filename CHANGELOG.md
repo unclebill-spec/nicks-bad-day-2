@@ -2,6 +2,11 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-23: v0.14.1 "Nurse Revamp" (Bill: smoother, cleaner nurses)
+- All 6 nurses get more animation frames: walk/run 4→8, idle 2→4, every combo hit gets wind-up + in-between + recovery (2→4, 3→5), jump 2→4 (launch/rise/apex/fall), throw 2→3, grab squeeze loop, 3-frame hurt flinch. `src/hero.js pose()` indexes updated.
+- Palette-locked cleanup (`tools/nurse_revamp.py`): ink outline kept on the silhouette only, interior seams use each area's own shade, stray pixels removed. No new colours; identities unchanged.
+- Images: `docs/nurses_before_after.png`, `docs/nurses_revamp.gif`. Cache `nbd2-app-v24`.
+
 ## 2026-10-23: v0.14 "Cafeteria Lunch Rush" (Bill: Jello floors, tray throwers, Lunch Lady with a ladle)
 - **FLOOR 1: THE CAFETERIA** (`LEVEL6`, LEVELS index 5, id 6, `?level=6`), after the Psych Ward, before the Night Shift. 7:00 PM: nobody got lunch.
   Cream subway-tile walls and a red/cream checker floor. Serving line, salad bar, FIZZCO soda fountain and a menu board, with red/blue/violet neons.

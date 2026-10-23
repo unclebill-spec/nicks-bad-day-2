@@ -8,7 +8,8 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-23, v0.14)
+## Current state (2026-10-23, v0.14.1)
+- **v0.14.1 nurse revamp:** heroes go through `tools/nurse_revamp.py` (`NR.smooth` in-between frames + `NR.cleanup` palette-locked selective outline) in `make_art.py`. Frame layouts are coupled to `src/hero.js pose()`: walk/run 8, idle 4, atk 4 (2-hit) / 5 (3-hit), jump 4, throw 3, grab 2, hurt 3. Cache `nbd2-app-v24`.
 - **v0.14 FLOOR 1: THE CAFETERIA (`LEVEL6`, LEVELS index 5, id 6; `?level=6`)**, placed after the Psych Ward and before the Night Shift (`afterTally` i===5 goes to `goCafe()`; i===6 plays the `cafeout` cutscene, then `goNight()`).
   `lv.cafe` flag, `lv.puddles` (permanent Jell-O, spawned in `loadLevel`). Boss `src/lunchlady.js` (`LunchLady`; soup waves live on the boss in `this.waves`).
   Enemies `linecut`, `onside` (ranch splash in stage.js `splashAt`). Props `roundtable`, `plchair`, `traystack`. Art comes from `tools/v14_art.py` and `v14_chars.py`, audio from `tools/v14_audio.py`.
