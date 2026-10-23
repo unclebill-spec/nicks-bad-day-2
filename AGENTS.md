@@ -8,7 +8,11 @@ A 1990s arcade beat 'em up in the spirit of Golden Axe and the TMNT and Simpsons
 their way through hospital floors full of comedic patients. Plain HTML5 Canvas 2D plus ES modules. No build step
 and no dependencies at runtime. Live on GitHub Pages: https://unclebill-spec.github.io/nicks-bad-day-2/
 
-## Current state (2026-10-08, v0.13)
+## Current state (2026-10-23, v0.14)
+- **v0.14 FLOOR 1: THE CAFETERIA (`LEVEL6`, LEVELS index 5, id 6; `?level=6`)**, placed after the Psych Ward and before the Night Shift (`afterTally` i===5 goes to `goCafe()`; i===6 plays the `cafeout` cutscene, then `goNight()`).
+  `lv.cafe` flag, `lv.puddles` (permanent Jell-O, spawned in `loadLevel`). Boss `src/lunchlady.js` (`LunchLady`; soup waves live on the boss in `this.waves`).
+  Enemies `linecut`, `onside` (ranch splash in stage.js `splashAt`). Props `roundtable`, `plchair`, `traystack`. Art comes from `tools/v14_art.py` and `v14_chars.py`, audio from `tools/v14_audio.py`.
+  Level Select: PICKS[5], startPick map `{0:0,2:1,4:4,5:5,6:2,7:3}`. Tests: `tests/v14.py`. Cache `nbd2-app-v23`.
 - **v0.13 FLOOR 5: THE PSYCH WARD (`LEVEL5` in data.js, LEVELS index 4, id 5; `?level=5`)**, placed **after the Scooter Run and
   before the Night Shift**. Flow: scooter tally → `goPsych()` → cutscene `psych` (`prepLevelBg(4, 'wardBg')`) → ward → boss cut
   `philin` → tally → `afterTally()` (id 5) → cutscene `psychout` → `goNight()`. `?level=3/4` still mean night / garage.

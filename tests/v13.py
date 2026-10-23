@@ -179,7 +179,7 @@ with sync_playwright() as p:
         ctx = b.new_context(viewport={'width': 915, 'height': 412}, has_touch=True, is_mobile=True); pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.goto(U + '?nocut=1'); pg.wait_for_function('window.__loaded === true', timeout=30000); time.sleep(0.6); pg.evaluate("__nbd.toLevels()"); time.sleep(0.5)
         R = pg.evaluate("[__nbd.game.lvRects, __nbd.G.VW, __nbd.G.VH, __nbd.PICKS[4].name]")
-        fit = all(r[0] >= 0 and r[1] >= 0 and r[0] + r[2] <= R[1] and r[1] + r[3] <= R[2] for r in R[0]) and len(R[0]) == 7
+        fit = all(r[0] >= 0 and r[1] >= 0 and r[0] + r[2] <= R[1] and r[1] + r[3] <= R[2] for r in R[0]) and len(R[0]) >= 7
         check('level select (phone): FLOOR 5 PSYCH WARD card, all cards fit', fit and 'PSYCH' in R[3], R)
         pg.screenshot(path='tests/out/v13_levels_phone.png')
         box = pg.evaluate("(()=>{const c=document.querySelector('canvas').getBoundingClientRect();return [c.left,c.top,c.width/__nbd.G.VW,c.height/__nbd.G.VH]})()")

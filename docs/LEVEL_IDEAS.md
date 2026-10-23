@@ -10,7 +10,7 @@ Code Blue, grabs/throws, specials and the drops (pizza, BEEF JERKY, energy drink
 |---|---|---|
 | 1 | Parking Garage at Shift Change | **DONE (v0.11)**: Level P3, after the Night Shift, before the ending |
 | 2 | Psych Ward | **DONE (v0.13)**: Floor 5, after the Scooter Run, before the Night Shift |
-| 3 | Cafeteria Lunch Rush | idea |
+| 3 | Cafeteria Lunch Rush | DONE (v0.14) |
 | 4 | Labor & Delivery | idea |
 | 5 | Rooftop Helipad at Night | idea |
 
@@ -35,7 +35,7 @@ Built as FLOOR 5: THE PSYCH WARD with GREG and boss "Dr." Phil-in. See `src/ward
   rounds now"). He "prescribes" things: tongue-depressor throws, a reflex-hammer bonk, a "STAT!" rush. Naps on the
   exam table when beaten.
 
-## 3. Cafeteria Lunch Rush
+## 3. Cafeteria Lunch Rush (DONE in v0.14)
 - **Look:** serving line with sneeze guards, steam trays, a salad bar, round tables and plastic chairs, a soda fountain.
 - **Hazards:** slippery Jell-O puddles (reuse the jello puddle / slip), stacked trays that topple.
 - **Enemies:** tray throwers (flat trays + lobbed Jell-O), line cutters, the guy who wants his order "on the side".

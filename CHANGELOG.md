@@ -2,6 +2,16 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-23: v0.14 "Cafeteria Lunch Rush" (Bill: Jello floors, tray throwers, Lunch Lady with a ladle)
+- **FLOOR 1: THE CAFETERIA** (`LEVEL6`, LEVELS index 5, id 6, `?level=6`), after the Psych Ward, before the Night Shift. 7:00 PM: nobody got lunch.
+  Cream subway-tile walls and a red/cream checker floor. Serving line, salad bar, FIZZCO soda fountain and a menu board, with red/blue/violet neons.
+- Spilled Jell-O puddles make the floor slippery. Tray stacks roll when hit. Round tables drop lunch loot, and the chairs can be carried.
+- Patients: tray throwers, the **Line Cutter** (who escapes) and **On-the-Side Guy** (throws ranch cups that leave a white puddle). Every nurse has cafeteria lines.
+- **Boss: LUNCH LADY LORETTA** (~1.3x a nurse). She swings a ladle, sends a rolling soup splash down the lane (jump it), and shouts "NEXT!", which dizzies grounded nurses nearby. She also flings mystery meat.
+  Phase 2, "WE'RE OUT OF PUDDING!": she gets faster and throws pudding cups that leave Jell-O. On KO she naps: "Kitchen's... closed... zzz".
+- New cutscenes (cafe, lunchlady, cafeout), a Level Select card (#6, 8 cards), new music (cafe, lunchlady) and sfx. Cache `nbd2-app-v23`.
+- Tests: `tests/v14.py` (A level, E boss, F flow and select). flow.py now runs 2,5,6,3,4. Screenshot: `docs/v14_cafe.png`.
+
 ## 2026-10-08: v0.13 "Psych Ward" (Bill: "let's add the next level" + GREG)
 - **New level: FLOOR 5, THE PSYCH WARD (BHU 5)**, 6:00 PM, placed **after the Scooter Run and before the Night Shift**. Padded
   quilted walls, a locked STAFF ONLY double door with a buzzer, a nurses' station behind plexiglass, a dayroom with a caged TV and
