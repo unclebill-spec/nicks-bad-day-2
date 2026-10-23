@@ -579,20 +579,20 @@ export class Hero extends Actor {
   pose() {
     const t = this.t, st = this.st;
     switch (st) {
-      case 'idle': case 'land': return this.carry ? ['lift', Math.floor(W.t * 2.2)] : ['idle', Math.floor(W.t * 2.2)];
-      case 'walk': case 'enter': return this.carry ? ['carry', Math.floor(W.t * 6)] : ['walk', Math.floor(W.t * 8)];
+      case 'idle': case 'land': return this.carry ? ['lift', Math.floor(W.t * 2.2)] : ['idle', Math.floor(W.t * 4.4)];
+      case 'walk': case 'enter': return this.carry ? ['carry', Math.floor(W.t * 12)] : ['walk', Math.floor(W.t * 16)];
       case 'lift': return t < 0.1 ? ['pickup', 0] : ['lift', 0];
-      case 'toss': return ['throw', t < 0.1 ? 0 : 1];
-      case 'run': return ['run', Math.floor(W.t * 12)];
-      case 'atk': { const A = this.atk; const n = this.atkName; const k = t / (A.dur * (this.d.atkK || 1)); return [n, A.t.length === 3 ? (k < 0.3 ? 0 : k < 0.75 ? 1 : 2) : (k < 0.4 ? 0 : 1)]; }
+      case 'toss': return ['throw', t < 0.05 ? 0 : t < 0.1 ? 1 : 2];
+      case 'run': return ['run', Math.floor(W.t * 24)];
+      case 'atk': { const A = this.atk; const n = this.atkName; const k = t / (A.dur * (this.d.atkK || 1)); return [n, A.t.length === 3 ? (k < 0.18 ? 0 : k < 0.3 ? 1 : k < 0.75 ? 2 : k < 0.88 ? 3 : 4) : (k < 0.22 ? 0 : k < 0.4 ? 1 : k < 0.8 ? 2 : 3)]; }  // nurse revamp: wind, in-between, hit, (follow), recover
       case 'dash': return ['dash', 0];
       case 'back': return ['back', 0];
-      case 'jump': case 'respawn': return this.carry ? ['lift', 0] : (this.airTossT || 0) > W.t ? ['throw', 1] : this.kicked ? ['jkick', 0] : ['jump', this.vz > 0 ? 0 : 1];
-      case 'grab': return ['grab', 0];
+      case 'jump': case 'respawn': return this.carry ? ['lift', 0] : (this.airTossT || 0) > W.t ? ['throw', 2] : this.kicked ? ['jkick', 0] : ['jump', this.vz > 150 ? 0 : this.vz > 30 ? 1 : this.vz > -90 ? 2 : 3];
+      case 'grab': return ['grab', Math.floor(W.t * 3)];
       case 'knee': return ['knee', 0];
-      case 'throw': return ['throw', t < 0.14 ? 0 : 1];
-      case 'slam': return this.t < 0.22 ? ['lift', 0] : ['throw', 1];
-      case 'hurt': return ['hurt', 0];
+      case 'throw': return ['throw', t < 0.08 ? 0 : t < 0.14 ? 1 : 2];
+      case 'slam': return this.t < 0.22 ? ['lift', 0] : ['throw', 2];
+      case 'hurt': return ['hurt', t < 0.08 ? 0 : t < 0.16 ? 1 : 2];
       case 'grabbed': return ['hurt', Math.floor(W.t * 6)];
       case 'dizzy': return ['dizzy', Math.floor(W.t * 4)];
       case 'fall': return ['fall', 0];
@@ -604,7 +604,7 @@ export class Hero extends Actor {
       case 'win': return ['win', Math.floor(W.t * 3)];
       case 'super': return ['defib', this.t < 0.34 ? 0 : this.t < 0.62 ? 1 : 2];
       case 'ativan': return ['jab', this.t < 0.38 ? 0 : 1];
-      case 'ride': return this.t < 0.22 ? ['jump', 0] : ['ride', Math.floor(W.t * 8)];
+      case 'ride': return this.t < 0.22 ? ['jump', 1] : ['ride', Math.floor(W.t * 8)];
       case 'teamwait': return ['team', 0];
       case 'teamup': return ['team', 0];
       case 'special': {

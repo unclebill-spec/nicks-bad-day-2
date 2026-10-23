@@ -528,10 +528,10 @@ def hero_anims(name):
     A = {}
     guard = dict(ua_f=22, fa_f=128, ua_b=-6, fa_b=118)
     A["idle"] = [P(**guard), P(**{**guard, "fa_f": 122}, hy=1)]
-    A["walk"] = walk_cycle(swing=22, arm=18)
+    A["walk"] = walk_cycle(n=8, swing=22, arm=18)
     for f in A["walk"]:
         f.update(ua_f=f["ua_f"] + 10, fa_f=110 + f["fa_f"] * 0.2)
-    A["run"] = walk_cycle(swing=38, arm=40, lean=16, bob=2)
+    A["run"] = walk_cycle(n=8, swing=38, arm=40, lean=16, bob=2)
     for f in A["run"]:
         f.update(fa_f=f["ua_f"] + 80, fa_b=f["ua_b"] + 80)
     A["atk1"] = [P(lean=6, ua_f=40, fa_f=110, ua_b=-10, fa_b=120), P(lean=12, ua_f=86, fa_f=90, ua_b=-14, fa_b=125, th_f=20, th_b=-18)]
@@ -611,7 +611,7 @@ def hero_anims(name):
     # v0.6: carrying a prop overhead (golden-axe style) and walking with it
     up = dict(ua_f=146, fa_f=186, ua_b=140, fa_b=182)
     A["lift"] = [P(lean=-2, th_f=12, th_b=-12, **up), P(lean=-2, th_f=12, th_b=-12, hy=1, **{**up, "fa_f": 180})]
-    A["carry"] = walk_cycle(swing=16, arm=0)
+    A["carry"] = walk_cycle(n=8, swing=16, arm=0)
     for f in A["carry"]:
         f.update(lean=-1, **up)
     if name == "nate":  # v0.8 lazy moves: phone idle, long-armed backhand, palm shove, stretched push-kick

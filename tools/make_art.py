@@ -24,6 +24,7 @@ from rig import INK, Raster, figure  # noqa: E402
 import chars  # noqa: E402
 import boss  # noqa: E402
 import props as PR  # noqa: E402
+import nurse_revamp as NR  # noqa: E402
 
 OUT.mkdir(exist_ok=True)
 atlas = {"chars": {}, "sprites": {}}
@@ -37,6 +38,8 @@ def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
         pl = body["plaid"]; post = lambda im: chars.gown_check(im, base=pl[0], check=pl[1], period=4)
     if body.get("post"):  # v0.10.1: any other per-frame post-process (Will's sweater knit)
         post = body["post"]
+    if name in NR.HEROES:  # nurse revamp: palette-locked cleanup after any fabric post
+        p0 = post; post = (lambda im: NR.cleanup(p0(im), body)) if p0 else (lambda im: NR.cleanup(im, body))
     for an, poses in anims.items():
         start = len(frames)
         hands = []
@@ -55,7 +58,7 @@ def char_sheet(name, anims, body, cell=(88, 80), anchor=(44, 76)):
 
 B = chars.bodies()
 for h in ("nick", "kim", "will", "jackie", "nate", "heather"):
-    char_sheet(h, chars.hero_anims(h), B[h])
+    char_sheet(h, NR.smooth(chars.hero_anims(h)), B[h])
 PATIENTS = ("wanderer", "spammer", "escape", "ivswing", "sundowner", "crutch", "bell", "elite", "runner", "tray", "o2", "barium", "apron", "lou", "yeller")
 for e in PATIENTS + ("visitor",):
     big = e == "visitor"
