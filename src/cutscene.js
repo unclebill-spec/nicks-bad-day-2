@@ -193,6 +193,33 @@ const SCRIPTS = {
         bubbles: [{ x: 6, y: 6, s: 'No returns. No exchanges. HONK!', tail: [w / 2, h - 72], at: 0.25, mw: w - 20, shout: true }] }),
     ];
   },
+  roof() {  // v0.16: the night shift -> 3 AM, a page to the roof
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['roof', 300, 58], cap: '3:00 AM. THE ROOF. WINDY.', acts: [{ s: a, a: 'walk', x: w * 0.1, y: h - 3, mv: 30, rate: 7 }, ...(b ? [{ s: b, a: 'walk', x: w * 0.1 - 26, y: h - 1, mv: 30, rate: 7 }] : [])],
+        bubbles: [{ x: w * 0.36, y: 8, s: '*PAGE* Unauthorized crew on the helipad. Again.', tail: [w * 0.3, h - 50], at: 0.35, mw: Math.min(210, w * 0.56) }] }),
+      (w, h) => ({ bg: null, burst: '#3aa8ff', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'A helicopter crew gone rogue. At 3 AM. Sure.', 'The roof? I was JUST getting comfy.', 'Who flies a helicopter on a 30-hour shift?!', 'Hold onto your scrubs. It is windy up there.', 'Ooh, the landing lights are so pretty!', 'I have flown before. Kind of. Let me lead.', 'Rogue flight crew. Fine. I brought a hair tie.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
+  lifeflight() {  // v0.16 boss intro: the LIFE FLITE crew
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['roof', 2330, 58], cap: 'THE BIG PAD.', acts: [{ s: a, a: 'idle', x: w * 0.14, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.14 + 26, y: h - 1 }] : []), { s: 'roxy', a: 'run', x: w * 1.05, y: h - 2, mv: -40, flip: true, rate: 8 }, { s: 'duke', a: 'idle', x: w * 0.9, y: h - 1, flip: true }],
+        bubbles: [{ x: w * 0.3, y: 14, s: 'LIFE FLITE! Nobody move, we are on a CALL!', tail: [w * 0.75, h - 80], at: 0.5, mw: Math.min(220, w * 0.6), shout: true }] }),
+      (w, h) => ({ bg: null, burst: '#a24dff', faces: [{ id: 'roxy', x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 6, y: 6, s: 'Thirty hours on call. Ace, keep it running. Duke, warm up the paddles.', tail: [w / 2, h - 72], at: 0.25, mw: w - 20, shout: true }] }),
+    ];
+  },
+  roofout() {  // v0.16: the crew goes off shift (asleep on their own stretcher), then on to 7:30 AM and the garage
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['roof', 2440, 58], cap: 'OFF SHIFT.', acts: [{ s: 'roxy', a: 'sleep', x: w * 0.6, y: h - 6 }, { s: 'duke', a: 'sleep', x: w * 0.6 + 30, y: h - 4 }, { s: a, a: 'win', x: w * 0.24, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.24 + 28, y: h - 1, rate: 3 }] : [])],
+        bubbles: [{ x: w * 0.42, y: 8, s: 'Going... off... shift... zzz', tail: [w * 0.64, h - 30], at: 0.3, mw: Math.min(200, w * 0.5) }] }),
+      (w, h) => ({ bg: null, burst: '#3a6aff', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Somebody call the real pilots. I am going home.', 'They earned that nap. So did I.', 'Ace, cut the engine. Everybody sleep.', 'Tuck them in. Gently. Then shift change.', 'Sweet dreams, flight crew! Fly safe tomorrow!', 'I will chart this. After coffee. Lots of coffee.', 'Helipad: secured. Hair: ruined. Shift: almost over.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
   ldout() {  // v0.15: the stork flies off with its "baby" (a laundry sack), then on to the night shift
     const [a, b] = heroIds();
     return [
@@ -284,7 +311,7 @@ function drawPanel(P, px, py, pw, ph, local, idx) {
   rect(px, py, pw, ph, '#2a3060');
   if (P.bg) {
     const [src, x0, y0] = P.bg;
-    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : src === 'garage' ? (W.garageBg || W.nightBg || W.hallBg) : src === 'cafe' ? (W.cafeBg || W.hallBg) : src === 'ld' ? (W.ldBg || W.hallBg) : src === 'ward' ? (W.wardBg || W.hallBg) : W.hallBg;
+    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : src === 'garage' ? (W.garageBg || W.nightBg || W.hallBg) : src === 'cafe' ? (W.cafeBg || W.hallBg) : src === 'ld' ? (W.ldBg || W.hallBg) : src === 'roof' ? (W.roofBg || W.nightBg || W.hallBg) : src === 'ward' ? (W.wardBg || W.hallBg) : W.hallBg;
     let sx = x0 === 'fridge' ? Math.max(0, (W.breakFridgeX || 300) - pw * 0.55) : x0;
     if (img) { sx = Math.max(0, Math.min(img.width - pw, sx)); c.drawImage(img, sx, y0, pw, ph, px, py, pw, ph); }
     if (src === 'hall') hallBits(sx, y0, px, py, pw);

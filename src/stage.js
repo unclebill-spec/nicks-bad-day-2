@@ -10,6 +10,7 @@ import { Valet } from './valet.js';
 import { PhilIn } from './philin.js';
 import { LunchLady } from './lunchlady.js';
 import { Stork } from './stork.js';
+import { LifeFlight } from './lifeflight.js';
 import { sfx, playMusic } from './sound.js';
 import { resetAlarm, maybeYeller, updateAlarm, alarmPending } from './alarm.js';
 
@@ -127,7 +128,8 @@ export const Director = {
   },
   startBoss(z = W.lv.zones[W.zone]) {
     W.bossOn = true; const kind = z.boss || 'tilly';
-    if (kind === 'stork') { W.boss = new Stork(W.lockX + G.VW + 60, 176); playMusic(W.lv.bossMusic || 'boss'); }
+    if (kind === 'lifeflight') { W.boss = new LifeFlight(W.lockX + G.VW + 60, 176); playMusic(W.lv.bossMusic || 'boss'); }
+    else if (kind === 'stork') { W.boss = new Stork(W.lockX + G.VW + 60, 176); playMusic(W.lv.bossMusic || 'boss'); }
     else if (kind === 'lunchlady') { W.boss = new LunchLady(W.lockX + G.VW + 40, 176); playMusic(W.lv.bossMusic || 'boss'); }
     else if (kind === 'philin') { W.boss = new PhilIn(W.lockX + G.VW + 40, 176); playMusic(W.lv.bossMusic || 'boss'); }
     else if (kind === 'valet') { W.boss = new Valet(W.lockX + G.VW + 70, 178); playMusic(W.lv.bossMusic || 'boss'); }
