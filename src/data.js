@@ -291,6 +291,40 @@ export const CAFE_LINES = {
     clear: ['Finally. Hand me a spoon and nobody talk to me.'] },
 };
 for (const [id, L] of Object.entries(CAFE_LINES)) HEROES[id].cafe = L;
+// v0.15 LABOR & DELIVERY lines (each nurse in their own voice), attached as HEROES[id].ld. 8 PM, everybody's family showed up.
+export const LD_LINES = {
+  nick: { spawn: ['Labor and Delivery. Nobody hand me a baby. I will drop it. Kidding! Mostly.'],
+    idle: ['Why are there forty balloons in one room?', 'Sir, the baby is not going to do a trick. Put the camera down.'],
+    zone: ['Hallway clear. Grandma is still here. Grandma is always still here.', 'Okay. Breathe. Not you. Me.'],
+    drop: ['Sorry! Congratulations though!', 'Have a seat. Have a nap.'],
+    clear: ['Mom and baby are doing great. I need a nap.'] },
+  kim: { spawn: ['Babies! Tiny little babies! I love it here!'],
+    idle: ['Look at the little hats! LOOK AT THE LITTLE HATS!', 'Who brought the cake? Is there cake?'],
+    zone: ['Visiting hours are OVER, sweetie!', 'Shhh! Babies sleeping!'],
+    drop: ['Nap time for grown-ups too!', 'Nighty night, new daddy!'],
+    clear: ["It's a... clear hallway! Yay!"] },
+  will: { spawn: ['I have delivered eleven babies. Okay, I watched. Same thing.'],
+    idle: ['Grandma has been here since Tuesday. Respect.', 'Every dad thinks his baby is the cutest. Mine would be cuter.'],
+    zone: ['That is how a professional clears a waiting room.', 'Special delivery. Of justice.'],
+    drop: ['Sit. Rest. Congratulations.', 'Take a seat, new dad.'],
+    clear: ['Ten fingers, ten toes, zero visitors. Perfect.'] },
+  jackie: { spawn: ["Okay team, quiet voices, walk don't run, babies are sleeping!"],
+    idle: ["Somebody take that camcorder before he films the delivery.", "I'll walk Grandma to the lobby, you get the dad!"],
+    zone: ['Good job, everybody! Gentle hands!', 'Hallway cleared! Wash your hands!'],
+    drop: ["Let's get you a chair, hon.", 'Easy now. Deep breaths.'],
+    clear: ['Everybody okay? Great. Somebody check on Mom.'] },
+  nate: { spawn: ['The babies sleep all day. I could work here.'],
+    idle: ['The nursery is the quietest room in the hospital. Wake me there.', 'Is that a stork? No. I need sleep.'],
+    zone: ['Cool. Can I hold a baby now?', 'Hallway... cleared. Nursery... nap.'],
+    drop: ['Nap buddy.', 'Yeah, lie down. Babies do it all day.'],
+    clear: ['I am going to sleep like a baby. Literally.'] },
+  heather: { spawn: ["Twelve dads, four grandmas and one camcorder from 1998. Let's go."],
+    idle: ['If one more dad films me I am confiscating the tape.', 'Grandma, the baby is fine. YOU need to go home.'],
+    zone: ["That's the hallway. It's quiet now. You're welcome.", 'No flash photography. I see you.'],
+    drop: ['Sit. Down.', 'Enjoy the floor. Congrats on the baby.'],
+    clear: ['Finally. Quiet. Nobody say "push" for an hour.'] },
+};
+for (const [id, L] of Object.entries(LD_LINES)) HEROES[id].ld = L;
 export const GREG_BILL = ['Wanna get outta here?', "Let's get outta here.", "You can't keep me locked up in here!", "I'm gonna knock you one!", "Don't touch my dick!"];
 export const GARAGE_BILL = { nick: "Someone's gonna key my car, I know it.", kim: 'Let me help you to your car, sweetie!', will: 'I always get the closest spot.', jackie: 'Who needs a jump?' };
 
@@ -395,6 +429,16 @@ export const ENEMIES = {
   onside: { name: 'ON-THE-SIDE GUY', sheet: 'onside', ai: 'tray', proj: 'ranch', projSpr: 'p_ranch', throwLines: ['ON THE SIDE!', 'DRESSING!', 'I SAID ON THE SIDE!'],
     hp: 38, speed: 34, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.6, 2.6], keep: 118, drop: ['snacks', 0.3], cafe: true, voice: 'voice2',
     ko: ['Nap... on the side... zzz', 'Is this... gluten free... zzz'], lines: ["Can I get that on the side?", 'Is this gluten free?', 'I asked for NO onions!'] },
+  // v0.15 LABOR & DELIVERY family (ld: true = they announce themselves). Over-excited and proud, never cruel. Everyday clothes, staff-sized.
+  camdad: { name: 'CAMCORDER DAD', sheet: 'camdad', ai: 'tray', flash: true, throwLines: ['SMILE!', 'THAT\'S MY BABY!', 'GET HER GOOD SIDE!', 'SAY CHEESE!'],
+    hp: 36, speed: 44, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.5, 2.4], keep: 120, drop: ['energy', 0.25], ld: true, voice: 'voice3',
+    ko: ['Did... you get that... zzz', 'Battery... low... zzz'], lines: ["IT'S A BABY! IT'S MY BABY!", 'Is it recording? IS IT RECORDING?', "I'M A DAD!", 'Everybody wave at the camera!'] },
+  grandma: { name: "GRANDMA (WON'T LEAVE)", sheet: 'grandma', ai: 'visitor', hp: 74, speed: 30, depth: 26, reach: 30, score: 600, atk: 'punch', cd: [1.6, 2.5], armor: 2, ld: true, voice: 'voice2',
+    drop: ['candy', 0.4], ko: ["I'm... still not leaving... zzz", 'Just resting my eyes... zzz'],
+    lines: ["I'm not going anywhere!", 'I brought a casserole!', "In my day we didn't have visiting hours!", 'Let me hold the baby!'] },
+  sibling: { name: 'BIG SIBLING', sheet: 'sibling', ai: 'tray', proj: 'juice', projSpr: 'p_juice', throwLines: ['JUICE BOX!', 'I WANT A BROTHER!', 'IS IT MY TURN YET?'],
+    hp: 28, speed: 60, depth: 26, reach: 140, score: 350, atk: 'throw', cd: [1.4, 2.2], keep: 110, drop: ['snacks', 0.3], ld: true, voice: 'voice1',
+    ko: ['Wake me when... it can play... zzz', 'Nap time... finally... zzz'], lines: ["I'm gonna be a big sibling!", 'This is SO boring!', 'Can I name it?'] },
   ragevisitor: { name: 'ROAD-RAGE VISITOR', sheet: 'ragevisitor', ai: 'visitor', hp: 62, speed: 50, depth: 26, reach: 30, score: 500, atk: 'punch', cd: [1.4, 2.2], armor: 1, garage: true,
     ko: ['Validate... my... ticket... zzz', "Fine. I'll take the bus... zzz"], voice: 'voice3',
     lines: ["I've been circling for 40 minutes!", 'THIS IS A TWO-HOUR SPOT!', 'Who do I talk to about this ticket?!', 'I was only gone FIVE minutes!'] },
@@ -472,6 +516,9 @@ export const BREAKABLES = {
     bits: ['deb_tray', 'deb_pea', 'deb_pea', 'deb_tray'], deb: ['#f0f2f4', '#5ac83a', '#e87a2a'], hit: 'thunk', brk: 'crash' },
   traystack: { name: 'TRAY STACK', spr: 'traystack', hp: 2, w: 20, h: 32, move: 'roll', fr: 0.7, push: 1.1, dmg: 14, mass: 1.6, loot: 'small',
     bits: ['deb_tray', 'deb_tray', 'deb_tray', 'deb_tray', 'deb_tray'], deb: ['#c8844a', '#e8a46a'], hit: 'traycrash', brk: 'traycrash' },
+  // v0.15 L&D: a gift-shop cart (flowers, a teddy bear, a balloon). Rolls when hit.
+  giftcart: { name: 'GIFT CART', spr: 'giftcart', hp: 3, w: 28, h: 32, move: 'roll', fr: 0.9, push: 1.0, dmg: 10, mass: 1.4, loot: 'small',
+    bits: ['deb_balloon', 'deb_gift', 'deb_flower', 'deb_flower'], deb: ['#f88ab8', '#ffffff', '#ff5a7a'], hit: 'thunk', brk: 'crash' },
   cone: { carry: true, name: 'TRAFFIC CONE', spr: 'cone', hp: 2, w: 12, h: 20, states: 2, move: 'slide', fr: 2.4, push: 1.25, dmg: 6, mass: 0.4, loot: 'small',
     bits: ['deb_cone', 'deb_cone'], deb: ['#ff7a1a', '#f4f4f4'], hit: 'thunk', brk: 'thunk' },
   shopcart: { metal: true, name: 'SHOPPING CART', spr: 'shopcart', hp: 4, w: 30, h: 28, move: 'roll', fr: 0.5, push: 1.1, dmg: 13, mass: 1.8, loot: 'cart',
@@ -789,7 +836,47 @@ export const LEVEL6 = {
   ],
   bossArena: 2300, backup: ['linecut', 'onside', 'tray'],
 };
-export const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5, LEVEL6];
+// ---- v0.15 Level 7: LABOR & DELIVERY (floor 2), after the Cafeteria and before the Night Shift. 8 PM: a pastel floor
+// (mint / peach / baby-blue tiles), the nursery window, balloons and IT'S A ...! banners. Every family showed up at once.
+// Boss: THE STORK, on a "special delivery" (the "baby" is a sack of laundry).
+export const LEVEL7 = {
+  id: 7, name: 'FLOOR 2: LABOR & DELIVERY', sub: "8:00 PM. IT'S A... SHIFT!", width: 2800, music: 'ld', bossMusic: 'stork', clock: 20 * 60, floorNum: '2', cutBoss: 'stork',
+  ld: true, tiles: { wall: 'lwall', ceil: 'lceil', floor: 'lfloor' },
+  wall: [
+    [24, 'elev', 'A'], [118, 'callpanel'], [140, 'sign_ld'], [240, 'neon_ld'], [300, 'balloons'], [340, 'banner_boy'], [440, 'nursery'], [580, 'sign_quiet'], [640, 'door', 701],
+    [720, 'balloons2'], [760, 'neon_nursery'], [860, 'banner_girl'], [960, 'nursery'], [1100, 'door', 702], [1180, 'sign_visit'], [1300, 'balloons'], [1340, 'neon_baby'],
+    [1460, 'banner_q'], [1600, 'door', 703], [1680, 'nursery'], [1820, 'sign_exit'], [1880, 'balloons2'], [1960, 'door', 704], [2040, 'sign_quiet'], [2120, 'banner_boy'],
+    [2220, 'neon_ld'], [2300, 'nursery'], [2440, 'balloons'], [2480, 'banner_girl'], [2620, 'neon_baby'],
+  ],
+  props: [
+    [200, 170, 'giftcart', []], [380, 196, 'plchair', []], [560, 180, 'giftcart', ['pudding']], [820, 200, 'plchair', []], [900, 160, 'giftcart', ['energy']],
+    [1250, 190, 'giftcart', []], [1380, 170, 'plchair', []], [1700, 196, 'giftcart', ['zynn']], [1760, 160, 'plchair', []], [2100, 180, 'giftcart', ['snacks']],
+    [2520, 196, 'plchair', []], [2620, 170, 'giftcart', []],
+  ],
+  puddles: [],
+  floorItems: [[600, 196, 'w:clipboard'], [1700, 170, 'w:callbell']],
+  zones: [
+    { at: 120, lock: 0, title: 'WAITING ROOM', waves: [
+      [['camdad', 'R', 0.5], ['sibling', 'D701', 1.4]],
+      [['grandma', 'R', 0.3], ['camdad', 'L', 1.2], ['sibling', 'D701', 2.0]],
+    ] },
+    { at: 680, lock: 600, title: 'NURSERY WINDOW', waves: [
+      [['camdad', 'D702', 0.3], ['sibling', 'R', 1.0], ['camdad', 'L', 1.8]],
+      [['grandma', 'R', 0.3], ['sibling', 'D701', 1.2], ['camdad', 'L', 2.0]],
+    ] },
+    { at: 1220, lock: 1140, title: 'BIRTHING SUITES', waves: [
+      [['grandma', 'D703', 0.3], ['camdad', 'R', 1.0], ['sibling', 'L', 1.8]],
+      [['camdad', 'D702', 0.4], ['grandma', 'R', 1.0], ['sibling', 'L', 1.8], ['elite', 'D703', 2.4]],
+    ] },
+    { at: 1800, lock: 1700, title: 'VISITING HOURS', waves: [
+      [['sibling', 'D704', 0.3], ['camdad', 'R', 0.9], ['grandma', 'L', 1.8]],
+      [['grandma', 'D704', 0.3], ['camdad', 'R', 0.9], ['elite', 'L', 1.6], ['sibling', 'D703', 2.4]],
+    ] },
+    { at: 2320, lock: 2300, boss: 'stork', title: 'SPECIAL DELIVERY', waves: [] },
+  ],
+  bossArena: 2300, backup: ['camdad', 'sibling', 'grandma'],
+};
+export const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5, LEVEL6, LEVEL7];
 // ---- v0.4 Breakroom bonus round (between Floor 3 and Floor 4): one screen, built to the current view width at start.
 // Thieves come out of the staff door and both screen edges, raid a snack spot for a couple of seconds, then run.
 export const BONUS = { time: 45, every: [1.3, 2.3], cap: 4, raid: 2.3, stop: 500, saved: 150, perfect: 3000,

@@ -138,6 +138,14 @@ def proj_bundle():
     return S
 
 
+def juice_splat():
+    """A purple, slippery grape-juice puddle with the squashed box."""
+    S = Raster(34, 10)
+    S.ellipse((17, 5), 15, 4, "#6a2aa8", None, rim=False); S.ellipse((14, 4), 9, 2.4, "#8a4ad8", None, rim=False)
+    S.rect(9, 3, 3, 1, "#c8a0f8"); S.rect(23, 4, 5, 3, "#8a3ad8"); S.rect(24, 5, 3, 1, "#ffffff")
+    return S
+
+
 def wall_pieces():
     return {
         "nursery": nursery(), "balloons": balloons(0), "balloons2": balloons(1),

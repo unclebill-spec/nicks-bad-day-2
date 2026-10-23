@@ -298,7 +298,7 @@ for k, S in {**V15.wall_pieces(), **V15.bits()}.items():
     add(k, S)
 for st in range(3):
     add(f"giftcart{st}", V15.giftcart(st))
-add("p_flash0", V15.proj_flash(0)); add("p_flash1", V15.proj_flash(1)); add("p_juice", V15.proj_juice()); add("p_bundle", V15.proj_bundle())
+add("p_flash0", V15.proj_flash(0)); add("p_flash1", V15.proj_flash(1)); add("p_juice", V15.proj_juice()); add("puddle_j", V15.juice_splat()); add("p_bundle", V15.proj_bundle())
 B15 = C15.bodies()
 for e in ("camdad", "grandma", "sibling"):
     char_sheet(e, C15.anims(e), B15[e])

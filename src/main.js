@@ -231,6 +231,8 @@ function toScootTally() {
 function goPsych() { W.scootOver = false; const go = () => loadLevel(4); if (noCuts()) go(); else { prepLevelBg(4, 'wardBg'); startCut('psych', go); } }
 // v0.14: the Psych Ward -> the CAFETERIA (floor 1, LEVELS[5]) -> the night shift
 function goCafe() { W.scootOver = false; const go = () => loadLevel(5); if (noCuts()) go(); else { prepLevelBg(5, 'cafeBg'); startCut('cafe', go); } }
+// v0.15: the Cafeteria -> LABOR & DELIVERY (floor 2, LEVELS[6]) -> the night shift
+function goLD() { W.scootOver = false; const go = () => loadLevel(6); if (noCuts()) go(); else { prepLevelBg(6, 'ldBg'); startCut('ld', go); } }
 function goNight() { W.scootOver = false; const go = () => loadLevel(2); if (noCuts()) go(); else startCut('night', go); }
 // v0.5: after a floor's tally. Floor 4 -> night shift -> the ending.
 function afterTally() {
@@ -238,7 +240,8 @@ function afterTally() {
   if (i === 1) return goLunch();
   if (i === 2) return goScooter();  // v0.9: Radiology -> the Scooter Run -> the night shift
   if (i === 5) { if (noCuts()) return goCafe(); return startCut('psychout', goCafe); }  // v0.13: the psych ward (Phil-in's outro) -> v0.14 the cafeteria
-  if (i === 6) { if (noCuts()) return goNight(); return startCut('cafeout', goNight); }  // v0.14: the cafeteria (Loretta's outro) -> the night shift
+  if (i === 6) { if (noCuts()) return goLD(); return startCut('cafeout', goLD); }  // v0.14: the cafeteria (Loretta's outro) -> v0.15 labor & delivery
+  if (i === 7) { if (noCuts()) return goNight(); return startCut('ldout', goNight); }  // v0.15: L&D (the stork's outro) -> the night shift
   if (i === 3) return goGarage();  // v0.11: the night shift -> 7:30 AM, the parking garage -> the ending
   finishRun(true); save.best = Math.max(save.best, 4); writeSave();
   const go = () => { game.scene = 'ending'; game.t = 0; setScene('menu'); playMusic('clear'); };
@@ -265,7 +268,7 @@ function loadLevel(idx, zone = 0) {
   W.enemies = []; W.boss = null; W.shots = []; W.fx = []; W.items = []; W.decor = []; W.t = 0; W.finalT = 0; W.vc = 0; W.bgHook = null; W.team = null;
   W.forceYeller = !!Q.get('yeller'); W.noAlarm = !!Q.get('noalarm') || !!lv.noAlarm; W.scoot = false; W.scootOver = false; scootUI(false);
   buildLevel(lv); resetGarage(lv); resetWard(lv); Director.reset(); W.camX = 0; W.camMin = 0; W.clock = lv.clock || 7 * 60; W.stats.time = 0;
-  if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else if (lv.garage) W.garageBg = W.bg; else if (lv.ward) W.wardBg = W.bg; else if (lv.cafe) W.cafeBg = W.bg; else W.nightBg = W.bg;
+  if (idx === 0) W.hallBg = W.bg; else if (idx === 1) W.radBg = W.bg; else if (lv.garage) W.garageBg = W.bg; else if (lv.ward) W.wardBg = W.bg; else if (lv.cafe) W.cafeBg = W.bg; else if (lv.ld) W.ldBg = W.bg; else W.nightBg = W.bg;
   W.heroes.forEach((h, i) => {
     h.kos = 0; h.maxCombo = 0; h.combo = 0; h.weapon = null; h.carry = null; h.held = null; h.grabber = null; h.ride = null; h.z = 0; h.vx = h.vy = h.vz = 0; h.inv = 0;
     if (h.st === 'out') { if (game.continuesLeft() > 0) h.continueT = 10; h.x = 56 + i * 22; return; }  // a KO'd partner can still continue here
@@ -345,11 +348,12 @@ export const PICKS = [
   { name: 'SCOOTER RUN', boss: 'MOTORCART MARV', icon: 'marv', col: '#d84a3a', glow: '#ff8a6a' },
   { name: 'FLOOR 5: PSYCH WARD', boss: '"DR." PHIL-IN', icon: 'philin', col: '#7a6ab8', glow: '#3aa8ff' },
   { name: 'FLOOR 1: CAFETERIA', boss: 'LUNCH LADY LORETTA', icon: 'lunchlady', col: '#e87a2a', glow: '#ff3a4a' },
+  { name: 'FLOOR 2: LABOR & DELIVERY', boss: 'THE STORK', icon: 'stork', col: '#f88ab8', glow: '#3aa8ff' },
   { name: 'NIGHT SHIFT', boss: 'LAST CALL (LIGHTS OUT)', icon: 'night', col: '#5a3ad8', glow: '#ff3a4a' },
   { name: 'P3: PARKING GARAGE', boss: 'VINNIE THE VALET', icon: 'valet', col: '#a24dff', glow: '#ff3a4a' },
 ];
 function toLevels() { game.scene = 'levels'; game.t = 0; game.pick = null; game.lvCur = game.lvCur || 0; game.lvLock = -1; setScene('menu'); }
-function levelCols() { return G.VW >= 380 ? 4 : 3; }  // v0.13: 8 stages -> 4 x 2 on 16:9 / phones, 3 x 3 on 4:3
+function levelCols() { return G.VW >= 380 ? 4 : 3; }  // v0.15: 9 stages -> 4 x 3 on 16:9 / phones, 3 x 3 on 4:3
 function pickLevel(i) {
   game.lvCur = i; game.lvLock = i; sfx('powerup');
   game.overlay = Menu(PICKS[i].name, [
@@ -382,6 +386,7 @@ function drawPickIcon(p, x, y, w, h) {
   const cx = x + w / 2, by = y + h - 2;
   if (p.icon === 'philin') { rect(x, y, w, h, '#b8b4d8', 0.25); spr('face_philin', cx - 12, Math.max(y + 2, by - 26)); }
   else if (p.icon === 'lunchlady') { rect(x, y, w, h, '#e8dcc0', 0.2); spr('face_lunchlady', cx - 12, Math.max(y + 2, by - 26)); spr('pudding', cx + 14, by - 12); }
+  else if (p.icon === 'stork') { rect(x, y, w, h, '#f8c8a8', 0.2); spr('face_stork', cx - 12, Math.max(y + 2, by - 26)); spr('p_bundle', cx + 12, by - 16); }
   else if (p.icon === 'tilly') spr('face_tilly', cx - 12, Math.max(y + 2, by - 26));
   else if (p.icon === 'valet') { spr('face_valet', cx - 12, Math.max(y + 2, by - 26)); }
   else if (p.icon === 'mri') { frame('mri', anim('mri', 'idle').s, cx + 10, by, { scale: 0.34 }); spr('face_lou', cx - 34, Math.max(y + 2, by - 22), { scale: 0.8 }); }
@@ -413,7 +418,7 @@ function drawLevels() {
 function startPick(i) {  // v0.12: drop the fresh team straight into a picked stage; afterTally / goNext / goNight carry on from there
   if (i === 1) { loadLevel(0); buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); playMusic('stage'); }
   else if (i === 3) { loadLevel(1); enterScooter(); }
-  else loadLevel({ 0: 0, 2: 1, 4: 4, 5: 5, 6: 2, 7: 3 }[i]);  // v0.14: + the cafeteria (pick 5 -> LEVELS[5])
+  else loadLevel({ 0: 0, 2: 1, 4: 4, 5: 5, 6: 6, 7: 2, 8: 3 }[i]);  // v0.14: + the cafeteria (pick 5 -> LEVELS[5]); v0.15 + L&D (pick 6 -> LEVELS[6])
 }
 function startGame() {
   const S = game.sel;
@@ -910,7 +915,7 @@ async function boot() {
   loaded();
   requestAnimationFrame(frameLoop);
   // test hooks
-  window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, toLevels, PICKS, ward: { blackout, WARD, resetWard }, goPsych: () => goPsych(), goCafe: () => goCafe(), Director, display,
+  window.__nbd = { spawn, prop: (kind, dx = 40, dy = 0, drops = []) => { const h = W.heroes[0]; const p = makeProp(kind, (h ? h.x : W.camX + 200) + dx, Math.max(136, Math.min(212, (h ? h.y : 170) + dy)), drops); W.props.push(p); return W.props.length - 1; }, hitProp, rollLoot, drop: (k) => { const h = W.heroes[0]; return h && dropItem(k, h.x, h.y, false); }, game, W, G, C, save, startGame, toSelect, toTitle, toLevels, PICKS, ward: { blackout, WARD, resetWard }, goPsych: () => goPsych(), goCafe: () => goCafe(), goLD: () => goLD(), Director, display,
     cut: (id, after) => startCut(id, () => (after === 'play' ? (game.scene = 'play', setScene('game')) : toTitle())), bonus: () => { buildBreakroom(); startBonus(); game.scene = 'bonus'; game.t = 0; setScene('game'); }, B: BONUS_STATE, goLunch, loadLevel, afterTally, goNext, scooter: enterScooter, goScooter, goNight, goGarage, prepGarageBg, garage: { sendCar, backOut, GARAGE, carDodge }, SC, SCOOT, scootSpawn, ALARM, maybeYeller, pullAlarm, stationFor, alarmAllowed, settingsMenu, applySettings };
   if (Q.get('autostart') || Q.get('zone') || Q.get('level')) { toSelect(1); game.sel.p[0].cur = Math.max(0, HERO_ORDER.indexOf(Q.get('hero') || 'nick')); startGame(); if (Q.get('scene') === 'bonus') { game.cut = null; game.cutDone = null; window.__nbd.bonus(); } if (Q.get('scene') === 'scooter') { game.cut = null; game.cutDone = null; enterScooter(); } }
 }

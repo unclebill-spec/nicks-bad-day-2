@@ -633,7 +633,7 @@ export class Hero extends Actor {
   say(ev, force = false) {
     let L = this.d.lines && this.d.lines[ev];
     // v0.11 parking garage: each nurse's garage lines (data.js GARAGE_LINES) take over most of the time down there
-    const LS = W.lv && (W.lv.garage ? 'garage' : W.lv.ward ? 'ward' : W.lv.cafe ? 'cafe' : null);  // v0.13: the psych ward has its own set (WARD_LINES)
+    const LS = W.lv && (W.lv.garage ? 'garage' : W.lv.ward ? 'ward' : W.lv.cafe ? 'cafe' : W.lv.ld ? 'ld' : null);  // v0.13: the psych ward has its own set (WARD_LINES)
     const GL = LS && this.d[LS] && this.d[LS][ev];
     if (GL && GL.length && (!L || W.rnd() < (GARAGE_MIX[ev] ?? 1))) L = GL;
     if (!L || !L.length || (!force && W.t < this.sayCd)) return null;
@@ -645,7 +645,7 @@ export class Hero extends Actor {
     return L[i];
   }
   sayTick(dt, I) {  // spawn line (once per floor, when he can first act) + the idle line after ~6 s doing nothing
-    if (!this.d.lines && !this.d.garage && !this.d.ward && !this.d.cafe) return;
+    if (!this.d.lines && !this.d.garage && !this.d.ward && !this.d.cafe && !this.d.ld) return;
     if (this.hiLv !== W.lv && this.canAct()) { this.hiLv = W.lv; this.say('spawn', true); }
     const busy = Math.hypot(I.mx, I.my) > 0.15 || I.atk || I.jmp || I.prs.sp || I.prs.grab || this.st !== 'idle';
     this.idleT = busy ? 0 : this.idleT + dt;

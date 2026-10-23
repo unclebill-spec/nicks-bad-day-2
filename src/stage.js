@@ -9,6 +9,7 @@ import { MRI, Lou } from './mri.js';
 import { Valet } from './valet.js';
 import { PhilIn } from './philin.js';
 import { LunchLady } from './lunchlady.js';
+import { Stork } from './stork.js';
 import { sfx, playMusic } from './sound.js';
 import { resetAlarm, maybeYeller, updateAlarm, alarmPending } from './alarm.js';
 
@@ -68,6 +69,13 @@ function splashAt(s, h) {
     addShot({ kind: 'puddle', spr: 'puddle_w', x: s.x, y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
     return;
   }
+  if (s.splash === 'juice') {  // v0.15 the big sibling's juice box: a grape splat and a slippery purple puddle
+    for (const vx of [-50, 40, 10]) addFx({ type: 'chunk', spr: null, col: vx > 20 ? '#c8a0f8' : '#6a2aa8', sz: 3, x: s.x, y: s.y, z: 6, vx, vy: 0, vz: 120, spin: 0, dur: 0.8 });
+    word('w_splat', s.x, s.y, h ? 20 : 4); sfx('juice', { vol: 0.6 });
+    if (h) floatText(['GRAPE?! ON WHITE SHOES?!', 'JUICE BOX!', 'STICKY!'][Math.floor(W.rnd() * 3)], h.x, h.y, 66, '#c8a0f8');
+    addShot({ kind: 'puddle', spr: 'puddle_j', x: s.x, y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
+    return;
+  }
   if (s.splash === 'coffee') {  // v0.11 Coffee Guy's latte: a brown splat and a slippery coffee puddle
     for (const vx of [-50, 40, 10]) addFx({ type: 'chunk', spr: null, col: vx > 20 ? '#f4e8d0' : '#7a4a22', sz: 3, x: s.x, y: s.y, z: 6, vx, vy: 0, vz: 120, spin: 0, dur: 0.8 });
     word('w_splat', s.x, s.y, h ? 20 : 4); sfx('splash', { vol: 0.55, rate: 1.2 });
@@ -119,7 +127,8 @@ export const Director = {
   },
   startBoss(z = W.lv.zones[W.zone]) {
     W.bossOn = true; const kind = z.boss || 'tilly';
-    if (kind === 'lunchlady') { W.boss = new LunchLady(W.lockX + G.VW + 40, 176); playMusic(W.lv.bossMusic || 'boss'); }
+    if (kind === 'stork') { W.boss = new Stork(W.lockX + G.VW + 60, 176); playMusic(W.lv.bossMusic || 'boss'); }
+    else if (kind === 'lunchlady') { W.boss = new LunchLady(W.lockX + G.VW + 40, 176); playMusic(W.lv.bossMusic || 'boss'); }
     else if (kind === 'philin') { W.boss = new PhilIn(W.lockX + G.VW + 40, 176); playMusic(W.lv.bossMusic || 'boss'); }
     else if (kind === 'valet') { W.boss = new Valet(W.lockX + G.VW + 70, 178); playMusic(W.lv.bossMusic || 'boss'); }
     else if (kind === 'lou') { W.boss = new Lou(W.lockX + G.VW + 50, 170); playMusic('boss'); }
@@ -197,7 +206,7 @@ export const Director = {
       if (s.kind === 'enemy') {
         for (const h of W.heroes) {
           if (!h.hittable() || Math.abs(h.y - s.y) > 8 || Math.abs(h.x - s.x) > 11 || s.z > h.z + h.h || s.z + 6 < h.z) continue;
-          h.takeHit({ dmg: s.dmg, dir: Math.sign(s.vx) || 1, kb: s.roll ? 80 : 40, stun: 0.35, down: !!s.roll, from: s.owner });
+          h.takeHit({ dmg: s.dmg, dir: Math.sign(s.vx) || 1, kb: s.roll ? 80 : 40, stun: 0.35, down: !!s.roll, dizzy: s.dizzy || 0, from: s.owner });  // v0.15 dizzy: the camcorder flash
           s.life = 0; if (s.splash) splashAt(s, h); else { spark(s.x, s.y, s.z, 'spark'); sfx(s.roll ? 'bounce' : 'punch0', { vol: 0.5 }); } break;
         }
       } else if (s.kind === 'weapon' || s.kind === 'boomerang') {
