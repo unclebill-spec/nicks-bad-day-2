@@ -232,7 +232,7 @@ function drawPanel(P, px, py, pw, ph, local, idx) {
   rect(px, py, pw, ph, '#2a3060');
   if (P.bg) {
     const [src, x0, y0] = P.bg;
-    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : src === 'garage' ? (W.garageBg || W.nightBg || W.hallBg) : src === 'ward' ? (W.wardBg || W.hallBg) : W.hallBg;
+    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : src === 'garage' ? (W.garageBg || W.nightBg || W.hallBg) : src === 'cafe' ? (W.cafeBg || W.hallBg) : src === 'ward' ? (W.wardBg || W.hallBg) : W.hallBg;
     let sx = x0 === 'fridge' ? Math.max(0, (W.breakFridgeX || 300) - pw * 0.55) : x0;
     if (img) { sx = Math.max(0, Math.min(img.width - pw, sx)); c.drawImage(img, sx, y0, pw, ph, px, py, pw, ph); }
     if (src === 'hall') hallBits(sx, y0, px, py, pw);

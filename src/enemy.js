@@ -160,7 +160,7 @@ export class Enemy extends Actor {
     this.x += dx / l * sp * dt; this.y += dy / l * sp * dt; if (Math.abs(dx) > 1) this.face = Math.sign(dx);
   }
   arrived() {  // v0.11: the garage's visitors announce themselves (one at a time, so the bubbles stay readable)
-    const d = this.d; if (!(d.garage || d.ward) || !d.lines || (W.shoutT || 0) > W.t || W.rnd() > 0.6) return;
+    const d = this.d; if (!(d.garage || d.ward || d.cafe) || !d.lines || (W.shoutT || 0) > W.t || W.rnd() > 0.6) return;
     W.shoutT = W.t + 2.2; this.speechT = 240;
     floatText(d.lines[Math.floor(W.rnd() * d.lines.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 });
   }
@@ -179,7 +179,7 @@ export class Enemy extends Actor {
     const K = this.kind, d = this.d;
     // speech bubbles now and then
     if (this.speechT <= 0 && d.sing && W.rnd() < 0.0025) { this.speechT = 7; this.croon(); }  // v0.13 Greg croons now and then
-    if (this.speechT <= 0 && W.rnd() < (d.garage || d.ward ? 0.005 : 0.003)) { this.speechT = 6; const L = { wanderer: ['Are you my nurse?', 'Where am I?'], spammer: ['NURSE! NURSE!', 'My TV is broken!'], escape: ['Catch me!', "I'm going home!"],
+    if (this.speechT <= 0 && W.rnd() < (d.garage || d.ward || d.cafe ? 0.005 : 0.003)) { this.speechT = 6; const L = { wanderer: ['Are you my nurse?', 'Where am I?'], spammer: ['NURSE! NURSE!', 'My TV is broken!'], escape: ['Catch me!', "I'm going home!"],
       ivswing: ['I need ice chips!', 'Fore!'], sundowner: ['Who are you?!', 'Get off my lawn!'], visitor: ['Who is in charge?!', 'I know my rights!'],
       crutch: ['Outta my way!', 'I can walk fine!'], bell: ['*DING DING DING*', 'Room service!'], elite: ["I've been here 40 times!", 'I want my usual room!'],
       runner: ['Freedom!', "You can't catch me!", 'I am NOT a fall risk!'], tray: ['This is NOT what I ordered!', 'Cold AGAIN?!', 'Send it back!'], o2: ['Just getting some air!', 'Mind the tank, dear.'] }[K];

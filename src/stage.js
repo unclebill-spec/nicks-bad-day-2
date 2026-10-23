@@ -60,6 +60,13 @@ function splashAt(s, h) {
     addShot({ kind: 'puddle', spr: 'puddle_g', x: s.x, y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
     return;
   }
+  if (s.splash === 'ranch') {  // v0.14 On-the-Side Guy's ranch cup: a white splat and a slippery puddle
+    addFx({ type: 'chunk', spr: null, col: '#f4f4ec', sz: 3, x: s.x, y: s.y, z: 6, vx: -40, vy: 0, vz: 110, spin: 0, dur: 0.8 });
+    word('w_splat', s.x, s.y, h ? 20 : 4); sfx('splat', { vol: 0.7 });
+    if (h) floatText(['ON THE SIDE!', 'RANCH?! REALLY?!', 'I ASKED FOR NONE!'][Math.floor(W.rnd() * 3)], h.x, h.y, 66, '#ffffff');
+    addShot({ kind: 'puddle', spr: 'puddle_w', x: s.x, y: s.y, z: 0, life: 5, owner: s.owner, hostile: true });
+    return;
+  }
   if (s.splash === 'coffee') {  // v0.11 Coffee Guy's latte: a brown splat and a slippery coffee puddle
     for (const vx of [-50, 40, 10]) addFx({ type: 'chunk', spr: null, col: vx > 20 ? '#f4e8d0' : '#7a4a22', sz: 3, x: s.x, y: s.y, z: 6, vx, vy: 0, vz: 120, spin: 0, dur: 0.8 });
     word('w_splat', s.x, s.y, h ? 20 : 4); sfx('splash', { vol: 0.55, rate: 1.2 });

@@ -257,6 +257,40 @@ export const WARD_LINES = {
     clear: ['Ward is quiet. Do not touch anything.'] },
 };
 for (const [id, L] of Object.entries(WARD_LINES)) HEROES[id].ward = L;
+// v0.14 CAFETERIA lines (each nurse in their own voice), attached as HEROES[id].cafe. It's 7 PM and nobody got lunch.
+export const CAFE_LINES = {
+  nick: { spawn: ['Lunch. At 7 PM. If I slip on jello I am going home.'],
+    idle: ['Is the mystery meat supposed to move? Tell me it is not supposed to move.', 'I just want one pudding. One.'],
+    zone: ['Okay, the line is moving. Barely.', 'Nobody touch the salad bar. I saw things.'],
+    drop: ['Sorry! Sit down and finish your peas!', 'Have a seat. Have a nap.'],
+    clear: ['I ate a crouton. Best lunch of my life.'] },
+  kim: { spawn: ['Lunch rush! My favorite rush!'],
+    idle: ['Ooh, tater tots! No, focus, Kim!', 'Who wants to split a pudding? Nobody? More for me!'],
+    zone: ['Back in line, sweetie! No cutting!', 'Tray table up! Next!'],
+    drop: ['Food coma! Nighty night!', 'Nap time, then dessert!'],
+    clear: ['Lunch is served! Finally!'] },
+  will: { spawn: ['I do not wait in lines. Lines wait for me.'],
+    idle: ['I tip my lunch lady. She tips me back. Respect.', 'Protein. I need protein. The meat... is that protein?'],
+    zone: ['That is how a professional clears a line.', 'Front of the line. Where I belong.'],
+    drop: ['Sit. Eat. Nap.', 'Take a seat, champ.'],
+    clear: ['I would like my pudding now. Thank you.'] },
+  jackie: { spawn: ["Okay team, one tray each, walk don't run!"],
+    idle: ['Somebody put a WET FLOOR sign by the jello. Anyone?', "I'll hold the line, you grab the tots!"],
+    zone: ['Good job, everybody! Single file!', 'Tables cleared! Wipe them down!'],
+    drop: ["Let's get you a chair, hon.", 'Easy now, sit right here.'],
+    clear: ['Everybody got a tray? Great. Eat fast.'] },
+  nate: { spawn: ['If they have tots I am staying here forever.'],
+    idle: ['I am on break. This is break. Leave me alone.', 'Is it lunch if I eat it lying down?'],
+    zone: ['Cool. Can I sit now?', 'Line... cleared. Nap... next.'],
+    drop: ['Nap buddy.', 'Yeah, lie down, it is great down there.'],
+    clear: ['I am taking a very long lunch.'] },
+  heather: { spawn: ["I have twelve minutes to eat and I'm going to use every one of them, so move."],
+    idle: ["If one more person asks for it 'on the side' I am wearing the soup.", 'The pudding better be there. I am not kidding.'],
+    zone: ["That's the line. It's moving now. You're welcome.", 'No cutting. I see you.'],
+    drop: ['Sit. Down.', 'Enjoy the floor.'],
+    clear: ['Finally. Hand me a spoon and nobody talk to me.'] },
+};
+for (const [id, L] of Object.entries(CAFE_LINES)) HEROES[id].cafe = L;
 export const GREG_BILL = ['Wanna get outta here?', "Let's get outta here.", "You can't keep me locked up in here!", "I'm gonna knock you one!", "Don't touch my dick!"];
 export const GARAGE_BILL = { nick: "Someone's gonna key my car, I know it.", kim: 'Let me help you to your car, sweetie!', will: 'I always get the closest spot.', jackie: 'Who needs a jump?' };
 
@@ -355,6 +389,12 @@ export const ENEMIES = {
     grabLines: ["Don't touch my dick!"],
     sing: ['\u266a Doo-be-doo-be-doo \u266a', "\u266a Start spreadin' the news... I'm checkin' out! \u266a", '\u266a Fly me outta this ward \u266a', '\u266a I did it MY way... out the window \u266a', '\u266a Strangers in the dayroom \u266a'],
     ko: ['Okay... I\'ll stay... zzz', 'Wake me for dinner... zzz', '\u266a Doo-be-doo... zzz \u266a'] },
+  // v0.14 CAFETERIA crowd (cafe: true = they announce themselves). Hungry, impatient, never cruel. Everyday clothes, staff-sized.
+  linecut: { name: 'LINE CUTTER', sheet: 'linecut', ai: 'escape', hp: 34, speed: 100, depth: 58, reach: 22, score: 350, atk: 'slap', cd: [1.2, 2.0], cafe: true, voice: 'voice3', drop: ['donut', 0.2],
+    ko: ['Fine... back of the line... zzz', 'Saving my spot... zzz'], lines: ['I was here first!', "I'm just grabbing a fork!", 'My friend is saving my spot!'] },
+  onside: { name: 'ON-THE-SIDE GUY', sheet: 'onside', ai: 'tray', proj: 'ranch', projSpr: 'p_ranch', throwLines: ['ON THE SIDE!', 'DRESSING!', 'I SAID ON THE SIDE!'],
+    hp: 38, speed: 34, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.6, 2.6], keep: 118, drop: ['snacks', 0.3], cafe: true, voice: 'voice2',
+    ko: ['Nap... on the side... zzz', 'Is this... gluten free... zzz'], lines: ["Can I get that on the side?", 'Is this gluten free?', 'I asked for NO onions!'] },
   ragevisitor: { name: 'ROAD-RAGE VISITOR', sheet: 'ragevisitor', ai: 'visitor', hp: 62, speed: 50, depth: 26, reach: 30, score: 500, atk: 'punch', cd: [1.4, 2.2], armor: 1, garage: true,
     ko: ['Validate... my... ticket... zzz', "Fine. I'll take the bus... zzz"], voice: 'voice3',
     lines: ["I've been circling for 40 minutes!", 'THIS IS A TWO-HOUR SPOT!', 'Who do I talk to about this ticket?!', 'I was only gone FIVE minutes!'] },
@@ -424,6 +464,14 @@ export const BREAKABLES = {
     bits: ['deb_puzzle0', 'deb_puzzle1', 'deb_puzzle2', 'deb_puzzle0', 'deb_puzzle1'], deb: ['#a87a4a', '#ff8a4a', '#3aa8ff'], hit: 'thunk', brk: 'crash' },
   pillcart: { carry: true, metal: true, name: 'PILL CART', spr: 'pillcart', hp: 3, w: 24, h: 30, move: 'roll', fr: 0.6, push: 1.0, dmg: 12, mass: 1.8, loot: 'pills',
     bits: ['deb_cup', 'deb_pill', 'deb_wheel'], deb: ['#e8eef4', '#3a8ae8', '#e84a5a'], hit: 'clang', brk: 'crash' },
+  // v0.14 CAFETERIA props: a plastic chair (light, throwable), a round table (kick it: lunch everywhere), and a tall stack of
+  // trays on a cart that topples with a crash and sends trays skidding (rolls; heavy hit).
+  plchair: { carry: true, name: 'CAFE CHAIR', spr: 'plchair', hp: 3, w: 16, h: 22, move: 'slide', fr: 2.6, push: 1.0, dmg: 7, mass: 0.7, loot: 'small',
+    bits: ['deb_chair', 'deb_chair'], deb: ['#7a3ab8', '#a46ae8'], hit: 'thunk', brk: 'thunk' },
+  roundtable: { name: 'CAFE TABLE', spr: 'roundtable', hp: 4, w: 38, h: 22, move: 'slide', fr: 4.0, push: 0.6, dmg: 10, mass: 2.2, loot: 'lunch',
+    bits: ['deb_tray', 'deb_pea', 'deb_pea', 'deb_tray'], deb: ['#f0f2f4', '#5ac83a', '#e87a2a'], hit: 'thunk', brk: 'crash' },
+  traystack: { name: 'TRAY STACK', spr: 'traystack', hp: 2, w: 20, h: 32, move: 'roll', fr: 0.7, push: 1.1, dmg: 14, mass: 1.6, loot: 'small',
+    bits: ['deb_tray', 'deb_tray', 'deb_tray', 'deb_tray', 'deb_tray'], deb: ['#c8844a', '#e8a46a'], hit: 'traycrash', brk: 'traycrash' },
   cone: { carry: true, name: 'TRAFFIC CONE', spr: 'cone', hp: 2, w: 12, h: 20, states: 2, move: 'slide', fr: 2.4, push: 1.25, dmg: 6, mass: 0.4, loot: 'small',
     bits: ['deb_cone', 'deb_cone'], deb: ['#ff7a1a', '#f4f4f4'], hit: 'thunk', brk: 'thunk' },
   shopcart: { metal: true, name: 'SHOPPING CART', spr: 'shopcart', hp: 4, w: 30, h: 28, move: 'roll', fr: 0.5, push: 1.1, dmg: 13, mass: 1.8, loot: 'cart',
@@ -441,6 +489,7 @@ export const LOOT = {
   vending: [['snacks', 0.35], ['energy', 0.3], ['jerky', 0.15], ['star', 0.15], ['zynn', 0.03]],
   glovebox: [['jerky', 0.12], ['snacks', 0.1], ['energy', 0.18], ['pizza', 0.06], ['star', 0.12], ['donut', 0.08], ['zynn', 0.03]],  // v0.11 a busted parked car
   puzzle: [['star', 0.3], ['snacks', 0.15], ['donut', 0.15], ['jerky', 0.06], ['zynn', 0.02]],
+  lunch: [['pizza', 0.2], ['pudding', 0.2], ['donut', 0.15], ['snacks', 0.1], ['zynn', 0.01]],
   pills: [['energy', 0.3], ['snacks', 0.15], ['candy', 0.15], ['pizza', 0.05], ['zynn', 0.02]],
   paystation: [['star', 0.35], ['energy', 0.2], ['snacks', 0.1], ['zynn', 0.03]],
 };
@@ -699,7 +748,48 @@ export const LEVEL5 = {
   ],
   bossArena: 2420, backup: ['escapee', 'capeguy', 'tinfoil', 'puppet'],
 };
-export const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5];
+// ---- v0.14 Level 6: THE CAFETERIA LUNCH RUSH (ground floor), after the Psych Ward and before the Night Shift. 7 PM and nobody
+// got lunch: the serving line behind sneeze guards, steam trays, a salad bar, the soda fountain, round tables and plastic chairs.
+// Jello puddles on the floor (slippery) and tray stacks that topple. Boss: LUNCH LADY LORETTA at the serving line.
+export const LEVEL6 = {
+  id: 6, name: 'FLOOR 1: CAFETERIA', sub: '7:00 PM. LUNCH. FINALLY.', width: 2800, music: 'cafe', bossMusic: 'lunchlady', clock: 19 * 60, floorNum: '1', cutBoss: 'lunchlady',
+  cafe: true, tiles: { wall: 'cwall', ceil: 'cceil', floor: 'cfloor' },
+  wall: [
+    [24, 'elev', 'A'], [118, 'callpanel'], [140, 'sign_cafe'], [230, 'neon_cafe'], [300, 'menuboard'], [400, 'serveline'], [560, 'sign_nocut'], [640, 'door', 601],
+    [720, 'soda'], [790, 'neon_eat'], [880, 'saladbar'], [990, 'sign_trays'], [1080, 'door', 602], [1160, 'menuboard'], [1260, 'serveline'], [1420, 'neon_dessert'],
+    [1520, 'soda'], [1600, 'door', 603], [1690, 'saladbar'], [1800, 'sign_exit'], [1870, 'neon_cafe'], [1960, 'door', 604], [2040, 'sign_nocut'], [2120, 'menuboard'],
+    [2220, 'neon_eat'], [2300, 'serveline'], [2460, 'soda'], [2540, 'neon_dessert'], [2640, 'sign_exit'],
+  ],
+  props: [
+    [180, 196, 'plchair', []], [320, 150, 'traystack', []], [500, 190, 'roundtable', ['pudding']], [540, 204, 'plchair', []], [760, 150, 'traystack', ['energy']],
+    [900, 184, 'roundtable', []], [940, 200, 'plchair', []], [1200, 150, 'traystack', []], [1330, 196, 'roundtable', ['pizza']], [1380, 160, 'plchair', []],
+    [1640, 150, 'traystack', []], [1760, 190, 'roundtable', ['zynn']], [1800, 204, 'plchair', []], [2060, 172, 'roundtable', []], [2180, 150, 'traystack', ['snacks']],
+    [2500, 196, 'plchair', []], [2600, 170, 'roundtable', []],
+  ],
+  puddles: [[420, 176], [850, 196], [1150, 168], [1500, 188], [1900, 176], [2260, 196]],
+  floorItems: [[600, 196, 'w:mop'], [1700, 170, 'w:clipboard']],
+  zones: [
+    { at: 120, lock: 0, title: 'THE LINE', waves: [
+      [['linecut', 'R', 0.5], ['tray', 'D601', 1.4]],
+      [['onside', 'R', 0.3], ['linecut', 'L', 1.2], ['wanderer', 'D601', 2.0]],
+    ] },
+    { at: 680, lock: 600, title: 'SALAD BAR', waves: [
+      [['onside', 'D602', 0.3], ['tray', 'R', 1.0], ['linecut', 'L', 1.8]],
+      [['linecut', 'R', 0.3], ['tray', 'D601', 1.2], ['onside', 'L', 2.0]],
+    ] },
+    { at: 1220, lock: 1140, title: 'TRAY RETURN', waves: [
+      [['tray', 'D603', 0.3], ['linecut', 'R', 1.0], ['spammer', 'L', 1.8]],
+      [['onside', 'D602', 0.4], ['linecut', 'R', 1.0], ['tray', 'L', 1.8], ['elite', 'D603', 2.4]],
+    ] },
+    { at: 1800, lock: 1700, title: 'DESSERT', waves: [
+      [['linecut', 'D604', 0.3], ['onside', 'R', 0.9], ['tray', 'L', 1.8]],
+      [['tray', 'D604', 0.3], ['linecut', 'R', 0.9], ['elite', 'L', 1.6], ['onside', 'D603', 2.4]],
+    ] },
+    { at: 2320, lock: 2300, boss: 'lunchlady', title: 'SERVING LINE', waves: [] },
+  ],
+  bossArena: 2300, backup: ['linecut', 'onside', 'tray'],
+};
+export const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5, LEVEL6];
 // ---- v0.4 Breakroom bonus round (between Floor 3 and Floor 4): one screen, built to the current view width at start.
 // Thieves come out of the staff door and both screen edges, raid a snack spot for a couple of seconds, then run.
 export const BONUS = { time: 45, every: [1.3, 2.3], cap: 4, raid: 2.3, stop: 500, saved: 150, perfect: 3000,

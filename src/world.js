@@ -27,6 +27,9 @@ const LAYER = {  // wall features: vertical placement by kind
   valetstand: (w, h) => FLOOR_Y + 2 - h, ramp: (w, h) => FLOOR_Y + 1 - h,
   // v0.13 psych ward pieces
   pwall_door: (w, h) => FLOOR_Y - h, buzzer: () => 52, nstation: (w, h) => FLOOR_Y + 2 - h, tvcage: () => 18, callstrip: () => 64,
+  // v0.14 cafeteria pieces
+  serveline: (w, h) => FLOOR_Y + 2 - h, saladbar: (w, h) => FLOOR_Y + 2 - h, soda: (w, h) => FLOOR_Y + 2 - h, menuboard: () => 22,
+  neon_cafe: () => 24, neon_eat: () => 24, neon_dessert: () => 24,
   neon_dayroom: () => 24, neon_calm: () => 24, neon_bhu: () => 24, poster_feelings: () => 34, poster_group: () => 40,
   fridge: (w, h) => FLOOR_Y + 3 - h, counter: (w, h) => FLOOR_Y + 3 - h, vend_wall: (w, h) => FLOOR_Y + 3 - h, btable: (w, h) => FLOOR_Y + 5 - h, cabinets: () => 30, note_food: () => 46, sign_breakroom: () => 37,
 };
@@ -55,6 +58,8 @@ const GLOW = {
   neon_stairs: { col: '#a24dff', r: 30, dx: 28, dy: 9 }, neon_valet: { col: '#ff3a4a', r: 32, dx: 26, dy: 9, pool: 40 }, booth: { col: '#bfe0ff', r: 22, dx: 25, dy: 26, a: 0.6 }, sign_xray: { col: '#3aa8ff', r: 22, dx: 40, dy: 5 }, trefoil: { col: '#ffd83a', r: 10, dx: 7, dy: 7, a: 0.6 },
   // v0.13 psych ward: the caged TVs' blue glow, neon DAYROOM (violet) / CALM ZONE (blue) / BHU 5 (red), call-light strips, the locked door's red buzzer, the station monitor
   tvcage: { col: '#3aa8ff', r: 30, dx: 20, dy: 18, pool: 42, blink: 0.35 }, neon_dayroom: { col: '#a24dff', r: 32, dx: 30, dy: 9, pool: 36 }, neon_calm: { col: '#3aa8ff', r: 32, dx: 34, dy: 9 },
+  neon_cafe: { col: '#ff3a4a', r: 26, dx: 20, dy: 9 }, neon_eat: { col: '#3aa8ff', r: 24, dx: 16, dy: 9 }, neon_dessert: { col: '#a24dff', r: 30, dx: 30, dy: 9, pool: 36 },
+  soda: { col: '#3aa8ff', r: 18, dx: 18, dy: 26, a: 0.6 }, serveline: { col: '#ffb04a', r: 30, dx: 64, dy: 20, a: 0.5 },
   neon_bhu: { col: '#ff3a4a', r: 26, dx: 22, dy: 9 }, callstrip: { col: '#a24dff', r: 22, dx: 32, dy: 3, pool: 30 }, buzzer: { col: '#ff3a4a', r: 12, dx: 6, dy: 4, blink: 0.8 }, nstation: { col: '#3aa8ff', r: 26, dx: 40, dy: 26, a: 0.6 },
 };
 const glowOf = (kind) => GLOW[kind] || GLOW[kind.replace(/\d+$/, '')];
