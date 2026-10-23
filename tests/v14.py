@@ -83,7 +83,7 @@ with sync_playwright() as p:
         pg.wait_for_function("__nbd.W.lv && __nbd.W.lv.id===6", timeout=10000); check('-> the cafeteria loads', True)
         pg.evaluate("__nbd.toLevels()"); time.sleep(0.5)
         R = pg.evaluate("[__nbd.game.lvRects, __nbd.G.VW, __nbd.G.VH, __nbd.PICKS[5].name]")
-        check('level select: 9 cards fit (v0.15), #6 is the CAFETERIA', len(R[0]) == 9 and 'CAFETERIA' in R[3] and all(r[0] >= 0 and r[1] >= 0 and r[0]+r[2] <= R[1] and r[1]+r[3] <= R[2] for r in R[0]), R)
+        check('level select: 10 cards fit (v0.16), #6 is the CAFETERIA', len(R[0]) == 10 and 'CAFETERIA' in R[3] and all(r[0] >= 0 and r[1] >= 0 and r[0]+r[2] <= R[1] and r[1]+r[3] <= R[2] for r in R[0]), R)
         pg.screenshot(path='tests/out/v14_levels.png')
         pg.close()
     b.close()

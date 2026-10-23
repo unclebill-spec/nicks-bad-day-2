@@ -12,7 +12,7 @@ Code Blue, grabs/throws, specials and the drops (pizza, BEEF JERKY, energy drink
 | 2 | Psych Ward | **DONE (v0.13)**: Floor 5, after the Scooter Run, before the Night Shift |
 | 3 | Cafeteria Lunch Rush | DONE (v0.14) |
 | 4 | Labor & Delivery | DONE (v0.15) |
-| 5 | Rooftop Helipad at Night | idea |
+| 5 | Rooftop Helipad at Night | DONE (v0.16) |
 
 ## 1. Parking Garage at Shift Change (DONE, v0.11)
 1990s TMNT-style street level. Concrete parking levels with stall lines, pillars, ramps, EXIT signs, a pay booth and a
@@ -49,7 +49,7 @@ Built as FLOOR 5: THE PSYCH WARD with GREG and boss "Dr." Phil-in. See `src/ward
 - **Boss:** **a giant stork** (still only ~1.5x a nurse's height): bundle drops, wing gusts that push lanes, beak
   peck charge. Comedic, never scary; it flies off with a "baby" (a sack of laundry) at the end.
 
-## 5. Rooftop Helipad at Night
+## 5. Rooftop Helipad at Night (DONE, v0.16)
 - **Look:** a windy rooftop, the H pad with neon blue, violet and red landing lights, a windsock, the city skyline,
   HVAC units and vents.
 - **Hazards:** wind gusts that push everyone across the lanes, the rotor wash when the chopper lands.

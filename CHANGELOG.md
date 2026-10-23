@@ -2,6 +2,19 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-23: v0.16 "Rooftop Helipad" (Bill: windy night sky, neon landing lights, a rogue Life Flight crew)
+- **THE ROOF: HELIPAD** (`LEVEL8`, LEVELS index 7, id 8, `?level=8`), after the Night Shift and before the Garage. 3:00 AM.
+  Night skyline, HVAC units, a windsock and an antenna mast with blinking red beacons, LIFE FLITE/HELIPAD/ROOF neons, and two H pads ringed with live blue/violet/red landing lights that glow and cast light.
+- **Wind gusts** (`src/roof.js`): every 8-12 s there is an arrow telegraph and "GUST!", and then the wind shoves heroes, enemies and props across lanes. Sliding flight cases.
+- New foes (nurse-sized): **VAPER** (a blueberry-cheesecake cloud that dizzies), **DRONE GUY** (a buzzing toy drone) and **DUKE** the flight medic (armored visitor AI).
+- **Boss: ROXY + THE LIFE FLITE CREW** (`src/lifeflight.js`), parody branding, Roxy about 1.3x a nurse. Her moves:
+  - Paddle bonk.
+  - "CLEAR!" floor bolts that dizzy (jump them).
+  - A stretcher-crew shoulder charge.
+  - "AIR SUPPORT!", where pilot Ace's chopper buzzes the lane with rotor wash.
+  - Phase 2, "HOT LOAD!": the chopper hovers over the big pad with a pulsing wash ring, and Duke jumps out with backup. On defeat: "Going... off... shift... zzz". The chopper lands, and Roxy and Duke nap on their own stretcher.
+- Cutscenes `roof`, `lifeflight`, `roofout`; music `roof` + `lifeflight`; Level Select now has 10 cards (ROOF after NIGHT SHIFT). Tests `tests/v16.py`; flow covers the roof. Images `docs/v16_roof.png`, `docs/v16_boss.png`. Cache `nbd2-app-v26`.
+
 ## 2026-10-23: v0.15 "Labor & Delivery" (Bill: pastel floor, camcorder dads, grandmas who won't leave, a giant stork)
 - **FLOOR 2: LABOR & DELIVERY** (`LEVEL7`, LEVELS index 6, id 7, `?level=7`), after the Cafeteria and before the Night Shift. 8:00 PM.
   Pastel walls and a pastel checker floor, with a nursery window, balloons, "IT'S A BOY!/GIRL!/...?!" banners, gift carts (breakable) and violet/blue/red neons.

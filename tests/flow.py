@@ -23,7 +23,7 @@ with sync_playwright() as p:
     # v0.5: the bonus leads up to Floor 4 Radiology, then the night shift, then THE END
     print('radiology', pg.evaluate("JSON.stringify([__nbd.game.scene, __nbd.W.lv.id, __nbd.W.heroes[0].score])"))
     pg.screenshot(path='tests/out/f_radiology.png')
-    for lv in (2, 5, 6, 7, 3, 4):  # Radiology -> Scooter Run -> Psych Ward -> Cafeteria -> v0.15 L&D -> Night Shift -> Garage
+    for lv in (2, 5, 6, 7, 3, 8, 4):  # Radiology -> Scooter Run -> Psych Ward -> Cafeteria -> v0.15 L&D -> Night Shift -> v0.16 Roof -> Garage
         pg.wait_for_function(f"__nbd.W.lv.id === {lv} && __nbd.game.scene === 'play'", timeout=10000); pg.evaluate('__nbd.W.cleared = true')
         pg.wait_for_function("__nbd.game.scene === 'tally'", timeout=5000); time.sleep(3.3)
         pg.keyboard.down('KeyJ'); time.sleep(0.1); pg.keyboard.up('KeyJ'); time.sleep(1)

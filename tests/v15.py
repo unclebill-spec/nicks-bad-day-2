@@ -100,7 +100,7 @@ with sync_playwright() as p:
         for (w, h) in ((960, 540), (800, 600)):
             pg.set_viewport_size({'width': w, 'height': h}); pg.evaluate("__nbd.toLevels()"); time.sleep(0.5)
             R = pg.evaluate("[__nbd.game.lvRects, __nbd.G.VW, __nbd.G.VH, __nbd.PICKS[6].name, __nbd.PICKS[7].name]")
-            check(f'level select {w}x{h}: 9 cards fit, #7 is L&D, then NIGHT SHIFT', len(R[0]) == 9 and 'LABOR' in R[3] and 'NIGHT' in R[4] and all(r[0] >= 0 and r[1] >= 0 and r[0]+r[2] <= R[1] and r[1]+r[3] <= R[2] for r in R[0]), R)
+            check(f'level select {w}x{h}: 10 cards fit, #7 is L&D, then NIGHT SHIFT', len(R[0]) == 10 and 'LABOR' in R[3] and 'NIGHT' in R[4] and all(r[0] >= 0 and r[1] >= 0 and r[0]+r[2] <= R[1] and r[1]+r[3] <= R[2] for r in R[0]), R)
             pg.screenshot(path=f'tests/out/v15_levels_{w}.png')
         pg.close()
     b.close()
