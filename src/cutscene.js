@@ -173,7 +173,33 @@ const SCRIPTS = {
       (w, h) => ({ bg: ['cafe', 2440, 58], cap: 'KITCHEN CLOSED.', acts: [{ s: 'lunchlady', a: 'sleep', x: w * 0.62, y: h - 2 }, { s: a, a: 'win', x: w * 0.24, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.24 + 28, y: h - 1, rate: 3 }] : [])],
         bubbles: [{ x: w * 0.42, y: 8, s: "Kitchen's... closed... zzz", tail: [w * 0.64, h - 30], at: 0.3, mw: Math.min(200, w * 0.5) }] }),
       (w, h) => ({ bg: null, burst: '#3a6aff', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
-        bubbles: [{ x: 4, y: 4, s: lz(a, 'Got the last pudding. Night shift, here we come.', 'Fed. Barely. On to the night shift.', 'Lunch: survived. Night shift: next.', "I ate standing up. Classic. Night shift time.", 'Sweet dreams, Loretta! I saved you a pudding!', 'Trays returned! Night shift, let\'s go!', 'Lunch rush handled. Night shift, your move.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Got the last pudding. Wait, L&D is paging us?', 'Fed. Barely. Now Labor & Delivery needs hands.', 'Lunch: survived. Floor 2: next.', "I ate standing up. Classic. Up to L&D.", 'Sweet dreams, Loretta! I saved you a pudding!', 'Trays returned! L&D, here we come!', 'Lunch rush handled. Labor & Delivery, your move.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
+  ld() {  // v0.15: the cafeteria -> Labor & Delivery
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['ld', 300, 58], cap: 'FLOOR 2: LABOR & DELIVERY. 8:00 PM.', acts: [{ s: a, a: 'walk', x: w * 0.1, y: h - 3, mv: 30, rate: 7 }, ...(b ? [{ s: b, a: 'walk', x: w * 0.1 - 26, y: h - 1, mv: 30, rate: 7 }] : [])] }),
+      (w, h) => ({ bg: null, burst: '#a24dff', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Why are there SO many dads with camcorders?', 'Balloons. Everywhere. Who let the balloons in?', 'Visiting hours ended an hour ago, Grandma.', 'Is that a juice box on the ceiling?!', 'Aww, babies! Okay, focus. FOCUS.', "I'll walk the grandmas out. Gently.", 'Pastel walls. Calm vibes. Loud dads.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
+  stork() {
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['ld', 2330, 58], cap: 'THE DELIVERY BAY.', acts: [{ s: a, a: 'idle', x: w * 0.14, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.14 + 26, y: h - 1 }] : []), { s: 'stork', a: 'fly', x: w * 1.05, y: h - 20, mv: -40, flip: true, rate: 6 }],
+        bubbles: [{ x: w * 0.3, y: 14, s: 'SPECIAL DELIVERY! Sign here, please!', tail: [w * 0.75, h - 80], at: 0.5, mw: Math.min(220, w * 0.6), shout: true }] }),
+      (w, h) => ({ bg: null, burst: '#a24dff', faces: [{ id: 'stork', x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 6, y: 6, s: 'No returns. No exchanges. HONK!', tail: [w / 2, h - 72], at: 0.25, mw: w - 20, shout: true }] }),
+    ];
+  },
+  ldout() {  // v0.15: the stork flies off with its "baby" (a laundry sack), then on to the night shift
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['ld', 2440, 58], cap: 'RETURN TO SENDER.', acts: [{ s: 'stork', a: 'fly', x: w * 0.6, y: h - 30, mv: 40, rate: 6 }, { s: a, a: 'win', x: w * 0.24, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.24 + 28, y: h - 1, rate: 3 }] : [])],
+        bubbles: [{ x: w * 0.42, y: 8, s: 'Wrong... address... honk', tail: [w * 0.64, h - 60], at: 0.3, mw: Math.min(200, w * 0.5) }] }),
+      (w, h) => ({ bg: null, burst: '#3a6aff', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'It took the laundry. Fine. Night shift, here we come.', 'That bundle was towels. Night shift time.', 'Delivery refused. On to the night shift.', 'Did a bird just steal our linens?', 'Bye, Mr. Stork! Drive safe! Fly safe!', "I'll restock the towels. Then night shift.", 'Signed, sealed, delivered. Night shift.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
     ];
   },
   psychout() {  // v0.13: Phil-in's outro, then on to the night shift
@@ -258,7 +284,7 @@ function drawPanel(P, px, py, pw, ph, local, idx) {
   rect(px, py, pw, ph, '#2a3060');
   if (P.bg) {
     const [src, x0, y0] = P.bg;
-    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : src === 'garage' ? (W.garageBg || W.nightBg || W.hallBg) : src === 'cafe' ? (W.cafeBg || W.hallBg) : src === 'ward' ? (W.wardBg || W.hallBg) : W.hallBg;
+    const img = src === 'break' ? W.breakBg : src === 'rad' ? (W.radBg || W.hallBg) : src === 'garage' ? (W.garageBg || W.nightBg || W.hallBg) : src === 'cafe' ? (W.cafeBg || W.hallBg) : src === 'ld' ? (W.ldBg || W.hallBg) : src === 'ward' ? (W.wardBg || W.hallBg) : W.hallBg;
     let sx = x0 === 'fridge' ? Math.max(0, (W.breakFridgeX || 300) - pw * 0.55) : x0;
     if (img) { sx = Math.max(0, Math.min(img.width - pw, sx)); c.drawImage(img, sx, y0, pw, ph, px, py, pw, ph); }
     if (src === 'hall') hallBits(sx, y0, px, py, pw);
