@@ -76,5 +76,17 @@
   "start": 1.723,
   "end": 29.285,
   "tempo": 139
+ },
+ "cafe": {
+  "loop": true,
+  "start": 3.235,
+  "end": 29.111,
+  "tempo": 148
+ },
+ "lunchlady": {
+  "loop": true,
+  "start": 1.226,
+  "end": 20.838,
+  "tempo": 195
  }
 }
