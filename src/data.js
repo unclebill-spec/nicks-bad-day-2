@@ -325,6 +325,40 @@ export const LD_LINES = {
     clear: ['Finally. Quiet. Nobody say "push" for an hour.'] },
 };
 for (const [id, L] of Object.entries(LD_LINES)) HEROES[id].ld = L;
+// v0.16 ROOFTOP HELIPAD lines (+ 'gust': the wind kicks up)
+export const ROOF_LINES = {
+  nick: { spawn: ['The roof. At 3 AM. In the wind. This is fine.'],
+    idle: ['Great view. Terrible hair day.', 'Who let a helicopter crew get THIS bored?'],
+    zone: ['Roof clear. Nobody look down.', 'Okay. Nobody blow away. That is the whole plan.'],
+    drop: ['Lie flat. Less wind down there.', 'Sorry! Fresh air is good for you!'],
+    clear: ['Pad is clear. I am going back inside forever.'], gust: ['WHOA! Hold onto something!', 'My hat! I do not have a hat! WHOA!'] },
+  kim: { spawn: ['Ooh, the lights are so PRETTY up here!'],
+    idle: ['Blue, purple, red, blue, purple, red... I could watch this all night!', 'Can we ride in the helicopter? Pleeease?'],
+    zone: ['Yay! Windy teamwork!', 'Everybody hold hands! For balance!'],
+    drop: ['Nighty night! Stay low, it is windy!', 'Sweet dreams up in the stars!'],
+    clear: ['Roof party! ...No? Okay. Roof cleared!'], gust: ['Wheee! Windy!', 'I am a KITE!'] },
+  will: { spawn: ['I have flown in a helicopter. Once. Sideways. Let us go.'],
+    idle: ['Wind speed: rude.', 'I could land that chopper. Probably. Do not test me.'],
+    zone: ['Roof secured. Like a pro.', 'That is how you clear a landing zone.'],
+    drop: ['Stay down. It is safer. Trust me.', 'Rest. The wind will not take you down there.'],
+    clear: ['Landing zone: clear. Ego: inflated.'], gust: ['Lean into it! LEAN!', 'Nope! Nope! Okay!'] },
+  jackie: { spawn: ['Everybody stay away from the edge, and nobody stand under the rotor!'],
+    idle: ['Who is up here vaping at 3 AM?!', 'Sir, that drone is NOT medical equipment.'],
+    zone: ['Good job! Stay behind the yellow line!', 'Rooftop cleared! Count off, everybody!'],
+    drop: ['Okay hon, lie down, away from the edge.', 'Breathe. You are safe now.'],
+    clear: ['Everybody accounted for? Great. Inside. Now.'], gust: ['Get low! Get LOW!', 'Hold the railing!'] },
+  nate: { spawn: ['Rooftop at 3 AM. Finally somewhere quiet to nap. Oh. Wind.'],
+    idle: ['The stars are nice. Like a ceiling for napping.', 'The helipad is just a big bed with an H on it.'],
+    zone: ['Cool. Roof. Done. Nap.', 'Wind is basically a fan. I sleep with a fan.'],
+    drop: ['Nap buddy. Hold onto the roof.', 'Lie down. Stay down. Good.'],
+    clear: ['Wake me when the helicopter leaves.'], gust: ['Nope. Too windy. Wake me later.', 'Whoa... free ride.'] },
+  heather: { spawn: ["A vaper, a drone guy and a helicopter crew that thinks they're Top Gun. Let's go."],
+    idle: ['If that drone touches me, I am keeping it.', 'Nobody is getting a joyride. NOBODY.'],
+    zone: ['Roof cleared. Get off my helipad.', "That's the edge. Don't make me show you."],
+    drop: ['Sit. Away from the edge.', 'Down. Stay down. The wind agrees.'],
+    clear: ['The pad is ours. Somebody call the real pilots.'], gust: ['UGH. My hair.', 'Seriously, wind?!'] },
+};
+for (const [id, L] of Object.entries(ROOF_LINES)) HEROES[id].roof = L;
 export const GREG_BILL = ['Wanna get outta here?', "Let's get outta here.", "You can't keep me locked up in here!", "I'm gonna knock you one!", "Don't touch my dick!"];
 export const GARAGE_BILL = { nick: "Someone's gonna key my car, I know it.", kim: 'Let me help you to your car, sweetie!', will: 'I always get the closest spot.', jackie: 'Who needs a jump?' };
 
@@ -433,6 +467,19 @@ export const ENEMIES = {
   camdad: { name: 'CAMCORDER DAD', sheet: 'camdad', ai: 'tray', flash: true, throwLines: ['SMILE!', 'THAT\'S MY BABY!', 'GET HER GOOD SIDE!', 'SAY CHEESE!'],
     hp: 36, speed: 44, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.5, 2.4], keep: 120, drop: ['energy', 0.25], ld: true, voice: 'voice3',
     ko: ['Did... you get that... zzz', 'Battery... low... zzz'], lines: ["IT'S A BABY! IT'S MY BABY!", 'Is it recording? IS IT RECORDING?', "I'M A DAD!", 'Everybody wave at the camera!'] },
+  // v0.16 rooftop: a patient sneaking a vape (a slow drifting cloud: dizzy), a guy flying a toy drone (it bonks), and DUKE the
+  // flight medic (the boss's backup: armored, pushes you around)
+  vaper: { name: 'ROOFTOP VAPER', sheet: 'vaper', ai: 'tray', flash: true, flashSpr: 'p_vape0', flashSpd: 95, flashDmg: 2, flashDizzy: 1.2, flashLife: 2.4, flashSfx: 'vape',
+    throwLines: ['*PFFFT*', 'IT IS BLUEBERRY!', 'MIND THE CLOUD!', 'IT IS NOT SMOKING!'],
+    hp: 34, speed: 46, depth: 26, reach: 150, score: 450, atk: 'throw', cd: [1.8, 2.6], keep: 110, drop: ['energy', 0.25], roof: true, voice: 'voice1',
+    ko: ['Just... one more... puff... zzz', 'Cloud... nine... zzz'], lines: ['I just came up for some AIR!', 'It is blueberry cheesecake flavor!', 'Nobody saw nothing.'] },
+  droneguy: { name: 'DRONE GUY', sheet: 'droneguy', ai: 'tray', flash: true, flashSpr: 'p_drone0', flashSpd: 200, flashDmg: 6, flashDizzy: 0, flashLife: 1.6, flashSfx: 'drone',
+    throwLines: ['INCOMING!', 'DRONE STRIKE! ...I MEAN DELIVERY!', 'WATCH THIS!', 'IT HAS A CAMERA!'],
+    hp: 30, speed: 54, depth: 26, reach: 160, score: 450, atk: 'throw', cd: [1.5, 2.3], keep: 130, drop: ['snacks', 0.3], roof: true, voice: 'voice3',
+    ko: ['Battery... critical... zzz', 'Returning... to home... zzz'], lines: ['I am getting AMAZING footage!', 'It is a hobby, not a crime!', 'Night mode! Night mode!'] },
+  duke: { name: 'DUKE (FLIGHT MEDIC)', sheet: 'duke', ai: 'visitor', hp: 140, speed: 42, depth: 26, reach: 34, score: 1200, atk: 'punch', cd: [1.4, 2.2], armor: 3, roof: true, voice: 'duke',
+    drop: ['energy', 0.5], ko: ['Off... shift... zzz', 'Wake me... for the next call... zzz'],
+    lines: ['Hot load, coming through!', 'I lift stretchers for breakfast!', 'Roxy says you are grounded!'] },
   grandma: { name: "GRANDMA (WON'T LEAVE)", sheet: 'grandma', ai: 'visitor', hp: 74, speed: 30, depth: 26, reach: 30, score: 600, atk: 'punch', cd: [1.6, 2.5], armor: 2, ld: true, voice: 'voice2',
     drop: ['candy', 0.4], ko: ["I'm... still not leaving... zzz", 'Just resting my eyes... zzz'],
     lines: ["I'm not going anywhere!", 'I brought a casserole!', "In my day we didn't have visiting hours!", 'Let me hold the baby!'] },
@@ -519,6 +566,9 @@ export const BREAKABLES = {
   // v0.15 L&D: a gift-shop cart (flowers, a teddy bear, a balloon). Rolls when hit.
   giftcart: { name: 'GIFT CART', spr: 'giftcart', hp: 3, w: 28, h: 32, move: 'roll', fr: 0.9, push: 1.0, dmg: 10, mass: 1.4, loot: 'small',
     bits: ['deb_balloon', 'deb_gift', 'deb_flower', 'deb_flower'], deb: ['#f88ab8', '#ffffff', '#ff5a7a'], hit: 'thunk', brk: 'crash' },
+  // v0.16 roof: a hard-shell flight case (med kit). Slides when hit; the wind shoves it too.
+  flightcase: { name: 'FLIGHT CASE', spr: 'flightcase', hp: 3, w: 28, h: 26, move: 'slide', fr: 1.6, push: 1.0, dmg: 9, mass: 1.2, loot: 'small',
+    bits: ['deb_case', 'deb_metal', 'deb_metal'], deb: ['#ff7a1a', '#c8c8d4', '#1a1a22'], hit: 'clang', brk: 'crash' },
   cone: { carry: true, name: 'TRAFFIC CONE', spr: 'cone', hp: 2, w: 12, h: 20, states: 2, move: 'slide', fr: 2.4, push: 1.25, dmg: 6, mass: 0.4, loot: 'small',
     bits: ['deb_cone', 'deb_cone'], deb: ['#ff7a1a', '#f4f4f4'], hit: 'thunk', brk: 'thunk' },
   shopcart: { metal: true, name: 'SHOPPING CART', spr: 'shopcart', hp: 4, w: 30, h: 28, move: 'roll', fr: 0.5, push: 1.1, dmg: 13, mass: 1.8, loot: 'cart',
@@ -876,7 +926,47 @@ export const LEVEL7 = {
   ],
   bossArena: 2300, backup: ['camdad', 'sibling', 'grandma'],
 };
-export const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5, LEVEL6, LEVEL7];
+// ---- v0.16 THE ROOF: ROOFTOP HELIPAD AT NIGHT (between the Night Shift and the Garage, ~3 AM). Windy (roof.js gusts shove
+// everyone across the lanes), dark, lit by neon signs on the parapet and the H pads' blue / violet / red landing lights.
+// Boss: the rogue LIFE FLITE crew (lifeflight.js).
+export const LEVEL8 = {
+  id: 8, name: 'THE ROOF: HELIPAD', sub: '3:00 AM. WINDY. VERY WINDY.', width: 2800, music: 'roof', bossMusic: 'lifeflight', clock: 3 * 60, floorNum: 'R', cutBoss: 'lifeflight',
+  roof: true, dark: 0.55, tiles: { wall: 'rwall', ceil: 'rceil', floor: 'rfloor' },
+  pads: [[1240, 176, 70], [2540, 176, 110]],
+  wall: [
+    [24, 'elev', 'A'], [118, 'callpanel'], [150, 'sign_noroof'], [230, 'hvac'], [330, 'neon_roof'], [420, 'vent'], [480, 'sign_rotor'], [560, 'mast'], [640, 'door', 801],
+    [740, 'hvac'], [850, 'neon_helipad'], [960, 'windsock'], [1060, 'vent'], [1100, 'door', 802], [1200, 'sign_pad'], [1300, 'neon_flite'],
+    [1440, 'hvac'], [1560, 'mast'], [1600, 'door', 803], [1700, 'neon_roof'], [1800, 'vent'], [1880, 'windsock'], [1960, 'door', 804], [2040, 'sign_rotor'],
+    [2120, 'hvac'], [2240, 'neon_helipad'], [2360, 'mast'], [2420, 'neon_flite'], [2580, 'windsock'], [2660, 'neon_roof'],
+  ],
+  props: [
+    [200, 170, 'flightcase', []], [520, 196, 'flightcase', ['pudding']], [880, 160, 'flightcase', []], [1000, 200, 'flightcase', ['energy']],
+    [1500, 190, 'flightcase', []], [1720, 160, 'flightcase', ['zynn']], [2060, 196, 'flightcase', ['snacks']], [2700, 170, 'flightcase', []],
+  ],
+  puddles: [],
+  floorItems: [[600, 196, 'w:clipboard'], [1700, 170, 'w:callbell']],
+  zones: [
+    { at: 120, lock: 0, title: 'ROOF ACCESS', waves: [
+      [['vaper', 'R', 0.5], ['droneguy', 'D801', 1.4]],
+      [['vaper', 'R', 0.3], ['droneguy', 'L', 1.2], ['vaper', 'D801', 2.0]],
+    ] },
+    { at: 680, lock: 600, title: 'HVAC ALLEY', waves: [
+      [['droneguy', 'D802', 0.3], ['vaper', 'R', 1.0], ['runner', 'L', 1.8]],
+      [['vaper', 'R', 0.3], ['droneguy', 'D801', 1.2], ['visitor', 'L', 2.0]],
+    ] },
+    { at: 1220, lock: 1140, title: 'THE LITTLE PAD', waves: [
+      [['vaper', 'D803', 0.3], ['droneguy', 'R', 1.0], ['visitor', 'L', 1.8]],
+      [['droneguy', 'D802', 0.4], ['vaper', 'R', 1.0], ['droneguy', 'L', 1.8], ['elite', 'D803', 2.4]],
+    ] },
+    { at: 1800, lock: 1700, title: 'WIND TUNNEL', waves: [
+      [['droneguy', 'D804', 0.3], ['vaper', 'R', 0.9], ['runner', 'L', 1.8]],
+      [['vaper', 'D804', 0.3], ['droneguy', 'R', 0.9], ['elite', 'L', 1.6], ['vaper', 'D803', 2.4]],
+    ] },
+    { at: 2320, lock: 2300, boss: 'lifeflight', title: 'HOT LOAD', waves: [] },
+  ],
+  bossArena: 2300, backup: ['vaper', 'droneguy', 'duke'],
+};
+export const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5, LEVEL6, LEVEL7, LEVEL8];
 // ---- v0.4 Breakroom bonus round (between Floor 3 and Floor 4): one screen, built to the current view width at start.
 // Thieves come out of the staff door and both screen edges, raid a snack spot for a couple of seconds, then run.
 export const BONUS = { time: 45, every: [1.3, 2.3], cap: 4, raid: 2.3, stop: 500, saved: 150, perfect: 3000,

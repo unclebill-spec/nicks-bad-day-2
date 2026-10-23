@@ -160,7 +160,7 @@ export class Enemy extends Actor {
     this.x += dx / l * sp * dt; this.y += dy / l * sp * dt; if (Math.abs(dx) > 1) this.face = Math.sign(dx);
   }
   arrived() {  // v0.11: the garage's visitors announce themselves (one at a time, so the bubbles stay readable)
-    const d = this.d; if (!(d.garage || d.ward || d.cafe || d.ld) || !d.lines || (W.shoutT || 0) > W.t || W.rnd() > 0.6) return;
+    const d = this.d; if (!(d.garage || d.ward || d.cafe || d.ld || d.roof) || !d.lines || (W.shoutT || 0) > W.t || W.rnd() > 0.6) return;
     W.shoutT = W.t + 2.2; this.speechT = 240;
     floatText(d.lines[Math.floor(W.rnd() * d.lines.length)], this.x, this.y, 64, '#ffffff'); sfx(d.voice, { vol: 0.3 });
   }
@@ -179,7 +179,7 @@ export class Enemy extends Actor {
     const K = this.kind, d = this.d;
     // speech bubbles now and then
     if (this.speechT <= 0 && d.sing && W.rnd() < 0.0025) { this.speechT = 7; this.croon(); }  // v0.13 Greg croons now and then
-    if (this.speechT <= 0 && W.rnd() < (d.garage || d.ward || d.cafe || d.ld ? 0.005 : 0.003)) { this.speechT = 6; const L = { wanderer: ['Are you my nurse?', 'Where am I?'], spammer: ['NURSE! NURSE!', 'My TV is broken!'], escape: ['Catch me!', "I'm going home!"],
+    if (this.speechT <= 0 && W.rnd() < (d.garage || d.ward || d.cafe || d.ld || d.roof ? 0.005 : 0.003)) { this.speechT = 6; const L = { wanderer: ['Are you my nurse?', 'Where am I?'], spammer: ['NURSE! NURSE!', 'My TV is broken!'], escape: ['Catch me!', "I'm going home!"],
       ivswing: ['I need ice chips!', 'Fore!'], sundowner: ['Who are you?!', 'Get off my lawn!'], visitor: ['Who is in charge?!', 'I know my rights!'],
       crutch: ['Outta my way!', 'I can walk fine!'], bell: ['*DING DING DING*', 'Room service!'], elite: ["I've been here 40 times!", 'I want my usual room!'],
       runner: ['Freedom!', "You can't catch me!", 'I am NOT a fall risk!'], tray: ['This is NOT what I ordered!', 'Cold AGAIN?!', 'Send it back!'], o2: ['Just getting some air!', 'Mind the tank, dear.'] }[K];
@@ -251,8 +251,9 @@ export class Enemy extends Actor {
           addShot({ kind: 'enemy', boom: true, spr: 'p_pillow', x: this.x + this.face * 10, y: this.y, z: 42, vx: this.face * 210, vz: 0, grav: 0, owner: this, dmg: 7, spin: 12, life: 2.6 });
           sfx('whoosh', { vol: 0.5 }); if (W.rnd() < 0.5 && d.throwLines) floatText(d.throwLines[Math.floor(W.rnd() * d.throwLines.length)], this.x, this.y, 62, '#ffffff');
         } else if (d.flash) {  // v0.15 CAMCORDER DAD: a straight, fast flash of light. It does almost nothing but it DIZZIES
-          addShot({ kind: 'enemy', spr: 'p_flash0', x: this.x + this.face * 12, y: this.y, z: 44, vx: this.face * 240, vz: 0, grav: 0, owner: this, dmg: 3 * dm, dizzy: 1.0, life: 1.3 });
-          sfx('camflash', { vol: 0.55 }); if (W.rnd() < 0.6 && d.throwLines) floatText(d.throwLines[Math.floor(W.rnd() * d.throwLines.length)], this.x, this.y, 62, '#bfe0ff');
+          // v0.16: generalized: the VAPER's slow cloud (dizzy) and the DRONE GUY's toy drone (a plain bonk) use it too
+          addShot({ kind: 'enemy', spr: d.flashSpr || 'p_flash0', x: this.x + this.face * 12, y: this.y, z: 44, vx: this.face * (d.flashSpd || 240), vz: 0, grav: 0, owner: this, dmg: (d.flashDmg || 3) * dm, dizzy: d.flashDizzy === undefined ? 1.0 : d.flashDizzy, life: d.flashLife || 1.3 });
+          sfx(d.flashSfx || 'camflash', { vol: 0.55 }); if (W.rnd() < 0.6 && d.throwLines) floatText(d.throwLines[Math.floor(W.rnd() * d.throwLines.length)], this.x, this.y, 62, '#bfe0ff');
         } else if (this.throwKind === 'jello' && d.proj) {  // v0.5 Contrast Chugger: a lobbed cup of barium (chalky white puddle)
           addShot({ kind: 'enemy', spr: d.projSpr || 'p_cup', x: this.x + this.face * 8, y: this.y, z: 48, vx: this.face * 120, vz: 165, grav: 330, owner: this, dmg: 6, spin: 7, splash: d.proj, life: 2.4 });
           const TL = d.throwLines || ['BOTTOMS UP!', 'DRINK YOUR CONTRAST!', 'BANANA FLAVOR!'];  // v0.11 Coffee Guy has his own

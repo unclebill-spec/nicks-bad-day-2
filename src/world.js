@@ -33,6 +33,9 @@ const LAYER = {  // wall features: vertical placement by kind
   // v0.15 labor & delivery pieces
   nursery: () => 20, balloons: (w, h) => FLOOR_Y + 2 - h, balloons2: (w, h) => FLOOR_Y + 2 - h, banner_boy: () => 8, banner_girl: () => 8, banner_q: () => 8,
   neon_ld: () => 24, neon_nursery: () => 24, neon_baby: () => 24, sign_quiet: () => 40, sign_visit: () => 40, sign_ld: () => 37,
+  // v0.16 rooftop pieces: units / vents / windsock / mast stand on the roof; neon sits on the parapet coping (y 98), signs on its face
+  hvac: (w, h) => FLOOR_Y + 2 - h, vent: (w, h) => FLOOR_Y + 2 - h, windsock: (w, h) => FLOOR_Y + 2 - h, mast: (w, h) => FLOOR_Y + 2 - h,
+  neon_helipad: (w, h) => 98 - h, neon_flite: (w, h) => 98 - h, neon_roof: (w, h) => 98 - h, sign_noroof: () => 102, sign_rotor: () => 102, sign_pad: () => 102,
   neon_dayroom: () => 24, neon_calm: () => 24, neon_bhu: () => 24, poster_feelings: () => 34, poster_group: () => 40,
   fridge: (w, h) => FLOOR_Y + 3 - h, counter: (w, h) => FLOOR_Y + 3 - h, vend_wall: (w, h) => FLOOR_Y + 3 - h, btable: (w, h) => FLOOR_Y + 5 - h, cabinets: () => 30, note_food: () => 46, sign_breakroom: () => 37,
 };
@@ -65,6 +68,9 @@ const GLOW = {
   // v0.15 L&D: neon L&D (red) / NURSERY (blue) / WELCOME BABY (violet), the nursery window's soft glow
   neon_ld: { col: '#ff3a4a', r: 26, dx: 18, dy: 9 }, neon_nursery: { col: '#3aa8ff', r: 32, dx: 30, dy: 9 }, neon_baby: { col: '#a24dff', r: 36, dx: 40, dy: 9, pool: 40 },
   nursery: { col: '#bfe0ff', r: 40, dx: 56, dy: 28, a: 0.5 },
+  // v0.16 rooftop: neon HELIPAD (blue) / LIFE FLITE (red) / ROOF (violet), the red aviation lights on the mast + windsock
+  neon_helipad: { col: '#3aa8ff', r: 36, dx: 30, dy: 9, pool: 44 }, neon_flite: { col: '#ff3a4a', r: 38, dx: 36, dy: 9, pool: 44 }, neon_roof: { col: '#a24dff', r: 28, dx: 18, dy: 9, pool: 34 },
+  mast: { col: '#ff3a4a', r: 16, dx: 7, dy: 4, blink: 0.7 }, windsock: { col: '#ff3a4a', r: 14, dx: 7, dy: 5, blink: 0.9 },
   soda: { col: '#3aa8ff', r: 18, dx: 18, dy: 26, a: 0.6 }, serveline: { col: '#ffb04a', r: 30, dx: 64, dy: 20, a: 0.5 },
   neon_bhu: { col: '#ff3a4a', r: 26, dx: 22, dy: 9 }, callstrip: { col: '#a24dff', r: 22, dx: 32, dy: 3, pool: 30 }, buzzer: { col: '#ff3a4a', r: 12, dx: 6, dy: 4, blink: 0.8 }, nstation: { col: '#3aa8ff', r: 26, dx: 40, dy: 26, a: 0.6 },
 };
@@ -91,6 +97,7 @@ export function buildLevel(lv) {
   x.fillStyle = 'rgba(30,40,60,0.22)'; x.fillRect(0, FLOOR_Y, lv.width, 4);
   x.fillStyle = 'rgba(255,255,255,0.10)'; x.fillRect(0, FLOOR_Y + 40, lv.width, 2); x.fillRect(0, FLOOR_Y + 70, lv.width, 1);
   if (lv.garage) paintGarage(x, lv);
+  if (lv.roof) paintRoof(x, lv);
   // dayroom: a different floor tint past the boss line
   if (lv.bossArena && !lv.garage) { x.fillStyle = 'rgba(160,120,220,0.12)'; x.fillRect(lv.bossArena - 40, FLOOR_Y, lv.width, 106); }
   if (lv.tint) { x.fillStyle = lv.tint; x.fillRect(0, 0, lv.width, 224); }
@@ -113,6 +120,23 @@ export function buildLevel(lv) {
   // breakables + floor items
   W.props = lv.props.map(([px, py, kind, drops]) => makeProp(kind, px, py, drops)); W.zynnProps = 0;
   W.items = []; for (const [ix, iy, k] of lv.floorItems || []) dropItem(k, ix, iy, false);
+}
+
+// v0.16 rooftop paint: a yellow safety line along the parapet, and each H pad (lv.pads [cx, cy, rx]): a pale concrete
+// disc with a white ring and a big white H (squashed for the floor perspective). Its flush landing lights are drawn live
+// (roof.js) and listed in W.roofPads so they can cast light.
+function paintRoof(x, lv) {
+  W.roofPads = [];
+  x.fillStyle = '#e8c02a'; x.fillRect(0, FLOOR_Y + 3, lv.width, 2); x.fillStyle = '#7a6414'; x.fillRect(0, FLOOR_Y + 5, lv.width, 1);
+  for (let lx = 0; lx < lv.width; lx += 16) { x.fillStyle = '#1a1a22'; x.fillRect(lx, FLOOR_Y + 3, 6, 2); }
+  for (const [cx, cy, rx] of lv.pads || []) {
+    const ry = rx * 0.34, el = (r1, r2, col) => { x.fillStyle = col; x.beginPath(); x.ellipse(cx, cy, r1, r2, 0, 0, Math.PI * 2); x.fill(); };
+    el(rx + 6, ry + 3, '#1c1c28'); el(rx, ry, '#4a4a5c'); el(rx - 5, ry - 2, '#f4f4f8'); el(rx - 9, ry - 3.5, '#3c3c4e');
+    x.fillStyle = '#f4f4f8'; const hw = rx * 0.42, hh = ry * 0.62, bw = Math.max(5, rx * 0.12);
+    x.fillRect(cx - hw, cy - hh, bw, hh * 2); x.fillRect(cx + hw - bw, cy - hh, bw, hh * 2); x.fillRect(cx - hw, cy - 2, hw * 2, 4);
+    const n = 14;
+    for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; W.roofPads.push({ x: cx + Math.cos(a) * (rx + 2), y: cy + Math.sin(a) * (ry + 1), c: i % 3, i }); }
+  }
 }
 
 // v0.11 parking garage floor paint: the back row of stalls (white lines, wheel stops, oil stains), the dashed yellow lane
