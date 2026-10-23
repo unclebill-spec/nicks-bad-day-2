@@ -286,6 +286,25 @@ for e in ("linecut", "onside"):
     b = B14[e]
     atlas["chars"][e]["pal"] = {"hair": [b["hair_c"], b["hair_s"]], "skin": [b["skin"], b["skin_s"]], "gown": [], "sock": []}
 char_sheet("lunchlady", C14.anims("lunchlady"), B14["lunchlady"], cell=(96, 92), anchor=(48, 88))
+# v0.15 LABOR & DELIVERY: pastel tiles, nursery window / balloons / banners, gift cart, projectiles, the family and THE STORK (tools/v15_*.py)
+import v15_art as V15  # noqa: E402
+import v15_chars as C15  # noqa: E402
+for i in range(4):
+    add(f"lwall{i}", V15.lwall_tile(i))
+add("lceil", V15.lceil_tile(False)); add("lceil_lit", V15.lceil_tile(True))
+for i, t in enumerate(V15.lfloor_tiles()):
+    add(f"lfloor{i}", t)
+for k, S in {**V15.wall_pieces(), **V15.bits()}.items():
+    add(k, S)
+for st in range(3):
+    add(f"giftcart{st}", V15.giftcart(st))
+add("p_flash0", V15.proj_flash(0)); add("p_flash1", V15.proj_flash(1)); add("p_juice", V15.proj_juice()); add("p_bundle", V15.proj_bundle())
+B15 = C15.bodies()
+for e in ("camdad", "grandma", "sibling"):
+    char_sheet(e, C15.anims(e), B15[e])
+    b = B15[e]
+    atlas["chars"][e]["pal"] = {"hair": [b["hair_c"], b["hair_s"]], "skin": [b["skin"], b["skin_s"]], "gown": [], "sock": []}
+atlas["chars"]["stork"] = C15.stork_sheet(OUT / "stork.png")
 add("p_cup", RA.proj_cup()); add("puddle_w", RA.barium_splat()); add("p_film", RA.proj_film()); add("mri_wave0", RA.mri_wave(0)); add("mri_wave1", RA.mri_wave(1)); add("mri_table", RA.mri_table())
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
              ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
@@ -353,6 +372,8 @@ for k, t, c1, c2 in (("w_weeoo", "WEE-OO!", "#ffb04a", "#ff5a2a"), ("w_beepbeep"
     SPR[k] = word(t, 16, c1, c2)
 SPR["w_valet"] = word("VALET RUSH!", 22, "#ff8a8a", "#e83a3a", stroke=3)
 SPR["w_next"] = word("NEXT!", 22, "#ffe84a", "#ff8a1e", stroke=3)
+SPR["w_delivery"] = word("SPECIAL DELIVERY!", 22, "#8ad8ff", "#a24dff", stroke=3)
+SPR["w_honk"] = word("HONK!", 22, "#ffe84a", "#ff8a1e", stroke=3)
 SPR["w_lunchrush"] = word("LUNCH RUSH!", 22, "#ff8ac0", "#e83a3a", stroke=3)
 SPR["w_codeblue"] = word("CODE BLUE!", 26, "#9ae0ff", "#3a6aff", stroke=3)
 SPR["w_charge"] = word("CHARGE NURSE!", 28, "#ffffff", "#ffd84a", stroke=3)
@@ -401,6 +422,7 @@ SPR["face_tilly"] = portrait(boss.tilly_body(), "grin")
 SPR["face_valet"] = portrait(B11["valet"], "grin", k=1.6)
 SPR["face_philin"] = portrait(B13["philin"], "grin", k=1.6)  # v0.13 "DR." PHIL-IN
 SPR["face_lunchlady"] = portrait(B14["lunchlady"], "grin", k=1.6)  # v0.14 LUNCH LADY LORETTA
+SPR["face_stork"] = C15.stork_face()  # v0.15 THE STORK
 SPR["face_greg"] = portrait(B13["greg"], "norm", k=2)  # v0.11 VINNIE THE VALET (bigger head, so 1.6x)
 SPR["face_lou"] = portrait(B["lou"], "grin", k=1.4)  # v0.7.1: Lou himself (bigger head, so drawn at 1.4x not 2x)
 

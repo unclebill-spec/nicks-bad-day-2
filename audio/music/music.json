@@ -88,5 +88,17 @@
   "start": 1.226,
   "end": 20.838,
   "tempo": 195
+ },
+ "ld": {
+  "loop": true,
+  "start": 3.38,
+  "end": 30.423,
+  "tempo": 142
+ },
+ "stork": {
+  "loop": true,
+  "start": 1.253,
+  "end": 21.303,
+  "tempo": 191
  }
 }

@@ -10,7 +10,8 @@ const SFX = ['jump', 'select', 'blip', 'coin', 'powerup', 'explosion', 'bounce',
   'pew', 'skid', 'scoot', 'beepbeep', 'marv', 'marv_ko',
   'carhorn', 'caralarm', 'screech', 'rev', 'keys', 'meep', 'valet', 'valet_ko',  // v0.11 parking garage + Vinnie the Valet
   'buzzer', 'flicker', 'strap', 'lasso', 'croon', 'greg', 'philin', 'philin_ko',
-  'ladle', 'soup', 'traycrash', 'next', 'lunchlady', 'lunchlady_ko'];  // v0.13 psych ward; v0.14 cafeteria + Lunch Lady Loretta
+  'ladle', 'soup', 'traycrash', 'next', 'lunchlady', 'lunchlady_ko',
+  'camflash', 'purse', 'juice', 'flap', 'storkhonk', 'stork', 'stork_ko', 'grandma'];  // v0.13 psych ward; v0.14 cafeteria + Lunch Lady Loretta; v0.15 L&D + the stork
 export const S = { ctx: null, buf: {}, music: {}, loops: {}, cur: null, curName: null, master: null, mus: null, fx: null, vol: { music: 0.6, sfx: 0.8 }, want: null };
 
 export async function initSound(vol) {
