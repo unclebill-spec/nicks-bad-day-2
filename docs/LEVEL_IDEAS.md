@@ -11,7 +11,7 @@ Code Blue, grabs/throws, specials and the drops (pizza, BEEF JERKY, energy drink
 | 1 | Parking Garage at Shift Change | **DONE (v0.11)**: Level P3, after the Night Shift, before the ending |
 | 2 | Psych Ward | **DONE (v0.13)**: Floor 5, after the Scooter Run, before the Night Shift |
 | 3 | Cafeteria Lunch Rush | DONE (v0.14) |
-| 4 | Labor & Delivery | idea |
+| 4 | Labor & Delivery | DONE (v0.15) |
 | 5 | Rooftop Helipad at Night | idea |
 
 ## 1. Parking Garage at Shift Change (DONE, v0.11)
@@ -42,7 +42,7 @@ Built as FLOOR 5: THE PSYCH WARD with GREG and boss "Dr." Phil-in. See `src/ward
 - **Boss:** **the Lunch Lady** with a giant ladle (hairnet, apron over a top + slacks). Ladle swing, soup splash wave
   down a lane, "NEXT!" shout that stuns, flings mystery meat. Phase 2: "WE'RE OUT OF PUDDING!"
 
-## 4. Labor & Delivery
+## 4. Labor & Delivery (DONE, v0.15)
 - **Look:** a pastel floor (mint, peach, baby blue tiles), a nursery window, balloons and "IT'S A ...!" banners.
 - **Enemies:** screaming dads with camcorders (the camcorder light is a flash that dizzies), grandmas who won't leave
   (slow, tough, purse swing, "I'm not going anywhere!"), siblings with juice boxes.

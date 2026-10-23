@@ -2,6 +2,13 @@
 
 All notable changes to Nick's Very Bad, Terrible Bad Day Part II. Dates are America/New_York.
 
+## 2026-10-23: v0.15 "Labor & Delivery" (Bill: pastel floor, camcorder dads, grandmas who won't leave, a giant stork)
+- **FLOOR 2: LABOR & DELIVERY** (`LEVEL7`, LEVELS index 6, id 7, `?level=7`), after the Cafeteria and before the Night Shift. 8:00 PM.
+  Pastel walls and a pastel checker floor, with a nursery window, balloons, "IT'S A BOY!/GIRL!/...?!" banners, gift carts (breakable) and violet/blue/red neons.
+- New patients and visitors (nurse-sized): **CAMCORDER DAD** (his flash dizzies nurses), **GRANDMA** who won't leave (visitor AI, armored with a purse) and **BIG SIBLING** (juice boxes leave sticky grape puddles).
+- **Boss: THE STORK** (`src/stork.js`), about 1.5x a nurse, parody mail-carrier stork. It pecks, does a beak-first charge down the lane and a wing gust that shoves nurses back and across lanes, and flies over dropping laundry "bundles" (watch the shadows). Phase 2, "SPECIAL DELIVERY!", makes it faster and adds a third bundle plus backup. On defeat: "Wrong... address... honk", and it flies off with its "baby", a laundry sack.
+- Cutscenes `ld`, `stork`, `ldout`; music `ld` + `stork`; Level Select now has 9 cards (L&D before NIGHT SHIFT). Tests `tests/v15.py`; flow covers L&D. Images `docs/v15_ld.png`, `docs/v15_stork.png`. Cache `nbd2-app-v25`.
+
 ## 2026-10-23: v0.14.1 "Nurse Revamp" (Bill: smoother, cleaner nurses)
 - All 6 nurses get more animation frames: walk/run 4→8, idle 2→4, every combo hit gets wind-up + in-between + recovery (2→4, 3→5), jump 2→4 (launch/rise/apex/fall), throw 2→3, grab squeeze loop, 3-frame hurt flinch. `src/hero.js pose()` indexes updated.
 - Palette-locked cleanup (`tools/nurse_revamp.py`): ink outline kept on the silhouette only, interior seams use each area's own shade, stray pixels removed. No new colours; identities unchanged.
