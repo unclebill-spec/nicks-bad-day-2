@@ -150,6 +150,32 @@ const SCRIPTS = {
         bubbles: [{ x: 4, y: 4, s: lz(a, "That's not a doctor. That's Phil in a lab coat.", 'Fine by me. Phil can chart tonight.', "Nice badge, Phil. Is that crayon?", "He has a stethoscope. Why does he have a stethoscope?!", "Ooh, Dr. Phil! Love the coat, sweetie! Now give it back!", 'Phil, I can help you hang that coat back up.', "There's only one doctor of nursing here. Me."), tail: [b ? 40 : w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
     ];
   },
+  cafe() {  // v0.14: the psych ward -> the cafeteria
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['cafe', 300, 58], cap: 'FLOOR 1: THE CAFETERIA. 7:00 PM.', acts: [{ s: a, a: 'walk', x: w * 0.1, y: h - 3, mv: 30, rate: 7 }, ...(b ? [{ s: b, a: 'walk', x: w * 0.1 - 26, y: h - 1, mv: 30, rate: 7 }] : [])] }),
+      (w, h) => ({ bg: null, burst: '#ff3a4a', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Lunch. At 7 PM. Nobody touch my tray.', 'I just want one pudding. ONE.', 'Who spilled the jello? Why is it EVERYWHERE?', "Is that the line? THAT'S the line?!", 'Ooh, mystery meat day! Yay?', "I'll grab trays for everybody!", 'Lunch is the most important meal. After coffee.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
+  lunchlady() {
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['cafe', 2330, 58], cap: 'THE SERVING LINE.', acts: [{ s: a, a: 'idle', x: w * 0.14, y: h - 3 }, ...(b ? [{ s: b, a: 'idle', x: w * 0.14 + 26, y: h - 1 }] : []), { s: 'lunchlady', a: 'walk', x: w * 1.05, y: h - 2, mv: -40, flip: true, rate: 7 }],
+        bubbles: [{ x: w * 0.3, y: 14, s: 'NO CUTTING. NO SUBSTITUTIONS.', tail: [w * 0.75, h - 70], at: 0.5, mw: Math.min(220, w * 0.6), shout: true }] }),
+      (w, h) => ({ bg: null, burst: '#ff3a4a', faces: [{ id: 'lunchlady', x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 6, y: 6, s: 'One scoop, hon. ONE. ...NEXT!', tail: [w / 2, h - 72], at: 0.25, mw: w - 20, shout: true }] }),
+    ];
+  },
+  cafeout() {  // v0.14: Loretta's outro, then on to the night shift
+    const [a, b] = heroIds();
+    return [
+      (w, h) => ({ bg: ['cafe', 2440, 58], cap: 'KITCHEN CLOSED.', acts: [{ s: 'lunchlady', a: 'sleep', x: w * 0.62, y: h - 2 }, { s: a, a: 'win', x: w * 0.24, y: h - 3, rate: 3 }, ...(b ? [{ s: b, a: 'win', x: w * 0.24 + 28, y: h - 1, rate: 3 }] : [])],
+        bubbles: [{ x: w * 0.42, y: 8, s: "Kitchen's... closed... zzz", tail: [w * 0.64, h - 30], at: 0.3, mw: Math.min(200, w * 0.5) }] }),
+      (w, h) => ({ bg: null, burst: '#3a6aff', faces: [{ id: a, x: w / 2 - 36, y: h - 72, scale: 2 }],
+        bubbles: [{ x: 4, y: 4, s: lz(a, 'Got the last pudding. Night shift, here we come.', 'Fed. Barely. On to the night shift.', 'Lunch: survived. Night shift: next.', "I ate standing up. Classic. Night shift time.", 'Sweet dreams, Loretta! I saved you a pudding!', 'Trays returned! Night shift, let\'s go!', 'Lunch rush handled. Night shift, your move.'), tail: [w / 2, h - 70], at: 0.25, mw: w - 16 }] }),
+    ];
+  },
   psychout() {  // v0.13: Phil-in's outro, then on to the night shift
     const [a, b] = heroIds();
     return [

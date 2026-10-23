@@ -8,6 +8,7 @@ import { Tilly } from './boss.js';
 import { MRI, Lou } from './mri.js';
 import { Valet } from './valet.js';
 import { PhilIn } from './philin.js';
+import { LunchLady } from './lunchlady.js';
 import { sfx, playMusic } from './sound.js';
 import { resetAlarm, maybeYeller, updateAlarm, alarmPending } from './alarm.js';
 
@@ -118,7 +119,8 @@ export const Director = {
   },
   startBoss(z = W.lv.zones[W.zone]) {
     W.bossOn = true; const kind = z.boss || 'tilly';
-    if (kind === 'philin') { W.boss = new PhilIn(W.lockX + G.VW + 40, 176); playMusic(W.lv.bossMusic || 'boss'); }
+    if (kind === 'lunchlady') { W.boss = new LunchLady(W.lockX + G.VW + 40, 176); playMusic(W.lv.bossMusic || 'boss'); }
+    else if (kind === 'philin') { W.boss = new PhilIn(W.lockX + G.VW + 40, 176); playMusic(W.lv.bossMusic || 'boss'); }
     else if (kind === 'valet') { W.boss = new Valet(W.lockX + G.VW + 70, 178); playMusic(W.lv.bossMusic || 'boss'); }
     else if (kind === 'lou') { W.boss = new Lou(W.lockX + G.VW + 50, 170); playMusic('boss'); }
     else if (kind === 'mri') { W.boss = new MRI(z.lock); playMusic(W.lv.bossMusic || 'boss'); }
