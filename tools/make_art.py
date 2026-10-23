@@ -305,6 +305,30 @@ for e in ("camdad", "grandma", "sibling"):
     b = B15[e]
     atlas["chars"][e]["pal"] = {"hair": [b["hair_c"], b["hair_s"]], "skin": [b["skin"], b["skin_s"]], "gown": [], "sock": []}
 atlas["chars"]["stork"] = C15.stork_sheet(OUT / "stork.png")
+# v0.16 ROOFTOP HELIPAD: night-sky tiles, HVAC / vents / windsock / mast / neon, flight case, projectiles, the chopper,
+# the stretcher, two rooftop pests and the rogue LIFE FLITE crew (tools/v16_*.py)
+import v16_art as V16  # noqa: E402
+import v16_chars as C16  # noqa: E402
+for i in range(4):
+    add(f"rwall{i}", V16.rwall_tile(i))
+add("rceil", V16.rceil_tile(False)); add("rceil_lit", V16.rceil_tile(True))
+for i, t in enumerate(V16.rfloor_tiles()):
+    add(f"rfloor{i}", t)
+for k, S in {**V16.wall_pieces(), **V16.bits()}.items():
+    add(k, S)
+for st in range(3):
+    add(f"flightcase{st}", V16.flightcase(st))
+add("p_vape0", V16.proj_vape(0)); add("p_vape1", V16.proj_vape(1)); add("p_drone0", V16.proj_drone(0)); add("p_drone1", V16.proj_drone(1))
+add("p_zap0", V16.proj_spark(0)); add("p_zap1", V16.proj_spark(1))
+add("chopper0", V16.chopper(0)); add("chopper1", V16.chopper(1)); add("chopper_nap", V16.chopper(0, "sleep")); add("stretcher", V16.stretcher())
+B16 = C16.bodies()
+for e in ("vaper", "droneguy"):
+    char_sheet(e, C16.anims(e), B16[e])
+for e in ("roxy", "duke", "ace"):
+    char_sheet(e, C16.anims(e), B16[e], cell=(96, 92), anchor=(48, 88))
+for e in ("vaper", "droneguy", "roxy", "duke", "ace"):
+    b = B16[e]
+    atlas["chars"][e]["pal"] = {"hair": [b["hair_c"], b["hair_s"]], "skin": [b["skin"], b["skin_s"]], "gown": [], "sock": []}
 add("p_cup", RA.proj_cup()); add("puddle_w", RA.barium_splat()); add("p_film", RA.proj_film()); add("mri_wave0", RA.mri_wave(0)); add("mri_wave1", RA.mri_wave(1)); add("mri_table", RA.mri_table())
 for k, f in (("energy", PR.energy_drink), ("snacks", PR.fruit_snacks), ("zynn", PR.zynn_tin), ("candy", PR.candy), ("star", PR.star), ("donut", PR.donut),
              ("w_crutch", PR.w_crutch), ("w_callbell", PR.w_callbell), ("w_cane", PR.w_cane), ("syringe", PR.syringe), ("urinal", PR.urinal), ("puddle_y", PR.puddle_y),
@@ -374,6 +398,9 @@ SPR["w_valet"] = word("VALET RUSH!", 22, "#ff8a8a", "#e83a3a", stroke=3)
 SPR["w_next"] = word("NEXT!", 22, "#ffe84a", "#ff8a1e", stroke=3)
 SPR["w_delivery"] = word("SPECIAL DELIVERY!", 22, "#8ad8ff", "#a24dff", stroke=3)
 SPR["w_honk"] = word("HONK!", 22, "#ffe84a", "#ff8a1e", stroke=3)
+SPR["w_gust"] = word("GUST!", 22, "#bfe0ff", "#3aa8ff", stroke=3)  # v0.16 rooftop wind
+SPR["w_clear"] = word("CLEAR!", 22, "#ffffff", "#3aa8ff", stroke=3)
+SPR["w_hotload"] = word("HOT LOAD!", 22, "#ff8a8a", "#ff3a4a", stroke=3)
 SPR["w_lunchrush"] = word("LUNCH RUSH!", 22, "#ff8ac0", "#e83a3a", stroke=3)
 SPR["w_codeblue"] = word("CODE BLUE!", 26, "#9ae0ff", "#3a6aff", stroke=3)
 SPR["w_charge"] = word("CHARGE NURSE!", 28, "#ffffff", "#ffd84a", stroke=3)
@@ -423,6 +450,9 @@ SPR["face_valet"] = portrait(B11["valet"], "grin", k=1.6)
 SPR["face_philin"] = portrait(B13["philin"], "grin", k=1.6)  # v0.13 "DR." PHIL-IN
 SPR["face_lunchlady"] = portrait(B14["lunchlady"], "grin", k=1.6)  # v0.14 LUNCH LADY LORETTA
 SPR["face_stork"] = C15.stork_face()  # v0.15 THE STORK
+SPR["face_roxy"] = portrait(B16["roxy"], "grin", k=1.6)  # v0.16 LIFE FLITE crew
+SPR["face_duke"] = portrait(B16["duke"], "grin", k=1.6)
+SPR["face_ace"] = portrait(B16["ace"], "grin", k=1.6)
 SPR["face_greg"] = portrait(B13["greg"], "norm", k=2)  # v0.11 VINNIE THE VALET (bigger head, so 1.6x)
 SPR["face_lou"] = portrait(B["lou"], "grin", k=1.4)  # v0.7.1: Lou himself (bigger head, so drawn at 1.4x not 2x)
 
